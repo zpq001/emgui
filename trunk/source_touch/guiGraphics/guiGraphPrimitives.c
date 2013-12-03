@@ -4,11 +4,10 @@
 #include "guiGraphHAL.h"
 #include "guiFonts.h"
 
-rect_t drawArea;		// absolute coordinates of rectangle, inside which drawing is allowed
-                        // All changes to this should be done through guiGraph_setDrawingArea()
 
 
 color_t penColor;             // Pen is used for drawing lines, frames, circles, etc
+color_t fillColor;            // Used for filling objects
 const tFont* currentFont;     // Font that currently used
 color_t fontForeColor;        // Used when printing text
 color_t fontBackColor;        //
@@ -16,78 +15,58 @@ uint8_t fontOutputMode;       // Specifies text background - OUTPUT_MODE_TRANSPA
 
 
 
-//-------------------------------------------------------//
-// Sets global drawing area
-// Coordinates are absolute
-//-------------------------------------------------------//
-void guiGraph_setDrawingArea(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
-{
-    drawArea.x1 = x1;
-    drawArea.y1 = y1;
-    drawArea.x2 = (x2 >= LCD_XSIZE) ? LCD_XSIZE - 1 : x2;
-    drawArea.y2 = (y2 >= LCD_YSIZE) ? LCD_YSIZE - 1 : y2;
-}
-
 
 //-------------------------------------------------------//
-// Converts rect coordinates which are relative to drawArea
-// to absolute values.
-// Converted coodinates are bound by drawArea
-// Returns zero if there is no intersection
+// Fills a rectangle with fillColor
 //-------------------------------------------------------//
-static uint8_t guiGraph_makeAbsoluteRect(rect_t* rect)
-{
-    rect->x1 = drawArea.x1 + rect->x1;
-    if (rect->x1 > drawArea.x2) return 0;
-
-    rect->y1 = drawArea.y1 + rect->y1;
-    if (rect->y1 > drawArea.y2) return 0;
-
-    rect->x2 = drawArea.x1 + rect->x2;
-    if (rect->x2 > drawArea.x2) rect->x2 = drawArea.x2;
-
-    rect->y2 = drawArea.y1 + rect->y2;
-    if (rect->y2 > drawArea.y2) rect->y2 = drawArea.y2;
-
-    return 1;
-}
-
-//-------------------------------------------------------//
-// Converts X,Y coordinates which are relative to drawArea
-// to absolute values.
-// Converted coodinates are bound by drawArea
-// Returns zero if there is no intersection
-//-------------------------------------------------------//
-static uint8_t guiGraph_makeAbsoluteXY(uint16_t *x, uint16_t *y)
-{
-    *x = drawArea.x1 + *x;
-    if (*x > drawArea.x2) return 0;
-
-    *y = drawArea.y1 + *y;
-    if (*y > drawArea.y2) return 0;
-
-    return 1;
-}
-
-
-//-------------------------------------------------------//
-// Fills a rectangle with specified color
-// Rectangle coordinates are relative to drawArea
-// Rectangle is checked and bounded before painting
-//-------------------------------------------------------//
-void guiGraph_fillRect(rect_t* rect, color_t color)
+void guiGraph_fillRect(rect_t* rect)
 {
 	uint16_t x,y;
     rect_t drawRect = *rect;
-    if (guiGraph_makeAbsoluteRect(&drawRect))   // convert relative coordinates to absolute
+    for (x=drawRect.x1; x<=drawRect.x2; x++)
+        for (y=drawRect.y1; y<=drawRect.y2; y++)
+            guiGraph_putPixel(x,y,fillColor);
+}
+
+//-------------------------------------------------------//
+// Draws horizontal line with penColor
+//-------------------------------------------------------//
+void guiGraph_drawHorLine(uint16_t x, uint16_t y, uint16_t length)
+{
+    while(length--)
     {
-        for (x=drawRect.x1; x<=drawRect.x2; x++)
-            for (y=drawRect.y1; y<=drawRect.y2; y++)
-                guiGraph_putPixel(x,y,color);
+        guiGraph_putPixel(x,y,penColor);
+        x++;
     }
 }
 
+//-------------------------------------------------------//
+// Draws vertical line with penColor
+//-------------------------------------------------------//
+void guiGraph_drawVertLine(uint16_t x, uint16_t y, uint16_t length)
+{
+    while(length--)
+    {
+        guiGraph_putPixel(x,y,penColor);
+        y++;
+    }
+}
 
+//-------------------------------------------------------//
+// Draws rectangle line with penColor
+//-------------------------------------------------------//
+void guiGraph_drawRect(rect_t *rect)
+{
+    uint16_t width, height;
+    if ((rect->x1 > rect->x2) || (rect->y1 > rect->y2))
+        return;
+    width = rect->x2 - rect->x1 + 1;
+    height = rect->y2 - rect->y1 + 1;
+    guiGraph_drawVertLine(rect->x1,rect->y1,height);
+    guiGraph_drawVertLine(rect->x2,rect->y1,height);
+    guiGraph_drawHorLine(rect->x1,rect->y1,width);
+    guiGraph_drawHorLine(rect->x1,rect->y2,width);
+}
 
 
 
@@ -103,7 +82,7 @@ void guiGraph_fillRect(rect_t* rect, color_t color)
 //  - altPenColor
 //  - outputMode
 //-------------------------------------------------------//
-static void drawPackedImage(const uint8_t *img, uint16_t x_pos, uint16_t y_pos, uint16_t img_width, uint16_t img_height)
+void guiGraph_drawPackedImage(const uint8_t *img, uint16_t x_pos, uint16_t y_pos, uint16_t img_width, uint16_t img_height)
 {
     uint8_t bit_mask = 0x01;
     uint8_t temp;
@@ -115,21 +94,13 @@ static void drawPackedImage(const uint8_t *img, uint16_t x_pos, uint16_t y_pos, 
     while(y_pos < y_fin)
     {
         img_index = img_start_index;
-        // Check Y-range
-        if ((y_pos >= drawArea.y1) && (y_pos <= drawArea.y2))
+        for (x = x_pos; x < x_pos + img_width; x++)
         {
-            for (x = x_pos; x < x_pos + img_width; x++)
-            {
-                temp = img[img_index++];
-                // Check X-range
-                if ((x_pos >= drawArea.x1) && (x_pos <= drawArea.x2))
-                {
-                    if (temp & bit_mask)
-                        guiGraph_putPixel(x,y_pos,fontForeColor);
-                    else if (fontOutputMode == FONT_OUTPUT_SOLID)
-                        guiGraph_putPixel(x,y_pos,fontBackColor);
-                }
-            }
+            temp = img[img_index++];
+            if (temp & bit_mask)
+                guiGraph_putPixel(x,y_pos,fontForeColor);
+            else if (fontOutputMode == FONT_OUTPUT_SOLID)
+                guiGraph_putPixel(x,y_pos,fontBackColor);
         }
         y_pos++;
         if (bit_mask == 0x80)
@@ -168,25 +139,20 @@ const tFontItem* guiGraph_getFontItem(const tFont *font, uint8_t code)
 
 //-------------------------------------------------------//
 // Prints text string using X and Y coordinates
-// Bounded by drawArea
 //-------------------------------------------------------//
 void guiGraph_printTextXY(uint16_t x, uint16_t y, char *string)
 {
     uint8_t index = 0;
     const tFontItem *fontItem;
     char c;
-    if (guiGraph_makeAbsoluteXY(&x, &y))   // convert relative coordinates to absolute
+
+    while((c = string[index++]))
     {
-        while((c = string[index++]))
+        fontItem = guiGraph_getFontItem(currentFont, c);
+        if (fontItem != 0)
         {
-            fontItem = guiGraph_getFontItem(currentFont, c);
-            if (fontItem != 0)
-            {
-                drawPackedImage(fontItem->data,x,y,fontItem->width,currentFont->height);
-                x += fontItem->width;
-                if (x > drawArea.x2)
-                    break;
-            }
+            guiGraph_drawPackedImage(fontItem->data,x,y,fontItem->width,currentFont->height);
+            x += fontItem->width;
         }
     }
 }
