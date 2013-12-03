@@ -8,10 +8,32 @@ uint32_t guiLcdBuffer[LCD_XSIZE * LCD_YSIZE];
 
 
 
+void guiGraph_putPixel(uint16_t x, uint16_t y, color_t color)
+{
+	uint32_t bufferOffset = y;
+	bufferOffset *= LCD_XSIZE;
+	bufferOffset += x;
+	guiLcdBuffer[bufferOffset] = color;
+}
 
+color_t guiGraph_getPixel(uint16_t x, uint16_t y)
+{
+	uint32_t bufferOffset = y;
+	bufferOffset *= LCD_XSIZE;
+	bufferOffset += x;
+	return guiLcdBuffer[bufferOffset];
+}
 
-
-
+/*
+color_t guiGraph_getColorFromRbg(uint8_t red, uint8_t green, uint8_t blue)
+{
+	color_t color = 0;
+	color |= red;
+	color |= (uint32_t)green << 8;
+	color |= (uint32_t)blue << 16;
+	return color;
+}
+*/
 
 
 
