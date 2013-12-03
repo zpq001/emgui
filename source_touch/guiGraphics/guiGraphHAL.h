@@ -18,6 +18,7 @@ typedef uint32_t color_t;
 #define CL_GREEN colorFromRgb(0,255,0)
 #define CL_BLUE colorFromRgb(0,0,255)
 #define CL_YELLOW colorFromRgb(255,255,0)
+#define CL_LIGHT_GREY colorFromRgb(200,200,200)
 
 extern color_t guiLcdBuffer[];
 

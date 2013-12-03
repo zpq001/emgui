@@ -4,6 +4,7 @@
 #include "guiGraphHAL.h"
 #include "guiGraphPrimitives.h"
 #include "guiFonts.h"
+#include "guiGraphWidgets.h"
 
 // Callback functions
 cbLogPtr addLogCallback;
@@ -47,23 +48,24 @@ void guiDrawIsComplete(void)
 
 void guiInitialize(void)
 {
+    rect_t rect1;
+
+    fillColor = CL_LIGHT_GREY;
+    rect1.x1 = 0;
+    rect1.x2 = LCD_XSIZE-1;
+    rect1.y1 = 0;
+    rect1.y2 = LCD_YSIZE-1;
+    guiGraph_fillRect(&rect1);
+
+    fillColor = CL_GREEN;
+    rect1.x1 = 0;
+    rect1.x2 = 50;
+    rect1.y1 = 0;
+    rect1.y2 = 100;
+    guiGraph_fillRect(&rect1);
 
 
-    guiGraph_setDrawingArea(0,0,LCD_XSIZE-1,LCD_YSIZE-1);
-    guiGraph_fillRect(&drawArea, CL_BLACK);
-
-    // Test
-    rect_t someRect;
-    someRect.x1 = 0;
-    someRect.x2 = 50;
-    someRect.y1 = 0;
-    someRect.y2 = 100;
-    guiGraph_fillRect(&someRect, CL_GREEN);
-
-
-
-    //penColor = CL_BLUE;
-
+    guiGraph_drawButton(100,100);
 
     currentFont = &font_h12;
 
