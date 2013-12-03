@@ -2,6 +2,8 @@
 
 #include "guiTop.h"
 #include "guiGraphHAL.h"
+#include "guiGraphPrimitives.h"
+#include "guiFonts.h"
 
 // Callback functions
 cbLogPtr addLogCallback;
@@ -45,9 +47,35 @@ void guiDrawIsComplete(void)
 
 void guiInitialize(void)
 {
-    uint32_t i = 0;
-    while(i < (LCD_XSIZE * LCD_YSIZE))
-        guiLcdBuffer[i++] = 0x00000000;
+
+
+    guiGraph_setDrawingArea(0,0,LCD_XSIZE-1,LCD_YSIZE-1);
+    guiGraph_fillRect(&drawArea, CL_BLACK);
+
+    // Test
+    rect_t someRect;
+    someRect.x1 = 0;
+    someRect.x2 = 50;
+    someRect.y1 = 0;
+    someRect.y2 = 100;
+    guiGraph_fillRect(&someRect, CL_GREEN);
+
+
+
+    //penColor = CL_BLUE;
+
+
+    currentFont = &font_h12;
+
+    fontForeColor = CL_RED;
+    fontBackColor = CL_YELLOW;
+    fontOutputMode = FONT_OUTPUT_SOLID;
+    guiGraph_printTextXY(20,20,"Hello world!");
+
+
+    fontForeColor = CL_BLUE;
+    fontOutputMode = FONT_OUTPUT_TRANSPARENT;
+    guiGraph_printTextXY(20,50,"Привет мiр!");
 
     guiDrawIsComplete();
 
@@ -70,18 +98,18 @@ void guiDrawAll(void)
 
 void guiTouchMoved(int x, int y)
 {
-    guiLcdBuffer[y * LCD_XSIZE + x] = 0x00FF00;
+    guiGraph_putPixel(x,y,CL_GREEN);
 }
 
 void guiTouchPressed(int x, int y)
 {
-    guiLcdBuffer[y * LCD_XSIZE + x] = 0x0000FF;
+    guiGraph_putPixel(x,y,CL_RED);
     guiDrawIsComplete();
 }
 
 void guiTouchReleased(int x, int y)
 {
-    guiLcdBuffer[y * LCD_XSIZE + x] = 0x00FFFF;
+    guiGraph_putPixel(x,y,CL_YELLOW);
     guiDrawIsComplete();
 }
 

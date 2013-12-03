@@ -21,14 +21,16 @@ SOURCES += main.cpp\
     gui_top/guiTop.c \
 	../../source_touch/guiGraphics/guiGraphPrimitives.c \
 	../../source_touch/guiGraphics/guiGraphHAL.c \
-	../../source_touch/guiGraphics/guiGraphWidgets.c
+	../../source_touch/guiGraphics/guiGraphWidgets.c \
+    ../../source_touch/guiGraphics/font_h12.c
 
 HEADERS  += mainwindow.h \
     ../common/pixeldisplay.h \
     gui_top/guiTop.h \
 	../../source_touch/guiGraphics/guiGraphPrimitives.h \
 	../../source_touch/guiGraphics/guiGraphHAL.h \
-	../../source_touch/guiGraphics/guiGraphWidgets.h
+	../../source_touch/guiGraphics/guiGraphWidgets.h \
+    ../../source_touch/guiGraphics/guiFonts.h
 	
 
 
