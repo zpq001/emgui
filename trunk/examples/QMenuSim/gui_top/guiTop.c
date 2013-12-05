@@ -1,26 +1,32 @@
 #include <stdio.h>
 
 #include "guiTop.h"
+#include "guiFonts.h"
 #include "guiGraphHAL.h"
 #include "guiGraphPrimitives.h"
-#include "guiFonts.h"
-//#include "guiGraphWidgets.h"
+#include "guiGraphWidgets.h"
+
+#include "guiCore.h"
+#include "guiWidgets.h"
+#include "guiForm.h"
+#include "guiTextLabel.h"
+
+#include "guiMainForm.h"
+//#include "guiSetupForm.h"
 
 // Callback functions
 cbLogPtr addLogCallback;
 cbLcdUpdatePtr updateLcdCallback;
 
-
+// Temporary display buffers, used for splitting GUI buffer into two separate LCD's
+uint8_t lcd0_buffer[DISPLAY_BUFFER_SIZE];
+uint8_t lcd1_buffer[DISPLAY_BUFFER_SIZE];
 
 
 //guiEventArgButtons_t argButtons;
 
 
-
-// Temporary display buffers, used for splitting GUI buffer into two separate LCD's
-uint8_t lcd0_buffer[DISPLAY_BUFFER_SIZE];
-uint8_t lcd1_buffer[DISPLAY_BUFFER_SIZE];
-
+//guiTextLabel_t label1;
 
 
 //-----------------------------------//
@@ -83,10 +89,9 @@ static void guiDrawIsComplete(void)
 
 void guiInitialize(void)
 {
-
-    //guiMainForm_Initialize();
+    guiMainForm_Initialize();
     //guiSetupForm_Initialize();
-    //guiCore_Init(&guiMainForm);
+    guiCore_Init(&guiMainForm);
 }
 
 
@@ -98,7 +103,7 @@ void guiDrawAll(void)
      // GUI function call
      //guiCore_RedrawAll();
 
-
+/*
      LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
      LCD_FillRect(50,0,69,128,FILL_WITH_BLACK);
 
@@ -106,7 +111,7 @@ void guiDrawAll(void)
 
      LCD_PrintString("rewrite, normal", 10, 5, IMAGE_MODE_NORMAL);
      LCD_PrintString("rewrite, inverse", 10, 20, IMAGE_MODE_INVERSE);
-/*
+
      LCD_SetPixelOutputMode(PIXEL_MODE_AND);
      LCD_PrintString("mode AND, normal", 10, 35, IMAGE_MODE_NORMAL);
      LCD_PrintString("mode AND, inverse", 10, 50, IMAGE_MODE_INVERSE);
@@ -119,6 +124,7 @@ void guiDrawAll(void)
      LCD_PrintString("mode XOR, normal", 10, 95, IMAGE_MODE_NORMAL);
      LCD_PrintString("mode XOR, inverse", 10, 110, IMAGE_MODE_INVERSE);
 */
+/*
      LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
      LCD_lineStyle = LCD_LINE_DOTTED;
      LCD_DrawHorLine(20,50,105,1);
@@ -132,9 +138,28 @@ void guiDrawAll(void)
      LCD_DrawRect(128 + 5, 5, 120, 120, 1);
      LCD_lineStyle = LCD_LINE_DASHED;
      LCD_DrawRect(128 + 10, 10, 110, 110, 1);
+*/
+/*
+    guiTextLabel_Initialize(&label1,0);
+    label1.text = "12345";
+    label1.x = 50;
+    label1.y = 50;
+    label1.width = 22;
+    label1.height = 22;
+    //label1.alignment = ALIGN_TOP_LEFT;
+    //label1.alignment = ALIGN_TOP_RIGHT;
+    //label1.alignment = ALIGN_TOP;
+    //label1.alignment = ALIGN_BOTTOM_LEFT;
+    //label1.alignment = ALIGN_BOTTOM_RIGHT;
+    //label1.alignment = ALIGN_BOTTOM;
+    label1.alignment = ALIGN_CENTER;
 
-     // Update display(s)
-     guiDrawIsComplete();
+    guiGraph_DrawTextLabel(&label1);
+*/
+
+    guiCore_RedrawAll();
+    // Update display(s)
+    guiDrawIsComplete();
 }
 
 

@@ -5,6 +5,7 @@
 
 **********************************************************/
 
+#include <stdint.h>
 #include "guiGraphHAL.h"
 
 
@@ -54,6 +55,18 @@ void LCD_SetPixelOutputMode(uint8_t newMode)
     }
 }
 
+
+//-------------------------------------------------------//
+// Sets line style
+//
+//-------------------------------------------------------//
+void LCD_SetLineStyle(uint8_t newStyle)
+{
+    if (newStyle != LCD_lineStyle)
+    {
+        LCD_lineStyle = newStyle;
+    }
+}
 
 
 //-------------------------------------------------------//
@@ -129,15 +142,15 @@ void LCD_DrawHorLine(uint8_t x_pos, uint8_t y_pos, uint8_t length, uint8_t pixel
 
     switch(LCD_lineStyle)
     {
-        case LCD_LINE_DASHED:
+        case LINE_STYLE_DASHED:
             dashPeriod = LCD_DASH_PERIOD;
             dashCompare = LCD_DASH_COMPARE;
             break;
-        case LCD_LINE_DOTTED:
+        case LINE_STYLE_DOTTED:
             dashPeriod = LCD_DOT_PERIOD;
             dashCompare = LCD_DOT_COMPARE;
             break;
-         default: //LCD_LINE_SOLID:
+         default: //LINE_STYLE_SOLID:
             dashPeriod = 10;
             dashCompare = 10;   // arbitrary, but >= dashPeriod
             break;
@@ -192,15 +205,15 @@ void LCD_DrawVertLine(uint8_t x_pos, uint8_t y_pos, uint8_t length, uint8_t pixe
 
     switch(LCD_lineStyle)
     {
-        case LCD_LINE_DASHED:
+        case LINE_STYLE_DASHED:
             dashPeriod = LCD_DASH_PERIOD;
             dashCompare = LCD_DASH_COMPARE;
             break;
-        case LCD_LINE_DOTTED:
+        case LINE_STYLE_DOTTED:
             dashPeriod = LCD_DOT_PERIOD;
             dashCompare = LCD_DOT_COMPARE;
             break;
-         default: //LCD_LINE_SOLID:
+         default: //LINE_STYLE_SOLID:
             dashPeriod = 10;
             dashCompare = 10;   // arbitrary, but >= dashPeriod
             break;
@@ -340,7 +353,17 @@ void LCD_DrawImage(const uint8_t* img, uint8_t x_pos, uint8_t y_pos, uint8_t wid
     uint16_t img_shift;
     uint8_t bit_mask, temp;
     uint8_t offset = y_pos % 8;
-    mode = (mode) ? 0xFF : 0x00;
+    /*
+        img != 0, mode = 1 - print text as black
+            => mode = 0x00
+        img != 0, mode = 0 - print text as white
+            => mode = 0xFF
+        img = 0, mode = 1 - fill with black
+            => mode = 0x00
+        img = 0, mode = 0 - fill with white
+            => mode = 0xFF
+    */
+    mode = (mode) ? 0x00 : 0xFF;
 
     #ifdef SOFT_HORIZ_REVERSED
         start_buffer_index = ((uint16_t)(y_pos / 8))*LCD_XSIZE + LCD_XSIZE - 1 - x_pos;

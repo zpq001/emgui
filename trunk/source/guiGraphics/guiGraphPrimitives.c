@@ -15,8 +15,6 @@
 
 **********************************************************/
 
-
-
 #include <stdint.h>
 #include "guiGraphPrimitives.h"
 #include "guiGraphHAL.h"
@@ -25,6 +23,16 @@
 
 const tFont* LCD_currentFont;
 
+
+//-------------------------------------------------------//
+// Sets current font for text printing
+//
+//-------------------------------------------------------//
+void LCD_SetFont(const tFont *newFont)
+{
+    if (newFont != LCD_currentFont)
+        LCD_currentFont = newFont;
+}
 
 
 //-------------------------------------------------------//
@@ -48,23 +56,52 @@ void LCD_DrawRect(uint8_t x_pos, uint8_t y_pos, uint8_t width, uint8_t height, u
 
 
 //-------------------------------------------------------//
-// Rerurns pointer to a font item with specified acode.
+// Rerurns pointer to a font item with specified code.
+// Font array MUST be sorted by code.
 // If no item with such code is found, 0 is returned.
-// TODO - use dichotomy
+// Using binary search, http://kvodo.ru/dvoichnyiy-poisk.html
 //-------------------------------------------------------//
 const tFontItem* LCD_GetFontItem(const tFont *font, uint8_t code)
 {
     tFontItem* itemPtr = 0;
+    uint8_t start_index = 0;
+    uint8_t end_index = font->charCount - 1;
     uint8_t i;
-    for (i=0;i<font->charCount;i++)
+    while (start_index < end_index)
     {
+        i = start_index + (end_index - start_index) / 2;
         itemPtr = (tFontItem*)&font->chars[i];
-        if (itemPtr->code == code)
-            break;
+        if (code < itemPtr->code)
+            end_index = i;
+        else if (code > itemPtr->code)
+            start_index = i+1;
+        else
+            return itemPtr;
     }
-    return itemPtr;
+    return 0;
 }
 
+//-------------------------------------------------------//
+// Rerurns length of a string in pixels
+//
+//-------------------------------------------------------//
+uint8_t LCD_GetStringWidth(const tFont *font, char *string)
+{
+    const tFontItem *fontItem;
+    uint8_t length = 0;
+    uint8_t index = 0;
+    char c;
+
+    while((c = string[index++]))
+    {
+        fontItem = LCD_GetFontItem(LCD_currentFont, c);
+        if (fontItem != 0)
+            length += fontItem->width + font->spacing;
+    }
+
+    length -= font->spacing;
+    return length;
+}
 
 
 //-------------------------------------------------------//
@@ -89,6 +126,65 @@ void LCD_PrintString(char *str, uint8_t x, uint8_t y, uint8_t mode)
         }
     }
 }
+
+
+
+//-------------------------------------------------------//
+// Prints a string with LCD_currentFont inside rectangle using
+//  alignment
+// mode:
+//     IMAGE_MODE_NORMAL - normal images
+//     IMAGE_MODE_INVERSE - inversed images
+//-------------------------------------------------------//
+void LCD_PrintStringAligned(char *str, rect_t *rect, uint8_t alignment, uint8_t mode)
+{
+    uint8_t index = 0;
+    const tFontItem *fontItem;
+    char c;
+    int16_t x_aligned, y_aligned;
+    int16_t strWidthPx;
+
+    // Find horizontal position
+    if (alignment & ALIGN_LEFT)
+    {
+        x_aligned = rect->x1;       // pretty simple - take left rect border as starting point
+    }
+    else
+    {
+        // We need to compute length of whole string in pixels
+        strWidthPx = LCD_GetStringWidth(LCD_currentFont,str);
+        if (alignment & ALIGN_RIGHT)
+            x_aligned = (int16_t)rect->x2 + 1 - strWidthPx;
+        else
+            x_aligned = rect->x1 + ((int16_t)(rect->x2 - rect->x1 + 1) - strWidthPx) / 2;
+    }
+
+    // Find vertical position
+    if (alignment & ALIGN_TOP)
+    {
+        y_aligned = rect->y1;
+    }
+    else if (alignment & ALIGN_BOTTOM)
+    {
+        y_aligned = (int16_t)rect->y2 + 1 - LCD_currentFont->height;
+    }
+    else
+    {
+        y_aligned = rect->y1 + ((int16_t)(rect->y2 - rect->y1 + 1) - LCD_currentFont->height) / 2;
+    }
+
+    // Now print string
+    while((c = str[index++]))
+    {
+        fontItem = LCD_GetFontItem(LCD_currentFont, c);
+        if (fontItem != 0)
+        {
+            LCD_DrawImage(fontItem->data, x_aligned, y_aligned, fontItem->width, LCD_currentFont->height, mode);
+            x_aligned += fontItem->width + LCD_currentFont->spacing;
+        }
+    }
+}
+
 
 
 

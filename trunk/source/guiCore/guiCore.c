@@ -1,19 +1,40 @@
+/**********************************************************
+    Module guiCore
 
-#include "guiConfig.h"
-#include "guiCore.h"
-#include "guiForm.h"
-#include "guiWidgetCommon.h"
+
+
+
+**********************************************************/
+
+#include <stdint.h>
+//#include "guiFonts.h"
+//#include "guiGraphPrimitives.h"
 #include "guiEvents.h"
-#include "soft_timer.h"
+#include "guiWidgets.h"
+#include "guiForm.h"
 
-extern void guiDrawIsCompleteCallback(void);
 
-guiForm_t *pCurrentForm;
-guiForm_t *pNextForm;
 
-uint8_t globalRedrawFlags;
 
-SoftTimer8b_t blinkTimer;
+const guiEvent_t guiEvent_DRAW = {GUI_EVENT_DRAW, 0};
+const guiEvent_t guiEvent_DRAW_ALL = {GUI_EVENT_DRAW_ALL, 0};
+const guiEvent_t guiEvent_SELECT = {GUI_EVENT_SELECT, 0};
+const guiEvent_t guiEvent_DESELECT = {GUI_EVENT_DESELECT, 0};
+const guiEvent_t guiEvent_UPDATE = {GUI_EVENT_UPDATE, 0};
+
+const guiEvent_t guiEvent_HIDE = {GUI_EVENT_HIDE, 0};
+const guiEvent_t guiEvent_SHOW = {GUI_EVENT_SHOW, 0};
+
+
+
+guiForm_t *currentForm;
+
+//guiForm_t *pNextForm;
+
+//uint8_t globalRedrawFlags;
+
+//SoftTimer8b_t blinkTimer;
+
 
 
 
@@ -21,21 +42,71 @@ SoftTimer8b_t blinkTimer;
 //  Top function for GUI core initializing
 //  All components must be already initialized
 //-------------------------------------------------------//
-void guiCore_Init(guiForm_t *pStartForm)
+void guiCore_Init(guiForm_t *initialForm)
 {
-    globalRedrawFlags = 0;
-    pNextForm = 0;
+    //globalRedrawFlags = 0;
+    //pNextForm = 0;
 
-    pCurrentForm = pStartForm;
-    pCurrentForm->processEvent(guiEvent_SELECT);
-
-    blinkTimer.RunOnce = 0;
-    blinkTimer.Top = 1;
-    blinkTimer.CompA = 0;
-    blinkTimer.Enabled = 1;
+    currentForm = initialForm;
+    //pCurrentForm->processEvent(guiEvent_SELECT);
 }
 
 
+
+void guiCore_RedrawAll(void)
+{
+    guiGenericWidget_t *widget;
+    uint8_t index;
+    uint8_t doProcessWidget = 1;
+    // TODO - send message to top-level form and all it's childs to update
+
+    widget = (guiGenericWidget_t *)currentForm;
+
+    while(1)
+    {
+        // Process widget
+        if (doProcessWidget)
+        {
+            widget->processEvent(widget, guiEvent_DRAW);
+            doProcessWidget = 0;
+        }
+        // Check if widget has children
+        if (widget->isContainer)
+        {
+            // If container has unprocessed children
+            if ( ((guiGenericContainer_t *)widget)->widgets.traverseIndex <
+                 ((guiGenericContainer_t *)widget)->widgets.count )
+            {
+                // switch to next one
+                index = ((guiGenericContainer_t *)widget)->widgets.traverseIndex++;
+                // check if widget actually exists
+                if (((guiGenericContainer_t *)widget)->widgets.elements[index])
+                {
+                    // TODO - Check if widget is visible and enabled
+                    widget = ((guiGenericContainer_t *)widget)->widgets.elements[index];
+                    doProcessWidget = 1;
+                }
+            }
+            else
+            {
+                // All container child items are processed. Reset counter of processed items and move up.
+                ((guiGenericContainer_t *)widget)->widgets.traverseIndex = 0;
+                if (widget == (guiGenericWidget_t *)currentForm)
+                    break;
+                else
+                    widget = widget->parent;
+            }
+        }
+        else
+        {
+            // Widget has no children. Move up.
+            widget = widget->parent;
+        }
+
+    }
+}
+
+/*
 //-------------------------------------------------------//
 //  Top GUI function for processing events
 //
@@ -75,12 +146,7 @@ void guiCore_RequestFullRedraw(void)
 
 
 
-void guiCore_RedrawAll(void)
-{
-    processSoftTimer8b(&blinkTimer);
-    guiCore_ProcessEvent(guiEvent_DRAW);
-    guiDrawIsCompleteCallback();
-}
+
 
 
 
@@ -189,7 +255,7 @@ uint8_t guiCore_CallEventHandler(guiGenericWidget_t *pWidget, uint8_t eventType)
     return handlerIsFound;
 }
 
-
+*/
 
 
 
