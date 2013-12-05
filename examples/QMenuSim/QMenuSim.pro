@@ -24,7 +24,12 @@ SOURCES += main.cpp\
     gui_top/guiTop.c \
     ../../source/guiGraphics/guiGraphHAL.c \
     ../../source/guiGraphics/guiGraphPrimitives.c \
-    ../../source/guiGraphics/font_h12.c
+    ../../source/guiGraphics/font_h12.c \
+    ../../source/guiGraphics/guiGraphWidgets.c \
+    ../../source/guiWidgets/guiTextLabel.c \
+    ../../source/guiWidgets/guiForm.c \
+    ../../source/guiCore/guiCore.c \
+    gui_top/guiMainForm.c
 	
 
 HEADERS  += mainwindow.h \
@@ -32,7 +37,14 @@ HEADERS  += mainwindow.h \
     gui_top/guiTop.h \
     ../../source/guiGraphics/guiGraphHAL.h \
     ../../source/guiGraphics/guiGraphPrimitives.h \
-    ../../source/guiGraphics/guiFonts.h
+    ../../source/guiGraphics/guiFonts.h \
+    ../../source/guiWidgets/guiWidgets.h \
+    ../../source/guiGraphics/guiGraphWidgets.h \
+    ../../source/guiWidgets/guiTextLabel.h \
+    ../../source/guiCore/guiEvents.h \
+    ../../source/guiWidgets/guiForm.h \
+    ../../source/guiCore/guiCore.h \
+    gui_top/guiMainForm.h
 	
 
 

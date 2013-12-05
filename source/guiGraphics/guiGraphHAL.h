@@ -44,17 +44,17 @@
 #define IMAGE_MODE_NORMAL    0x01
 #define IMAGE_MODE_INVERSE   0x00
 // Aliases for fill rect
-#define FILL_WITH_BLACK      0x00
-#define FILL_WITH_WHITE      0x01
+#define FILL_WITH_BLACK      0x01
+#define FILL_WITH_WHITE      0x00
 
 #define LCD_FillRect(x_pos, y_pos, width, height, mode) \
     LCD_DrawImage(0, x_pos, y_pos, width, height, mode)
 
 
 // Line drawing mode (not for all functions)
-#define LCD_LINE_SOLID      0x10
-#define LCD_LINE_DASHED     0x20
-#define LCD_LINE_DOTTED     0x30
+#define LINE_STYLE_SOLID      0x10
+#define LINE_STYLE_DASHED     0x20
+#define LINE_STYLE_DOTTED     0x30
 
 
 
@@ -64,6 +64,8 @@ extern uint8_t lcdBuffer[LCD_BUFFER_SIZE];
 extern uint8_t LCD_lineStyle;
 
 void LCD_SetPixelOutputMode(uint8_t newMode);
+void LCD_SetLineStyle(uint8_t newStyle);
+
 void LCD_PutPixel (uint8_t x_pos, uint8_t y_pos, uint8_t pixelValue);
 void LCD_DrawHorLine(uint8_t x_pos, uint8_t y_pos, uint8_t length, uint8_t pixelValue);
 void LCD_DrawVertLine(uint8_t x_pos, uint8_t y_pos, uint8_t length, uint8_t pixelValue);

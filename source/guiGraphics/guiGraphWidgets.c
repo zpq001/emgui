@@ -1,59 +1,57 @@
+/**********************************************************
+  Module guiGraphWidgets contains functions for drawing widgets.
 
+
+
+**********************************************************/
+
+#include <stdint.h>
 #include "guiGraphHAL.h"
 #include "guiGraphPrimitives.h"
 #include "guiFonts.h"
+#include "guiWidgets.h"
 
 
-// temporary
-void guiGraph_drawButton(uint16_t x, uint16_t y)
+
+
+
+void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
 {
-    uint16_t bWidth = 50;
-    uint16_t bHeight = 20;
     rect_t rect;
 
-    /*
-    rect1.x1 = 300;
-    rect1.y1 = 200;
-    rect1.x2 = 350;
-    rect1.y2 = 260;
-    guiGraph_fillRect(&rect1, CL_RED); */
+    // Process redraw flags - TODO
+    // Check isVisible
 
-    penColor = colorFromRgb(100,100,100);
-    fillColor = colorFromRgb(200,200,200);
+    // Erase rectangle
+    LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+    LCD_FillRect(textLabel->x,textLabel->y,textLabel->width,textLabel->height,FILL_WITH_WHITE);
 
-    // Fill
-    rect.x1 = x + 1;
-    rect.y1 = y + 1;
-    rect.x2 = rect.x1 + bWidth - 2;
-    rect.y2 = rect.y1 + bHeight - 2;
-    guiGraph_fillRect(&rect);
+    // Draw focus
+    if (textLabel->isFocused)
+    {
+        LCD_SetLineStyle(LINE_STYLE_DOTTED);
+        LCD_DrawRect(textLabel->x,textLabel->y,textLabel->width,textLabel->height,1);
+    }
 
-    // Draw frame
-/*    rect.x1 = x;
-    rect.y1 = y;
-    rect.x2 = rect.x1 + bWidth - 1;
-    rect.y2 = rect.y1 + bHeight - 1;
-    guiGraph_drawRect(&rect); */
+    // Draw string
+    if (textLabel->text)
+    {
+        LCD_SetPixelOutputMode(PIXEL_MODE_OR);
+        LCD_SetFont(textLabel->font);
+        rect.x1 = textLabel->x;
+        rect.y1 = textLabel->y;
+        rect.x2 = textLabel->x + textLabel->width - 1;
+        rect.y2 = textLabel->y + textLabel->height - 1;
+        LCD_PrintStringAligned(textLabel->text, &rect, textLabel->alignment, IMAGE_MODE_NORMAL);
+    }
 
-    // Dark
-    penColor = colorFromRgb(100,100,100);
-    guiGraph_drawHorLine(x,y + bHeight - 1,bWidth);
-    guiGraph_drawVertLine(x + bWidth - 1,y,bHeight);
-
-    penColor = colorFromRgb(150,150,150);
-    guiGraph_drawHorLine(x+1,y + bHeight - 2,bWidth-2);
-    guiGraph_drawVertLine(x + bWidth - 2,y+1,bHeight-2);
-
-    // Light
-    penColor = colorFromRgb(230,230,230);
-    guiGraph_drawHorLine(x,y,bWidth-1);
-    guiGraph_drawVertLine(x,y,bHeight-1);
-
-    penColor = colorFromRgb(195,195,195);
-    guiGraph_drawHorLine(x + 1,y + 1,bWidth-3);
-    guiGraph_drawVertLine(x + 1,y + 1,bHeight-3);
-
-
-
-
+    // Reset flags
+    // TODO
 }
+
+
+
+
+
+
+
