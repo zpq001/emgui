@@ -43,6 +43,7 @@ void registerLcdUpdateCallback(cbLcdUpdatePtr fptr);
 
 // Functions for top-level
 void guiInitialize(void);
+void guiUpdateTime(uint8_t hours, uint8_t minutes, uint8_t seconds);
 void guiDrawAll(void);
 
 void guiButtonClicked(uint32_t buttonCode);

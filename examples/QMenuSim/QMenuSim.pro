@@ -29,7 +29,8 @@ SOURCES += main.cpp\
     ../../source/guiWidgets/guiTextLabel.c \
     ../../source/guiWidgets/guiForm.c \
     ../../source/guiCore/guiCore.c \
-    gui_top/guiMainForm.c
+    gui_top/guiMainForm.c \
+    gui_top/guiSubForm1.c
 	
 
 HEADERS  += mainwindow.h \
@@ -44,7 +45,8 @@ HEADERS  += mainwindow.h \
     ../../source/guiCore/guiEvents.h \
     ../../source/guiWidgets/guiForm.h \
     ../../source/guiCore/guiCore.h \
-    gui_top/guiMainForm.h
+    gui_top/guiMainForm.h \
+    gui_top/guiSubForm1.h
 	
 
 

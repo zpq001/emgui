@@ -33,12 +33,13 @@ private slots:
     void on_wheelEvent(QWheelEvent * event);
 
     void on_touchMove(void);
-
+    void on_secondsTimer(void);
 
 private:
     Ui::MainWindow *ui;
     void updateStatusBar(void);
     bool eventFilter(QObject *obj, QEvent *event);
+
 };
 
 #endif // MAINWINDOW_H

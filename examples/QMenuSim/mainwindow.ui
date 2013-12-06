@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>427</width>
-    <height>453</height>
+    <width>452</width>
+    <height>459</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -116,6 +116,9 @@
       <property name="title">
        <string>GroupBox</string>
       </property>
+      <property name="checkable">
+       <bool>false</bool>
+      </property>
       <widget class="QPushButton" name="updateButton">
        <property name="geometry">
         <rect>
@@ -133,6 +136,9 @@
        </property>
        <property name="text">
         <string>Update</string>
+       </property>
+       <property name="checkable">
+        <bool>false</bool>
        </property>
       </widget>
       <widget class="QCheckBox" name="updateCheckBox">
@@ -266,6 +272,19 @@
         <string>OK</string>
        </property>
       </widget>
+      <widget class="QCheckBox" name="checkBox_logEnable">
+       <property name="geometry">
+        <rect>
+         <x>380</x>
+         <y>20</y>
+         <width>41</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>log</string>
+       </property>
+      </widget>
      </widget>
     </item>
     <item>
@@ -306,7 +325,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>427</width>
+     <width>452</width>
      <height>20</height>
     </rect>
    </property>

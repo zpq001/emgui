@@ -12,7 +12,7 @@
 #include "guiTextLabel.h"
 
 #include "guiMainForm.h"
-//#include "guiSetupForm.h"
+#include "guiSubForm1.h"
 
 // Callback functions
 cbLogPtr addLogCallback;
@@ -23,10 +23,14 @@ uint8_t lcd0_buffer[DISPLAY_BUFFER_SIZE];
 uint8_t lcd1_buffer[DISPLAY_BUFFER_SIZE];
 
 
+uint8_t timeHours;
+uint8_t timeMinutes;
+uint8_t timeSeconds;
+
+
 //guiEventArgButtons_t argButtons;
 
 
-//guiTextLabel_t label1;
 
 
 //-----------------------------------//
@@ -46,7 +50,6 @@ void guiLogEvent(char *string)
 {
     addLogCallback(LOG_FROM_BOTTOM, string);
 }
-
 
 
 
@@ -87,10 +90,24 @@ static void guiDrawIsComplete(void)
 //-----------------------------------//
 // Commands to GUI
 
+
+void guiUpdateTime(uint8_t hours, uint8_t minutes, uint8_t seconds)
+{
+    timeHours = hours;
+    timeMinutes = minutes;
+    timeSeconds = seconds;
+}
+
+
 void guiInitialize(void)
 {
+    timeHours = 0;
+    timeMinutes = 0;
+    timeSeconds = 0;
+
+    guiSubForm1_Initialize();
     guiMainForm_Initialize();
-    //guiSetupForm_Initialize();
+
     guiCore_Init(&guiMainForm);
 }
 

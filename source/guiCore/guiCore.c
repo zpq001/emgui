@@ -27,28 +27,54 @@ const guiEvent_t guiEvent_SHOW = {GUI_EVENT_SHOW, 0};
 
 
 
-guiForm_t *currentForm;
-
-//guiForm_t *pNextForm;
-
-//uint8_t globalRedrawFlags;
-
-//SoftTimer8b_t blinkTimer;
+guiGenericWidget_t *rootWidget;
 
 
+
+
+//=======================================================//
+
+
+//-------------------------------------------------------//
+// Makes specified rectangle invalid - it must be redrawn
+//
+//-------------------------------------------------------//
+void guiCore_InvalidateRect(void *rect)
+{
+    /*
+        Approach 1:
+            Add this rectangle to the list of invalidated rectangles of thew form.
+            Redrawing will be split into two stages:
+                a.  Traverse whole widget tree and find for each container if it intercepts with any of the rectangles.
+                    If there is some interseption, mark the container to fully redraw it and it's content if rectangle is
+                    not an exact widget.
+                    For each widget in the container also check interseption with the rectangles and mark those
+                    who has interception.
+                b.  Add marked widgets and containers to redraw list. Sort list by Z-index and redraw every widget.
+        Approach 2:
+            Check if the rectangle lies on the parent widget completely. If so, mark parent to be redrawn and exit.
+            If rectangle spands over the parent's borders, check the same for parent's parent and so on, until
+            root widget is reached - i.e. propagate up the tree.
+
+        If using Z-order, possibly put all form widgets into single array?
+
+    */
+}
+
+
+
+//=======================================================//
 
 
 //-------------------------------------------------------//
 //  Top function for GUI core initializing
 //  All components must be already initialized
 //-------------------------------------------------------//
-void guiCore_Init(guiForm_t *initialForm)
+void guiCore_Init(guiGenericWidget_t *rootObject)
 {
-    //globalRedrawFlags = 0;
-    //pNextForm = 0;
 
-    currentForm = initialForm;
-    //pCurrentForm->processEvent(guiEvent_SELECT);
+    rootWidget = rootObject;
+    //prootWidget->processEvent(guiEvent_SELECT);
 }
 
 
@@ -56,19 +82,23 @@ void guiCore_Init(guiForm_t *initialForm)
 void guiCore_RedrawAll(void)
 {
     guiGenericWidget_t *widget;
+    guiGenericWidget_t *nextWidget;
     uint8_t index;
-    uint8_t doProcessWidget = 1;
-    // TODO - send message to top-level form and all it's childs to update
 
-    widget = (guiGenericWidget_t *)currentForm;
+    // Update root widget. Root widget can further call
+    // update for any other widget.
+    rootWidget->processEvent(rootWidget, guiEvent_UPDATE);
+
+    // Start widget tree traverse from root widget
+    widget = rootWidget;
 
     while(1)
     {
         // Process widget
-        if (doProcessWidget)
+        if (widget->redrawRequired)
         {
+            // The redrawRequired flag is reset by widget after processing DRAW event
             widget->processEvent(widget, guiEvent_DRAW);
-            doProcessWidget = 0;
         }
         // Check if widget has children
         if (widget->isContainer)
@@ -77,21 +107,29 @@ void guiCore_RedrawAll(void)
             if ( ((guiGenericContainer_t *)widget)->widgets.traverseIndex <
                  ((guiGenericContainer_t *)widget)->widgets.count )
             {
-                // switch to next one
+                // switch to next one if possible
                 index = ((guiGenericContainer_t *)widget)->widgets.traverseIndex++;
-                // check if widget actually exists
-                if (((guiGenericContainer_t *)widget)->widgets.elements[index])
+                nextWidget = ((guiGenericContainer_t *)widget)->widgets.elements[index];
+                // check if widget actually exists and is visible
+                if (nextWidget == 0)
+                    continue;
+                if (nextWidget->isVisible == 0)
+                    continue;
+                // Check if widget must be redrawn forcibly
+                if (widget->redrawForced)
                 {
-                    // TODO - Check if widget is visible and enabled
-                    widget = ((guiGenericContainer_t *)widget)->widgets.elements[index];
-                    doProcessWidget = 1;
+                    nextWidget->redrawForced = 1;
+                    nextWidget->redrawRequired = 1;
                 }
+                if ((nextWidget->redrawRequired) || (nextWidget->isContainer))
+                    widget = nextWidget;
             }
             else
             {
                 // All container child items are processed. Reset counter of processed items and move up.
                 ((guiGenericContainer_t *)widget)->widgets.traverseIndex = 0;
-                if (widget == (guiGenericWidget_t *)currentForm)
+                widget->redrawForced = 0;
+                if (widget->parent == 0)    // root widget has no parent
                     break;
                 else
                     widget = widget->parent;
@@ -100,11 +138,14 @@ void guiCore_RedrawAll(void)
         else
         {
             // Widget has no children. Move up.
+            widget->redrawForced = 0;
             widget = widget->parent;
         }
-
     }
 }
+
+
+
 
 /*
 //-------------------------------------------------------//
@@ -114,14 +155,14 @@ void guiCore_RedrawAll(void)
 void guiCore_ProcessEvent(guiEvent_t event)
 {
 
-    pCurrentForm->processEvent(event);
+    prootWidget->processEvent(event);
 
     // Check if there is a request to switch to other form
     if (pNextForm != 0)
     {
-        pCurrentForm->processEvent(guiEvent_DESELECT);
-        pCurrentForm = pNextForm;
-        pCurrentForm->processEvent(guiEvent_SELECT);
+        prootWidget->processEvent(guiEvent_DESELECT);
+        prootWidget = pNextForm;
+        prootWidget->processEvent(guiEvent_SELECT);
         pNextForm = 0;
     }
 
@@ -141,7 +182,7 @@ void guiCore_RequestSwitchForm(guiForm_t* pFormToSwitch)
 
 void guiCore_RequestFullRedraw(void)
 {
-    pCurrentForm->redrawFlags |= WF_REDRAW;
+    prootWidget->redrawFlags |= WF_REDRAW;
 }
 
 
