@@ -49,6 +49,10 @@ typedef struct guiGenericWidget_t {
     // Bit state flags:
     uint8_t isFocused : 1;
     uint8_t isVisible : 1;
+    uint8_t redrawRequired : 1;     // If this flag is set, widget will be sent DRAW event.
+                                    // Widget should set this flag itself.
+    uint8_t redrawForced : 1;       // This flag is set by GUI core when widget must be redrawn
+                                    // redrawRequired is set along with redrawForced.
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -70,6 +74,8 @@ typedef struct guiGenericContainer_t {
     // Bit state flags:
     uint8_t isFocused : 1;
     uint8_t isVisible : 1;
+    uint8_t redrawRequired : 1;
+    uint8_t redrawForced : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -95,6 +101,8 @@ typedef struct guiForm_t {
     // Bit state flags:
     uint8_t isFocused : 1;
     uint8_t isVisible : 1;
+    uint8_t redrawRequired : 1;
+    uint8_t redrawForced : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -123,6 +131,8 @@ typedef struct guiTextLabel_t {
     // Bit state flags:
     uint8_t isFocused : 1;
     uint8_t isVisible : 1;
+    uint8_t redrawRequired : 1;
+    uint8_t redrawForced : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;

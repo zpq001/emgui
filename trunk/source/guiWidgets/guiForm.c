@@ -30,6 +30,8 @@ void guiForm_Initialize(guiForm_t *form)
     form->acceptFocusByTab = 0;
     form->isFocused = 0;
     form->isVisible = 0;
+    form->redrawForced = 0;
+    form->redrawRequired = 0;
     form->isContainer = 1;
     form->tag = 0;
     form->tabIndex = 0;

@@ -5,7 +5,9 @@
 #include "guiWidgets.h"
 
 
-
+// Redraw flags:
+#define FORM_REDRAW_FOCUS       (1<<0)
+#define FORM_REDRAW_BACKGROUND  (1<<1)
 
 
 

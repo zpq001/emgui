@@ -5,6 +5,7 @@
 #include <QTimer.h>
 #include <QWheelEvent>
 #include <QLabel>
+#include <QTime>
 
 #include "pixeldisplay.h"
 
@@ -31,8 +32,10 @@ QSignalMapper *btnReleaseSignalMapper;
 MainWindow* pt2Myself;        // Global variable which points to this.
                               // Used for C callbacks.
 QTimer updateTimer;
+QTimer secondsTimer;
 QLabel *StatusLabel_LCD0;
 QLabel *StatusLabel_LCD1;
+QTime t;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -99,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->updateButton,SIGNAL(clicked()),this,  SLOT(on_LCD_update()));
     connect(&updateTimer,SIGNAL(timeout()),this,SLOT(on_LCD_update()));
+    connect(&secondsTimer,SIGNAL(timeout()),this,SLOT(on_secondsTimer()));
 
     connect(ui->PixelDisplay1, SIGNAL(touchMove()), this, SLOT(on_touchMove()) );
     connect(ui->PixelDisplay2, SIGNAL(touchMove()), this, SLOT(on_touchMove()) );
@@ -116,6 +120,9 @@ MainWindow::MainWindow(QWidget *parent) :
     registerLogCallback((cbLogPtr)&MainWindow::addLogWrapper);
     registerLcdUpdateCallback((cbLcdUpdatePtr)&MainWindow::updateDisplayWrapper);
     guiInitialize();
+
+    // Start seconds timer
+    secondsTimer.start(1000);
 
     // Start update timer
     if (ui->updateCheckBox->checkState())
@@ -135,27 +142,30 @@ MainWindow::~MainWindow()
 
 void MainWindow::addLogMessage(int type, char *string)
 {
-    QString msg;
-    switch(type)
+    if (ui->checkBox_logEnable->checkState())
     {
-        case LOG_FROM_TOP:
-            ui->textEdit->setTextColor( QColor( "blue" ) );
-            msg = QString::fromUtf8("\u21D3");
-            //msg = "v";
-            break;
-        case LOG_FROM_BOTTOM:
-            ui->textEdit->setTextColor( QColor( "red" ) );
-            msg = QString::fromUtf8("\u21D1");
-            //msg = "^";
-            break;
-        default:
-            ui->textEdit->setTextColor( QColor( "black" ) );
-            msg = "?";
-            break;
+        QString msg;
+        switch(type)
+        {
+            case LOG_FROM_TOP:
+                ui->textEdit->setTextColor( QColor( "blue" ) );
+                msg = QString::fromUtf8("\u21D3");
+                //msg = "v";
+                break;
+            case LOG_FROM_BOTTOM:
+                ui->textEdit->setTextColor( QColor( "red" ) );
+                msg = QString::fromUtf8("\u21D1");
+                //msg = "^";
+                break;
+            default:
+                ui->textEdit->setTextColor( QColor( "black" ) );
+                msg = "?";
+                break;
+        }
+        msg += " ";
+        msg += string;
+        ui->textEdit->append(msg);
     }
-    msg += " ";
-    msg += string;
-    ui->textEdit->append(msg);
 }
 
 
@@ -334,3 +344,17 @@ void MainWindow::on_wheelEvent(QWheelEvent * event)
     if (ui->checkBox_updMode->checkState())
         on_LCD_update();
 }
+
+
+void MainWindow::on_secondsTimer(void)
+{
+    t.start();
+    guiUpdateTime(t.hour(),t.minute(),t.second());
+    if (ui->checkBox_updMode->checkState())
+        on_LCD_update();
+}
+
+
+
+
+

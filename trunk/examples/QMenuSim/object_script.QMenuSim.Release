@@ -11,6 +11,7 @@ INPUT(
 ./release\guiForm.o
 ./release\guiCore.o
 ./release\guiMainForm.o
+./release\guiSubForm1.o
 ./release\moc_mainwindow.o
 ./release\moc_pixeldisplay.o
 );

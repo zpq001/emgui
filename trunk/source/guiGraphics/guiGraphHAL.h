@@ -66,6 +66,7 @@ extern uint8_t LCD_lineStyle;
 void LCD_SetPixelOutputMode(uint8_t newMode);
 void LCD_SetLineStyle(uint8_t newStyle);
 
+void LCD_FillWholeBuffer(uint8_t pixelValue);
 void LCD_PutPixel (uint8_t x_pos, uint8_t y_pos, uint8_t pixelValue);
 void LCD_DrawHorLine(uint8_t x_pos, uint8_t y_pos, uint8_t length, uint8_t pixelValue);
 void LCD_DrawVertLine(uint8_t x_pos, uint8_t y_pos, uint8_t length, uint8_t pixelValue);
