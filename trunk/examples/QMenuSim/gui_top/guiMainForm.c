@@ -10,8 +10,10 @@
 #include <stdint.h>
 
 #include "guiFonts.h"
-#include "guiGraphPrimitives.h"
 #include "guiGraphHAL.h"
+#include "guiGraphPrimitives.h"
+#include "guiGraphWidgets.h"
+
 #include "guiEvents.h"
 #include "guiWidgets.h"
 #include "guiTextLabel.h"
@@ -54,14 +56,18 @@ void guiMainForm_Initialize(void)
     guiMainForm.isVisible = 1;
     guiMainForm.redrawRequired = 1;
     guiMainForm.redrawForced = 1;
+    guiMainForm.x = 0;
+    guiMainForm.y = 0;
+    guiMainForm.width = 255;
+    guiMainForm.height = 128;
 
     guiTextLabel_Initialize(&textLabel1, (guiGenericWidget_t *)&guiMainForm);
     textLabel1.tabIndex = 1;
     textLabel1.acceptFocus = 1;
     textLabel1.acceptFocusByTab = 1;
     textLabel1.x = 128 + 50;
-    textLabel1.y = 114;
-    textLabel1.width = 78;
+    textLabel1.y = 112;
+    textLabel1.width = 70;
     textLabel1.height = 14;
     textLabel1.alignment = ALIGN_CENTER;
     textLabel1.text = textLabel1_data;
@@ -69,6 +75,8 @@ void guiMainForm_Initialize(void)
     // Show subForm1
     guiSubForm1.isVisible = 1;
     guiSubForm1.isFocused = 1;
+    guiSubForm1.redrawRequired = 1;
+    guiSubForm1.redrawForced = 1;
 }
 
 
@@ -83,10 +91,19 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *pWidget, gui
             guiSubForm1.processEvent((guiGenericWidget_t *)&guiSubForm1, guiEvent_UPDATE);  //
             break;
           case GUI_EVENT_DRAW:
-            LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-            LCD_FillWholeBuffer(0);
-            LCD_SetLineStyle(LINE_STYLE_SOLID);
-            LCD_DrawHorLine(0,110,255,1);
+            // Check if full redraw is required
+            if (guiMainForm.redrawForced)
+            {
+                // Widget must be fully redrawn - set all flags
+                guiMainForm.redrawFlags = FORM_REDRAW_FOCUS |
+                                         FORM_REDRAW_BACKGROUND;
+            }
+            guiGraph_DrawForm(&guiMainForm);
+            // Draw static elemens
+            if (guiMainForm.redrawFlags & FORM_REDRAW_BACKGROUND)
+                LCD_DrawHorLine(0,110,255,1);
+            // Reset flags
+            guiMainForm.redrawFlags = 0;
             guiMainForm.redrawRequired = 0;
             break;
     }

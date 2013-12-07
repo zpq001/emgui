@@ -11,8 +11,33 @@
 #include "guiFonts.h"
 #include "guiWidgets.h"
 
+#include "guiForm.h"
 #include "guiTextLabel.h"
 
+
+int16_t wx;
+int16_t wy;
+
+
+//-------------------------------------------------------//
+// Sets point (0,0) of coordinate system
+// Parameters x and y must be absolute values
+// Widget's geometry is relative to (wx,wy)
+//-------------------------------------------------------//
+void guiGraph_SetBaseXY(int16_t x, int16_t y)
+{
+    wx = x;
+    wy = y;
+}
+
+//-------------------------------------------------------//
+// Sets point (0,0) of coordinate system
+//-------------------------------------------------------//
+void guiGraph_OffsetBaseXY(int16_t dx, int16_t dy)
+{
+    wx += dx;
+    wy += dy;
+}
 
 
 /*
@@ -41,10 +66,28 @@
 //-------------------------------------------------------//
 void guiGraph_DrawForm(guiForm_t *form)
 {
+    if (form->redrawFlags & FORM_REDRAW_FOCUS)
+    {
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        if (form->isFocused)
+        {
+            LCD_SetLineStyle(LINE_STYLE_DOTTED);
+            LCD_DrawRect(wx,wy,form->width,form->height,1);
+        }
+        else
+        {
+            // TODO - add hasFrame
+            LCD_SetLineStyle(LINE_STYLE_SOLID);
+            LCD_DrawRect(wx,wy,form->width,form->height,1);
+        }
+    }
 
-
-
-
+    if (form->redrawFlags & FORM_REDRAW_BACKGROUND)
+    {
+        // Erase rectangle
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        LCD_FillRect(wx+1,wy+1,form->width-2,form->height-2,FILL_WITH_WHITE);
+    }
 }
 
 
@@ -64,13 +107,15 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
         if (textLabel->isFocused)
         {
             LCD_SetLineStyle(LINE_STYLE_DOTTED);
-            LCD_DrawRect(textLabel->x,textLabel->y,textLabel->width,textLabel->height,1);
+            LCD_DrawRect(wx,wy,textLabel->width,textLabel->height,1);
         }
         else
         {
-            // TODO - add hasFrame
             LCD_SetLineStyle(LINE_STYLE_SOLID);
-            LCD_DrawRect(textLabel->x,textLabel->y,textLabel->width,textLabel->height,1);
+            if (textLabel->hasFrame)
+                LCD_DrawRect(wx,wy,textLabel->width,textLabel->height,1);
+            else
+                LCD_DrawRect(wx,wy,textLabel->width,textLabel->height,0);
         }
     }
 
@@ -79,17 +124,17 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
     {
         // Erase rectangle
         LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-        LCD_FillRect(textLabel->x+1,textLabel->y+1,textLabel->width-2,textLabel->height-2,FILL_WITH_WHITE);
+        LCD_FillRect(wx+1,wy+1,textLabel->width-2,textLabel->height-2,FILL_WITH_WHITE);
 
         // Draw string
         if (textLabel->text)
         {
             LCD_SetPixelOutputMode(PIXEL_MODE_OR);
             LCD_SetFont(textLabel->font);
-            rect.x1 = textLabel->x+1;
-            rect.y1 = textLabel->y+1;
-            rect.x2 = textLabel->x + textLabel->width - 2;
-            rect.y2 = textLabel->y + textLabel->height - 2;
+            rect.x1 = wx+1;
+            rect.y1 = wy+1;
+            rect.x2 = wx + textLabel->width - 2;
+            rect.y2 = wy + textLabel->height - 2;
             LCD_PrintStringAligned(textLabel->text, &rect, textLabel->alignment, IMAGE_MODE_NORMAL);
         }
     }

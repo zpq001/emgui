@@ -8,10 +8,12 @@
 
 #include <stdint.h>
 //#include "guiFonts.h"
-//#include "guiGraphPrimitives.h"
+#include "guiGraphPrimitives.h"
+#include "guiGraphWidgets.h"
 #include "guiEvents.h"
 #include "guiWidgets.h"
 #include "guiForm.h"
+#include "guiCore.h"
 
 
 
@@ -26,20 +28,58 @@ const guiEvent_t guiEvent_HIDE = {GUI_EVENT_HIDE, 0};
 const guiEvent_t guiEvent_SHOW = {GUI_EVENT_SHOW, 0};
 
 
+guiMsgQueue_t guiMsgQueue;
+
+
 
 guiGenericWidget_t *rootWidget;
-
-
+guiGenericWidget_t *focusedWidget;
 
 
 //=======================================================//
 
 
+uint8_t guiCore_AddMessageToQueue(guiGenericWidget_t *target, guiEvent_t event)
+{
+    if (guiMsgQueue.count < GUI_CORE_QUEUE_SIZE)
+    {
+        guiMsgQueue.queue[guiMsgQueue.tail].event = event;
+        guiMsgQueue.queue[guiMsgQueue.tail].target = target;
+        guiMsgQueue.count++;
+        guiMsgQueue.tail++;
+        if (guiMsgQueue.tail == GUI_CORE_QUEUE_SIZE)
+            guiMsgQueue.tail = 0;
+        return 1;
+     }
+    return 0;
+}
+
+uint8_t guiCore_GetMessageFromQueue(guiGenericWidget_t **target, guiEvent_t *event)
+{
+    if (guiMsgQueue.count > 0)
+    {
+        *target = guiMsgQueue.queue[guiMsgQueue.head].target;
+        *event = guiMsgQueue.queue[guiMsgQueue.head].event;
+        guiMsgQueue.count--;
+        guiMsgQueue.head++;
+        if (guiMsgQueue.head == GUI_CORE_QUEUE_SIZE)
+            guiMsgQueue.head = 0;
+        return 1;
+    }
+    return 0;
+}
+
+
+
+
+
 //-------------------------------------------------------//
 // Makes specified rectangle invalid - it must be redrawn
-//
+// Rectangle coordinates are relative to widget's.
+// When calling this function, widget should set it's
+// redraw flags itself.
 //-------------------------------------------------------//
-void guiCore_InvalidateRect(void *rect)
+void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, uint16_t x2, uint16_t y2)
 {
     /*
         Approach 1:
@@ -59,11 +99,42 @@ void guiCore_InvalidateRect(void *rect)
         If using Z-order, possibly put all form widgets into single array?
 
     */
+
+    while (1)
+    {
+        if (widget->parent == 0)    // root widget has no parent
+            break;
+
+        // Convert rectangle into parent's coordinates
+        x1 += widget->x;
+        x2 += widget->x;
+        y1 += widget->y;
+        y2 += widget->y;
+
+        // Move up the tree
+        widget = widget->parent;
+
+        // Make parent widget redraw
+        widget->redrawRequired = 1;
+        widget->redrawForced = 1;
+
+        // Check if rectangle lies inside parent
+        if ( (x1 >= 0) &&
+             (y1 >= 0) &&
+             (x2 < widget->width) &&
+             (y2 < widget->height) )
+        {
+            break;
+        }
+
+    }
 }
 
 
 
 //=======================================================//
+
+
 
 
 //-------------------------------------------------------//
@@ -75,6 +146,9 @@ void guiCore_Init(guiGenericWidget_t *rootObject)
 
     rootWidget = rootObject;
     //prootWidget->processEvent(guiEvent_SELECT);
+    guiMsgQueue.count = 0;
+    guiMsgQueue.head = 0;
+    guiMsgQueue.tail = 0;
 }
 
 
@@ -91,6 +165,7 @@ void guiCore_RedrawAll(void)
 
     // Start widget tree traverse from root widget
     widget = rootWidget;
+    guiGraph_SetBaseXY(widget->x, widget->y);
 
     while(1)
     {
@@ -122,7 +197,10 @@ void guiCore_RedrawAll(void)
                     nextWidget->redrawRequired = 1;
                 }
                 if ((nextWidget->redrawRequired) || (nextWidget->isContainer))
+                {
                     widget = nextWidget;
+                    guiGraph_OffsetBaseXY(widget->x, widget->y);
+                }
             }
             else
             {
@@ -132,13 +210,17 @@ void guiCore_RedrawAll(void)
                 if (widget->parent == 0)    // root widget has no parent
                     break;
                 else
+                {
+                    guiGraph_OffsetBaseXY(-widget->x, -widget->y);
                     widget = widget->parent;
+                }
             }
         }
         else
         {
             // Widget has no children. Move up.
             widget->redrawForced = 0;
+            guiGraph_OffsetBaseXY(-widget->x, -widget->y);
             widget = widget->parent;
         }
     }
@@ -147,29 +229,59 @@ void guiCore_RedrawAll(void)
 
 
 
-/*
+
 //-------------------------------------------------------//
 //  Top GUI function for processing events
 //
 //-------------------------------------------------------//
 void guiCore_ProcessEvent(guiEvent_t event)
 {
+    guiGenericWidget_t *target;
+    guiEvent_t targetEvent;
+    uint8_t processResult;
 
-    prootWidget->processEvent(event);
+    if (focusedWidget == 0)
+        return;                 // Should not normally happen ?
 
-    // Check if there is a request to switch to other form
-    if (pNextForm != 0)
+    guiCore_AddMessageToQueue(focusedWidget, event);
+
+    while(guiCore_GetMessageFromQueue(&target,&targetEvent))
     {
-        prootWidget->processEvent(guiEvent_DESELECT);
-        prootWidget = pNextForm;
-        prootWidget->processEvent(guiEvent_SELECT);
-        pNextForm = 0;
+        while(1)
+        {
+            processResult = target->processEvent(target, targetEvent);
+            if (processResult == GUI_EVENT_ACCEPTED)
+                break;
+            // Focused widget cannot process event - pass event to parent
+            if (target->parent != 0)
+            {
+                target = target->parent;
+            }
+            else
+            {
+                // No widget can process this event - skip it.
+                break;
+            }
+        }
     }
-
-//        guiCore_RedrawAll();        // CHECKME - force redraw
 }
 
 
+
+void guiCore_RequestFocusChange(guiGenericWidget_t *widget)
+{
+    if (focusedWidget != 0)
+    {
+
+    }
+
+}
+
+
+
+
+
+/*
 //-------------------------------------------------------//
 //  This puts request for switching form.
 //  Should be called inside the form's event handler
