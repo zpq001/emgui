@@ -4,8 +4,26 @@
 #include <stdint.h>
 #include "guiForm.h"
 #include "guiEvents.h"
+#include "guiWidgets.h"
 
 
+#define GUI_CORE_QUEUE_SIZE 10
+
+typedef struct {
+    guiGenericWidget_t *target;
+    guiEvent_t event;
+} guiMsg_t;
+
+typedef struct {
+    uint8_t head;
+    uint8_t tail;
+    uint8_t count;
+    guiMsg_t queue[GUI_CORE_QUEUE_SIZE];
+} guiMsgQueue_t;
+
+
+#define GUI_EVENT_PASS_TO_PARENT    0x00
+#define GUI_EVENT_ACCEPTED          0x01
 
 /*
 #define ITEMS_IN_RANGE_ARE_VISIBLE          0x01
@@ -22,11 +40,16 @@ void guiCore_SetVisibleByTag(guiWidgetCollection_t *pCollection, uint8_t minTag,
 
 //extern SoftTimer8b_t blinkTimer;
 
-void guiCore_Init(guiForm_t *initialForm);
-void guiCore_RedrawAll(void);
+uint8_t guiCore_AddMessageToQueue(guiGenericWidget_t *target, guiEvent_t event);
+uint8_t guiCore_GetMessageFromQueue(guiGenericWidget_t **target, guiEvent_t *event);
 
-/*
+void guiCore_Init(guiGenericWidget_t *initialForm);
+void guiCore_RedrawAll(void);
+void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, uint16_t x2, uint16_t y2);
+
+
 void guiCore_ProcessEvent(guiEvent_t event);
+/*
 void guiCore_RequestSwitchForm(guiForm_t* pFormToSwitch);
 void guiCore_RequestFullRedraw(void);
 

@@ -11,11 +11,12 @@
 
 #include "guiFonts.h"
 #include "guiGraphPrimitives.h"
+#include "guiGraphWidgets.h"
 #include "guiEvents.h"
 #include "guiWidgets.h"
 #include "guiTextLabel.h"
 #include "guiForm.h"
-
+#include "guiCore.h"
 
 // Other forms - in order to switch between them
 #include "guiMainForm.h"
@@ -58,11 +59,11 @@ void guiSubForm1_Initialize(void)
     guiSubForm1.widgets.elements = guiSubForm1Elements;
     guiSubForm1.widgets.elements[0] = &textLabel1;
     guiSubForm1.widgets.elements[1] = &textLabel2;
+    guiSubForm1.x = 10;
+    guiSubForm1.y = 10;
+    guiSubForm1.width = 200;
+    guiSubForm1.height = 90;
 
-
-
-    //guiSubForm1.handlers.count = 2;
-    //guiSubForm1.handlers.elements[0] = {GUI_EVENT_SELECT, }
 
     guiTextLabel_Initialize(&textLabel1, (guiGenericWidget_t *)&guiSubForm1);
     textLabel1.tabIndex = 1;
@@ -70,10 +71,11 @@ void guiSubForm1_Initialize(void)
     textLabel1.acceptFocusByTab = 1;
     textLabel1.x = 5;
     textLabel1.y = 10;
-    textLabel1.width = 150;
+    textLabel1.width = 130;
     textLabel1.height = 20;
     textLabel1.alignment = ALIGN_LEFT;
     textLabel1.text = textLabel1_data;
+    textLabel1.hasFrame = 1;
 
     guiTextLabel_Initialize(&textLabel2, (guiGenericWidget_t *)&guiSubForm1);
     textLabel2.tabIndex = 2;
@@ -81,10 +83,11 @@ void guiSubForm1_Initialize(void)
     textLabel2.acceptFocusByTab = 1;
     textLabel2.x = 5;
     textLabel2.y = 40;
-    textLabel2.width = 150;
+    textLabel2.width = 130;
     textLabel2.height = 20;
     textLabel2.alignment = ALIGN_LEFT;
     textLabel2.text = textLabel2_data;
+    textLabel2.hasFrame = 1;
 }
 
 
@@ -98,9 +101,16 @@ static uint8_t guiSubForm1_ProcessEvents(struct guiGenericWidget_t *pWidget, gui
             textLabel2_updateCallback();
             break;
         case GUI_EVENT_DRAW:
-            LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-            LCD_SetLineStyle(LINE_STYLE_SOLID);
-            LCD_DrawRect(0,0,250,100,1);
+            // Check if full redraw is required
+            if (guiSubForm1.redrawForced)
+            {
+                // Widget must be fully redrawn - set all flags
+                guiSubForm1.redrawFlags = FORM_REDRAW_FOCUS |
+                                         FORM_REDRAW_BACKGROUND;
+            }
+            guiGraph_DrawForm(&guiSubForm1);
+            // Reset flags
+            guiSubForm1.redrawFlags = 0;
             guiSubForm1.redrawRequired = 0;
           break;
     }
@@ -147,16 +157,20 @@ static uint8_t guiSubForm1_ProcessEvents(struct guiGenericWidget_t *pWidget, gui
 static void textLabel1_updateCallback(void)
 {
     guiLogEvent("Request update for MainForm.textLabel1");
-/*
+
     // Move label across form
     static int8_t increment = 1;
-    if (TextLabel1.x_pos >= 70) increment = -1;
-    else if (TextLabel1.x_pos <= 10) increment = 1;
-    TextLabel1.x_pos += increment;
-    guiCore_RequestFullRedraw();
-*/
+    if (textLabel1.x >= 20) increment = -1;
+    else if (textLabel1.x <= -5) increment = 1;
+    // Make parent redraw
+    guiCore_InvalidateRect((guiGenericWidget_t *)&textLabel1,textLabel1.x,textLabel1.y,
+                           textLabel1.x + textLabel1.width - 1,
+                           textLabel1.y + textLabel1.height - 1);
+    // Move
+    textLabel1.x += increment;
+
     sprintf(textLabel1.text,"%s%d","Label x = ",textLabel1.x);
-    guiTextLabel_SetRedrawFlags(&textLabel1, TEXT_LABEL_REDRAW_TEXT);
+    //guiTextLabel_SetRedrawFlags(&textLabel1, TEXT_LABEL_REDRAW_TEXT);
 }
 
 static void textLabel2_updateCallback(void)

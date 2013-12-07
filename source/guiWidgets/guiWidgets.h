@@ -56,6 +56,10 @@ typedef struct guiGenericWidget_t {
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
+    int16_t x;
+    int16_t y;
+    uint16_t width;
+    uint16_t height;
     // Event processing function
     uint8_t (*processEvent)(struct guiGenericWidget_t *pWidget, guiEvent_t event);
     // Handler table
@@ -79,6 +83,10 @@ typedef struct guiGenericContainer_t {
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
+    int16_t x;
+    int16_t y;
+    uint16_t width;
+    uint16_t height;
     // Event processing function
     uint8_t (*processEvent)(struct guiGenericWidget_t *pWidget, guiEvent_t event);
     // Handler table
@@ -106,6 +114,10 @@ typedef struct guiForm_t {
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
+    int16_t x;
+    int16_t y;
+    uint16_t width;
+    uint16_t height;
     // Event processing function
     uint8_t (*processEvent)(struct guiGenericWidget_t *pWidget, guiEvent_t event);
     // Handler table
@@ -114,6 +126,7 @@ typedef struct guiForm_t {
 
     guiWidgetCollection_t widgets;
     uint8_t redrawFlags;
+
 
 } guiForm_t;
 
@@ -136,6 +149,10 @@ typedef struct guiTextLabel_t {
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
+    int16_t x;
+    int16_t y;
+    uint16_t width;
+    uint16_t height;
     // Event processing function
     uint8_t (*processEvent)(struct guiGenericWidget_t *pWidget, guiEvent_t event);
     // Handler table
@@ -143,13 +160,10 @@ typedef struct guiTextLabel_t {
     //-----------------------------------------//
 
     uint8_t redrawFlags;
-    int16_t x;
-    int16_t y;
-    uint16_t width;
-    uint16_t height;
     uint8_t alignment;
     const tFont *font;
     char *text;
+    uint8_t hasFrame : 1;
 
 } guiTextLabel_t;
 
