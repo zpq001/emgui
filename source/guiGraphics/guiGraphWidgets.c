@@ -76,9 +76,11 @@ void guiGraph_DrawForm(guiForm_t *form)
         }
         else
         {
-            // TODO - add hasFrame
             LCD_SetLineStyle(LINE_STYLE_SOLID);
-            LCD_DrawRect(wx,wy,form->width,form->height,1);
+            if (form->hasFrame)
+                LCD_DrawRect(wx,wy,form->width,form->height,1);
+            else
+                LCD_DrawRect(wx,wy,form->width,form->height,0);
         }
     }
 

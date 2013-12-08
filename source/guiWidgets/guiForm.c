@@ -42,6 +42,7 @@ void guiForm_Initialize(guiForm_t *form)
     form->widgets.focusedIndex = 0;
     form->widgets.traverseIndex = 0;
     form->redrawFlags = 0;
+    form->hasFrame = 0;
 }
 
 

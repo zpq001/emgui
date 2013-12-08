@@ -126,7 +126,7 @@ typedef struct guiForm_t {
 
     guiWidgetCollection_t widgets;
     uint8_t redrawFlags;
-
+    uint8_t hasFrame : 1;
 
 } guiForm_t;
 

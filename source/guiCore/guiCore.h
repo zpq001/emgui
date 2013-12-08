@@ -22,8 +22,8 @@ typedef struct {
 } guiMsgQueue_t;
 
 
-#define GUI_EVENT_PASS_TO_PARENT    0x00
-#define GUI_EVENT_ACCEPTED          0x01
+#define GUI_EVENT_DECLINE       0x00
+#define GUI_EVENT_ACCEPTED      0x01
 
 /*
 #define ITEMS_IN_RANGE_ARE_VISIBLE          0x01
@@ -49,6 +49,10 @@ void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, 
 
 
 void guiCore_ProcessEvent(guiEvent_t event);
+
+void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget);
+void guiCore_AcceptFocus(guiGenericWidget_t *widget);
+
 /*
 void guiCore_RequestSwitchForm(guiForm_t* pFormToSwitch);
 void guiCore_RequestFullRedraw(void);

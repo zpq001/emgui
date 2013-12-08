@@ -63,6 +63,7 @@ void guiSubForm1_Initialize(void)
     guiSubForm1.y = 10;
     guiSubForm1.width = 200;
     guiSubForm1.height = 90;
+    guiSubForm1.hasFrame = 1;
 
 
     guiTextLabel_Initialize(&textLabel1, (guiGenericWidget_t *)&guiSubForm1);
@@ -96,7 +97,7 @@ static uint8_t guiSubForm1_ProcessEvents(struct guiGenericWidget_t *pWidget, gui
     // Process GUI messages - select, draw, etc
     switch(event.type)
     {
-          case GUI_EVENT_UPDATE:
+        case GUI_EVENT_UPDATE:
             textLabel1_updateCallback();
             textLabel2_updateCallback();
             break;
@@ -112,7 +113,30 @@ static uint8_t guiSubForm1_ProcessEvents(struct guiGenericWidget_t *pWidget, gui
             // Reset flags
             guiSubForm1.redrawFlags = 0;
             guiSubForm1.redrawRequired = 0;
-          break;
+            break;
+        case GUI_EVENT_BUTTONS_ENCODER:
+            if ( ((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_LEFT )
+            {
+                guiCore_RequestFocusChange((guiGenericWidget_t *)&textLabel1);
+
+            }
+            else if ( ((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_RIGHT )
+            {
+                guiCore_RequestFocusChange((guiGenericWidget_t *)&textLabel2);
+            }
+            break;
+        case GUI_EVENT_FOCUS:
+            guiSubForm1.isFocused = 1;
+            guiSubForm1.redrawFlags |= FORM_REDRAW_FOCUS;
+            guiSubForm1.redrawRequired = 1;
+            guiCore_AcceptFocus((guiGenericWidget_t *)&guiSubForm1);
+            break;
+        case GUI_EVENT_UNFOCUS:
+            guiSubForm1.isFocused = 0;
+            guiSubForm1.redrawFlags |= FORM_REDRAW_FOCUS;
+            guiSubForm1.redrawRequired = 1;
+            break;
+
     }
 
 /*        case GUI_EVENT_DRAW:
@@ -148,8 +172,8 @@ static uint8_t guiSubForm1_ProcessEvents(struct guiGenericWidget_t *pWidget, gui
                 // Pass event to the widgets
     }
     guiCore_CallEventHandler((guiGenericWidget_t *)&guiSubForm1,event.type); */
-    return 0;
 
+    return GUI_EVENT_ACCEPTED;
 }
 
 

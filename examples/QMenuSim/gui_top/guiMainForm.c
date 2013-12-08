@@ -14,6 +14,7 @@
 #include "guiGraphPrimitives.h"
 #include "guiGraphWidgets.h"
 
+#include "guiCore.h"
 #include "guiEvents.h"
 #include "guiWidgets.h"
 #include "guiTextLabel.h"
@@ -106,8 +107,15 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *pWidget, gui
             guiMainForm.redrawFlags = 0;
             guiMainForm.redrawRequired = 0;
             break;
+        case GUI_EVENT_FOCUS:
+            guiCore_RequestFocusChange((guiGenericWidget_t *)&guiSubForm1);
+
+            break;
+        case GUI_EVENT_UNFOCUS:
+
+            break;
     }
-    return 0;
+    return GUI_EVENT_ACCEPTED;
 }
 
 

@@ -27,6 +27,9 @@ const guiEvent_t guiEvent_UPDATE = {GUI_EVENT_UPDATE, 0};
 const guiEvent_t guiEvent_HIDE = {GUI_EVENT_HIDE, 0};
 const guiEvent_t guiEvent_SHOW = {GUI_EVENT_SHOW, 0};
 
+const guiEvent_t guiEvent_UNFOCUS = {GUI_EVENT_UNFOCUS, 0};
+const guiEvent_t guiEvent_FOCUS = {GUI_EVENT_FOCUS, 0};
+
 
 guiMsgQueue_t guiMsgQueue;
 
@@ -144,11 +147,19 @@ void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, 
 void guiCore_Init(guiGenericWidget_t *rootObject)
 {
 
-    rootWidget = rootObject;
+
+
     //prootWidget->processEvent(guiEvent_SELECT);
     guiMsgQueue.count = 0;
     guiMsgQueue.head = 0;
     guiMsgQueue.tail = 0;
+
+    rootWidget = rootObject;
+    focusedWidget = rootObject;
+    // Redraw flags ?
+
+    guiCore_ProcessEvent(guiEvent_FOCUS);
+
 }
 
 
@@ -268,13 +279,26 @@ void guiCore_ProcessEvent(guiEvent_t event)
 
 
 
-void guiCore_RequestFocusChange(guiGenericWidget_t *widget)
+void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
 {
+    if (newFocusedWidget == focusedWidget)
+        return;
+
+    // First tell currently focused widget to loose focus
     if (focusedWidget != 0)
     {
-
+        guiCore_AddMessageToQueue(focusedWidget, guiEvent_UNFOCUS);
     }
+    // Tell new widget to get focus
+    if (newFocusedWidget != 0)
+    {
+        guiCore_AddMessageToQueue(newFocusedWidget, guiEvent_FOCUS);
+    }
+}
 
+void guiCore_AcceptFocus(guiGenericWidget_t *widget)
+{
+    focusedWidget = widget;
 }
 
 

@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include "guiEvents.h"
+#include "guiCore.h"
 #include "guiWidgets.h"
 #include "guiTextLabel.h"
 #include "guiFonts.h"
@@ -20,6 +21,8 @@
 static uint8_t guiTextLabel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 {
     guiTextLabel_t *textLabel = (guiTextLabel_t *)widget;
+    uint8_t processResult = GUI_EVENT_DECLINE;
+
     switch (event.type)
     {
         case GUI_EVENT_DRAW:
@@ -40,9 +43,23 @@ static uint8_t guiTextLabel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t 
             // Reset flags
             textLabel->redrawFlags = 0;
             textLabel->redrawRequired = 0;
+            processResult = GUI_EVENT_ACCEPTED;
+            break;
+        case GUI_EVENT_FOCUS:
+            textLabel->isFocused = 1;
+            textLabel->redrawFlags |= TEXT_LABEL_REDRAW_FOCUS;
+            textLabel->redrawRequired = 1;
+            guiCore_AcceptFocus((guiGenericWidget_t *)textLabel);
+            processResult = GUI_EVENT_ACCEPTED;
+            break;
+        case GUI_EVENT_UNFOCUS:
+            textLabel->isFocused = 0;
+            textLabel->redrawFlags |= TEXT_LABEL_REDRAW_FOCUS;
+            textLabel->redrawRequired = 1;
+            processResult = GUI_EVENT_ACCEPTED;
             break;
     }
-    return 0;
+    return processResult;
 }
 
 

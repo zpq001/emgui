@@ -7,6 +7,7 @@
 #include "guiGraphWidgets.h"
 
 #include "guiCore.h"
+#include "guiEvents.h"
 #include "guiWidgets.h"
 #include "guiForm.h"
 #include "guiTextLabel.h"
@@ -28,7 +29,7 @@ uint8_t timeMinutes;
 uint8_t timeSeconds;
 
 
-//guiEventArgButtons_t argButtons;
+guiEventArgButtons_t argButtons;
 
 
 
@@ -108,7 +109,7 @@ void guiInitialize(void)
     guiSubForm1_Initialize();
     guiMainForm_Initialize();
 
-    guiCore_Init(&guiMainForm);
+    guiCore_Init((guiGenericWidget_t *)&guiMainForm);
 }
 
 
@@ -183,16 +184,16 @@ void guiDrawAll(void)
 
 void guiButtonClicked(uint32_t buttonCode)
 {
- //  guiEvent_t bEvent;
+   guiEvent_t bEvent;
     addLogCallback(LOG_FROM_TOP, "Generated button event");
- /*
+
     bEvent.type = GUI_EVENT_BUTTONS_ENCODER;
     bEvent.args = &argButtons;
     argButtons.buttonCode = buttonCode;
     argButtons.encoderDelta = 0;
 
     guiCore_ProcessEvent(bEvent);
-	*/
+
 }
 
 void guiEncoderRotated(int32_t delta)
