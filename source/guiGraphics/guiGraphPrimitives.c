@@ -56,27 +56,67 @@ void LCD_DrawRect(uint8_t x_pos, uint8_t y_pos, uint8_t width, uint8_t height, u
 
 
 //-------------------------------------------------------//
-// Rerurns pointer to a font item with specified code.
+// Rerurns width and offset of a font item
 // Font array MUST be sorted by code.
 // If no item with such code is found, 0 is returned.
 // Using binary search, http://kvodo.ru/dvoichnyiy-poisk.html
 //-------------------------------------------------------//
-const tFontItem* LCD_GetFontItem(const tFont *font, uint8_t code)
+uint8_t LCD_GetFontItem(const tFont *font, uint8_t code, uint8_t *width, uint16_t *offset)
 {
-    tFontItem* itemPtr = 0;
+    uint8_t itemCode;
     uint8_t start_index = 0;
-    uint8_t end_index = font->charCount - 1;
+    uint8_t end_index;
     uint8_t i;
-    while (start_index < end_index)
+
+    if (font->codeTable == 0)
     {
-        i = start_index + (end_index - start_index) / 2;
-        itemPtr = (tFontItem*)&font->chars[i];
-        if (code < itemPtr->code)
-            end_index = i;
-        else if (code > itemPtr->code)
-            start_index = i+1;
+        // Font char set is a contiguous array
+        start_index = font->firstCharCode;
+        end_index = start_index + (font->charCount - 1);
+        if ((code < start_index) || (code > end_index))
+            return 0;
         else
-            return itemPtr;
+        {
+            i = code-start_index;
+            if (offset != 0)
+            {
+                if (font->offsetTable == 0)
+                    *offset = (uint16_t)i * font->bytesPerChar;
+                else
+                    *offset = font->offsetTable[i];
+            }
+            if (font->widthTable == 0)
+                *width = font->width;
+            else
+                *width = font->widthTable[i];
+            return 1;
+        }
+    }
+    else
+    {
+        end_index = font->charCount;
+        // Font char set is defined by charTable
+        while (start_index < end_index)
+        {
+            i = start_index + (end_index - start_index) / 2;
+            itemCode = font->codeTable[i];
+            if (code < itemCode)
+                end_index = i;
+            else if (code > itemCode)
+                start_index = i+1;
+            else
+            {
+                // Found
+                if (offset != 0)
+                    // Font must have valid offsetTable when codeTable is used
+                    *offset = font->offsetTable[i];
+                if (font->widthTable == 0)
+                    *width = font->width;
+                else
+                    *width = font->widthTable[i];
+                return 1;
+            }
+        }
     }
     return 0;
 }
@@ -87,16 +127,15 @@ const tFontItem* LCD_GetFontItem(const tFont *font, uint8_t code)
 //-------------------------------------------------------//
 uint8_t LCD_GetStringWidth(const tFont *font, char *string)
 {
-    const tFontItem *fontItem;
     uint8_t length = 0;
     uint8_t index = 0;
+    uint8_t charWidth;
     char c;
 
     while((c = string[index++]))
     {
-        fontItem = LCD_GetFontItem(LCD_currentFont, c);
-        if (fontItem != 0)
-            length += fontItem->width + font->spacing;
+        if (LCD_GetFontItem(LCD_currentFont, c, &charWidth, 0))
+            length += charWidth + font->spacing;
     }
 
     length -= font->spacing;
@@ -113,16 +152,17 @@ uint8_t LCD_GetStringWidth(const tFont *font, char *string)
 void LCD_PrintString(char *str, uint8_t x, uint8_t y, uint8_t mode)
 {
     uint8_t index = 0;
-    const tFontItem *fontItem;
+    uint8_t charWidth;
+    uint16_t charOffset;
     char c;
 
     while((c = str[index++]))
     {
-        fontItem = LCD_GetFontItem(LCD_currentFont, c);
-        if (fontItem != 0)
+
+        if (LCD_GetFontItem(LCD_currentFont, c, &charWidth, &charOffset))
         {
-            LCD_DrawImage(fontItem->data, x, y, fontItem->width, LCD_currentFont->height, mode);
-            x += fontItem->width + LCD_currentFont->spacing;
+            LCD_DrawImage(&LCD_currentFont->data[charOffset], x, y, charWidth, LCD_currentFont->height, mode);
+            x += charWidth + LCD_currentFont->spacing;
         }
     }
 }
@@ -139,7 +179,8 @@ void LCD_PrintString(char *str, uint8_t x, uint8_t y, uint8_t mode)
 void LCD_PrintStringAligned(char *str, rect_t *rect, uint8_t alignment, uint8_t mode)
 {
     uint8_t index = 0;
-    const tFontItem *fontItem;
+    uint8_t charWidth;
+    uint16_t charOffset;
     char c;
     int16_t x_aligned, y_aligned;
     int16_t strWidthPx;
@@ -176,11 +217,10 @@ void LCD_PrintStringAligned(char *str, rect_t *rect, uint8_t alignment, uint8_t 
     // Now print string
     while((c = str[index++]))
     {
-        fontItem = LCD_GetFontItem(LCD_currentFont, c);
-        if (fontItem != 0)
+        if (LCD_GetFontItem(LCD_currentFont, c, &charWidth, &charOffset))
         {
-            LCD_DrawImage(fontItem->data, x_aligned, y_aligned, fontItem->width, LCD_currentFont->height, mode);
-            x_aligned += fontItem->width + LCD_currentFont->spacing;
+            LCD_DrawImage(&LCD_currentFont->data[charOffset], x_aligned, y_aligned, charWidth, LCD_currentFont->height, mode);
+            x_aligned += charWidth + LCD_currentFont->spacing;
         }
     }
 }
