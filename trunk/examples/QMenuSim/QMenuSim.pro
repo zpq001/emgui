@@ -24,13 +24,17 @@ SOURCES += main.cpp\
     gui_top/guiTop.c \
     ../../source/guiGraphics/guiGraphHAL.c \
     ../../source/guiGraphics/guiGraphPrimitives.c \
-    ../../source/guiGraphics/font_h12.c \
     ../../source/guiGraphics/guiGraphWidgets.c \
     ../../source/guiWidgets/guiTextLabel.c \
     ../../source/guiWidgets/guiForm.c \
     ../../source/guiCore/guiCore.c \
     gui_top/guiMainForm.c \
-    gui_top/guiSubForm1.c
+    gui_top/guiSubForm1.c \
+    ../../source/guiGraphics/font_6x8_mono.c \
+    ../../source/guiGraphics/font_h12.c \
+    ../../source/guiGraphics/font_h32.c \
+    ../../source/guiGraphics/font_h10.c \
+    ../../source/guiGraphics/font_h10_bold.c
 	
 
 HEADERS  += mainwindow.h \

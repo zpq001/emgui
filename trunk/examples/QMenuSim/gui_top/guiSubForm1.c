@@ -76,6 +76,12 @@ void guiSubForm1_Initialize(void)
     textLabel1.height = 20;
     textLabel1.alignment = ALIGN_LEFT;
     textLabel1.text = textLabel1_data;
+    //textLabel1.font = &font_h12;
+    //textLabel1.font = &font_6x8_mono;
+    //textLabel1.text = "12 3.450";
+    textLabel1.text = "Form1";
+    //textLabel1.font = &font_h32;
+    textLabel1.font = &font_h10;
     textLabel1.hasFrame = 1;
 
     guiTextLabel_Initialize(&textLabel2, (guiGenericWidget_t *)&guiSubForm1);
@@ -88,6 +94,9 @@ void guiSubForm1_Initialize(void)
     textLabel2.height = 20;
     textLabel2.alignment = ALIGN_LEFT;
     textLabel2.text = textLabel2_data;
+    //textLabel2.font = &font_6x8_mono;
+    //textLabel2.font = &font_h12;
+    textLabel2.font = &font_h10_bold;
     textLabel2.hasFrame = 1;
 }
 
@@ -193,7 +202,7 @@ static void textLabel1_updateCallback(void)
     // Move
     textLabel1.x += increment;
 
-    sprintf(textLabel1.text,"%s%d","Label x = ",textLabel1.x);
+    //sprintf(textLabel1.text,"%s%d","Label x = ",textLabel1.x);
     //guiTextLabel_SetRedrawFlags(&textLabel1, TEXT_LABEL_REDRAW_TEXT);
 }
 

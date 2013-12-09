@@ -85,7 +85,7 @@ void guiTextLabel_Initialize(guiTextLabel_t *textLabel, guiGenericWidget_t *pare
     textLabel->width = 40;
     textLabel->height = 15;
     textLabel->alignment = ALIGN_TOP_LEFT;
-    textLabel->font = &font_h12;
+    textLabel->font = &font_6x8_mono;
     textLabel->text = 0;
     textLabel->hasFrame = 0;
 }
