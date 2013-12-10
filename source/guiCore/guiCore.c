@@ -19,9 +19,6 @@
 
 
 const guiEvent_t guiEvent_DRAW = {GUI_EVENT_DRAW, 0};
-const guiEvent_t guiEvent_DRAW_ALL = {GUI_EVENT_DRAW_ALL, 0};
-const guiEvent_t guiEvent_SELECT = {GUI_EVENT_SELECT, 0};
-const guiEvent_t guiEvent_DESELECT = {GUI_EVENT_DESELECT, 0};
 const guiEvent_t guiEvent_UPDATE = {GUI_EVENT_UPDATE, 0};
 
 const guiEvent_t guiEvent_HIDE = {GUI_EVENT_HIDE, 0};
@@ -146,10 +143,6 @@ void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, 
 //-------------------------------------------------------//
 void guiCore_Init(guiGenericWidget_t *rootObject)
 {
-
-
-
-    //prootWidget->processEvent(guiEvent_SELECT);
     guiMsgQueue.count = 0;
     guiMsgQueue.head = 0;
     guiMsgQueue.tail = 0;
@@ -158,8 +151,8 @@ void guiCore_Init(guiGenericWidget_t *rootObject)
     focusedWidget = rootObject;
     // Redraw flags ?
 
-    guiCore_ProcessEvent(guiEvent_FOCUS);
-
+    guiCore_PostEventToFocused(guiEvent_FOCUS);
+    guiCore_ProcessMessageQueue();
 }
 
 
@@ -172,7 +165,8 @@ void guiCore_RedrawAll(void)
 
     // Update root widget. Root widget can further call
     // update for any other widget.
-    rootWidget->processEvent(rootWidget, guiEvent_UPDATE);
+    guiCore_AddMessageToQueue(rootWidget, guiEvent_UPDATE);
+    guiCore_ProcessMessageQueue();
 
     // Start widget tree traverse from root widget
     widget = rootWidget;
@@ -239,22 +233,26 @@ void guiCore_RedrawAll(void)
 
 
 
+// CHECKME
+void guiCore_PostEventToFocused(guiEvent_t event)
+{
+    if (focusedWidget == 0)
+        return;                 // Should not normally happen ?
+    guiCore_AddMessageToQueue(focusedWidget, event);
+}
+
+
 
 
 //-------------------------------------------------------//
-//  Top GUI function for processing events
+//  GUI core function for processing message queue
 //
 //-------------------------------------------------------//
-void guiCore_ProcessEvent(guiEvent_t event)
+void guiCore_ProcessMessageQueue(void)
 {
     guiGenericWidget_t *target;
     guiEvent_t targetEvent;
     uint8_t processResult;
-
-    if (focusedWidget == 0)
-        return;                 // Should not normally happen ?
-
-    guiCore_AddMessageToQueue(focusedWidget, event);
 
     while(guiCore_GetMessageFromQueue(&target,&targetEvent))
     {
@@ -305,71 +303,43 @@ void guiCore_AcceptFocus(guiGenericWidget_t *widget)
 
 
 
-/*
+
+
+
+
 //-------------------------------------------------------//
-//  This puts request for switching form.
-//  Should be called inside the form's event handler
+//  Pass focus to next widget in collection
+//
 //-------------------------------------------------------//
-void guiCore_RequestSwitchForm(guiForm_t* pFormToSwitch)
+void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tabDir)
 {
-    pNextForm = pFormToSwitch;
-}
-
-
-void guiCore_RequestFullRedraw(void)
-{
-    prootWidget->redrawFlags |= WF_REDRAW;
-}
-
-
-
-
-
-
-
-
-
-void guiCore_SelectWidget(guiWidgetCollection_t *pCollection, guiGenericWidget_t *pWidgetToSelect)
-{
-
-    if ((pCollection->pSelected != 0) && (pCollection->pSelected != pWidgetToSelect))
-        ((guiGenericWidget_t *)pCollection->pSelected)->processEvent(pCollection->pSelected, guiEvent_DESELECT);
-    if (pWidgetToSelect != 0)
-    {
-        if (pWidgetToSelect->properties & WP_IS_VISIBLE)
-        {
-            pWidgetToSelect->processEvent(pWidgetToSelect, guiEvent_SELECT);
-            if (pWidgetToSelect->state & WF_IS_SELECTED)
-                pCollection->pSelected = pWidgetToSelect;
-        }
-    }
-}
-
-
-void guiCore_SelectNextWidget(guiWidgetCollection_t *pCollection, int8_t tabDir)
-{
-    uint8_t currentTabIndex, i;
-    uint16_t minTabIndex = 0x200;   // maximum x2
-    uint8_t minWidgetIndex = pCollection->count;
+    uint8_t currentTabIndex;
+    uint8_t i;
+    int16_t minTabIndex = 0x200;   // maximum x2
     int16_t tmp;
-    guiGenericWidget_t *pWidget;
+    uint8_t minWidgetIndex = container->widgets.count;
+    guiGenericWidget_t *widget;
 
-    // Get current widget's tabIndex
-    if (pCollection->pSelected != 0)
-        currentTabIndex = ((guiGenericWidget_t *)pCollection->pSelected)->tabIndex;
-    else
-        currentTabIndex = 0;
+    currentTabIndex = 0;
+
+    // Check if current widget belongs to specified container's collection
+    if (focusedWidget)
+    {
+        if (focusedWidget->parent == (guiGenericWidget_t *)container)
+            currentTabIndex = focusedWidget->tabIndex;
+    }
+
 
     // Find widget with next tabIndex
-    for (i = 0; i < pCollection->count; i++)
+    for (i = 0; i < container->widgets.count; i++)
     {
-        pWidget = (guiGenericWidget_t *)pCollection->elements[i];
-        if ((pWidget->tabIndex != 0) && (pWidget->properties & WP_IS_VISIBLE))
+        widget = (guiGenericWidget_t *)container->widgets.elements[i];
+        if ((widget->acceptFocusByTab) && (widget->isVisible))
         {
             if (tabDir >= 0)
-                tmp = (pWidget->tabIndex <= currentTabIndex) ? pWidget->tabIndex + 256 : pWidget->tabIndex;
+                tmp = (widget->tabIndex <= currentTabIndex) ? widget->tabIndex + 256 : widget->tabIndex;
             else
-                tmp = (pWidget->tabIndex >= currentTabIndex) ? 256 - pWidget->tabIndex : pWidget->tabIndex;
+                tmp = (widget->tabIndex >= currentTabIndex) ? -(widget->tabIndex - 256) : -widget->tabIndex;
 
             if (tmp < minTabIndex)
             {
@@ -379,60 +349,60 @@ void guiCore_SelectNextWidget(guiWidgetCollection_t *pCollection, int8_t tabDir)
         }
     }
 
-    if (minWidgetIndex < pCollection->count)
+    if (minWidgetIndex < container->widgets.count)
     {
-        pWidget = (guiGenericWidget_t *)pCollection->elements[minWidgetIndex];
-        guiCore_SelectWidget(pCollection, pWidget);
+        widget = container->widgets.elements[minWidgetIndex];
+        container->widgets.focusedIndex = minWidgetIndex;
+        guiCore_RequestFocusChange(widget);
     }
 }
 
 
 
 
-void guiCore_SetVisibleByTag(guiWidgetCollection_t *pCollection, uint8_t minTag, uint8_t maxTag, uint8_t mode)
+
+uint8_t guiCore_CallEventHandler(guiGenericWidget_t *widget, guiEvent_t event)
+{
+    uint8_t i;
+    uint8_t handlerResult = GUI_EVENT_DECLINE;
+    for(i=0; i<widget->handlers.count; i++)
+    {
+        if (widget->handlers.elements[i].eventType == event.type)
+        {
+            handlerResult = widget->handlers.elements[i].handler(widget, event);
+        }
+    }
+    return handlerResult;
+}
+
+
+
+void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, uint8_t maxTag, uint8_t mode)
 {
     uint8_t i;
     uint8_t tagInRange;
-    guiGenericWidget_t *pWidget;
-    for(i=0; i<pCollection->count; i++)
+    guiGenericWidget_t *widget;
+    for(i=0; i<collection->count; i++)
     {
-        pWidget = (guiGenericWidget_t *)pCollection->elements[i];
-        if (pWidget == 0)
+        widget = (guiGenericWidget_t *)collection->elements[i];
+        if (widget == 0)
             continue;
-        tagInRange = ((pWidget->tag >= minTag) && (pWidget->tag <= maxTag)) ? mode & 0x3 : mode & 0xC;
+        tagInRange = ((widget->tag >= minTag) && (widget->tag <= maxTag)) ? mode & 0x3 : mode & 0xC;
         if ((tagInRange == ITEMS_IN_RANGE_ARE_VISIBLE) || (tagInRange == ITEMS_OUT_OF_RANGE_ARE_VISIBLE))
-            pWidget->processEvent(pWidget, guiEvent_SHOW);
-        else if ((tagInRange == ITEMS_IN_RANGE_ARE_INVISIBLE) || (tagInRange == ITEMS_OUT_OF_RANGE_ARE_INVISIBLE))
-            pWidget->processEvent(pWidget, guiEvent_HIDE);
-    }
-}
-
-
-uint8_t guiCore_CallEventHandler(guiGenericWidget_t *pWidget, uint8_t eventType)
-{
-    uint8_t i;
-    uint8_t handlerIsFound = 0;
-    for(i=0; i<pWidget->handlers.count; i++)
-    {
-        if (pWidget->handlers.elements[i].eventType == eventType)
         {
-            pWidget->handlers.elements[i].handler(pWidget);
-            handlerIsFound = 1;
+            if (widget->isVisible == 0)
+                //widget->processEvent(widget, guiEvent_SHOW);
+                guiCore_AddMessageToQueue(widget, guiEvent_SHOW);
+        }
+        else if ((tagInRange == ITEMS_IN_RANGE_ARE_INVISIBLE) || (tagInRange == ITEMS_OUT_OF_RANGE_ARE_INVISIBLE))
+        {
+            if (widget->isVisible)
+                //widget->processEvent(widget, guiEvent_HIDE);
+                guiCore_AddMessageToQueue(widget, guiEvent_HIDE);
         }
     }
-
-    // TODO - return value:
-    //  - not found
-    //  - found, return what handler returned
-
-    // TODO - check processing of the events by containers - first pass to selected child ?
-    // if child cannot process, process by container
-    // what to do with OK/ESC (fall deeper or pop up focus ?)
-
-    return handlerIsFound;
 }
 
-*/
 
 
 

@@ -4,17 +4,19 @@
 #include <stdint.h>
 
 
-// Event types
+// Event types for widgets
 #define GUI_EVENT_DRAW         0x01
-#define GUI_EVENT_DRAW_ALL     0x08
-#define GUI_EVENT_SELECT       0x02
-#define GUI_EVENT_DESELECT     0x03
 #define GUI_EVENT_UPDATE       0x04
 #define GUI_EVENT_BUTTONS_ENCODER       0x05
 #define GUI_EVENT_HIDE          0x06
 #define GUI_EVENT_SHOW          0x07
 #define GUI_EVENT_UNFOCUS       0x08
 #define GUI_EVENT_FOCUS         0x09
+
+// Event types for callbacks (common widget event handlers)
+#define GUI_ON_FOCUS_CHANGED    0x80
+#define GUI_ON_DRAW             0x81
+#define GUI_ON_VISIBLE_CHANGED  0x82
 
 
 // Temporary

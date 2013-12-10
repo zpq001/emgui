@@ -13,6 +13,7 @@
 
 #include "guiForm.h"
 #include "guiTextLabel.h"
+#include "guiCheckBox.h"
 
 
 int16_t wx;
@@ -144,7 +145,29 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
 
 
 
+void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
+{
+    if (checkBox->redrawFlags & CHECKBOX_REDRAW_FOCUS)
+    {
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        if (checkBox->isFocused)
+        {
+            LCD_SetLineStyle(LINE_STYLE_DOTTED);
+            LCD_DrawRect(wx,wy,checkBox->width,checkBox->height,1);
+        }
+        else
+        {
+            LCD_SetLineStyle(LINE_STYLE_SOLID);
+            if (checkBox->hasFrame)
+                LCD_DrawRect(wx,wy,checkBox->width,checkBox->height,1);
+            else
+                LCD_DrawRect(wx,wy,checkBox->width,checkBox->height,0);
+        }
+    }
 
+
+
+}
 
 
 

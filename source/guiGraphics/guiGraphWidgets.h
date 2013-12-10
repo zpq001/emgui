@@ -14,7 +14,7 @@ void guiGraph_OffsetBaseXY(int16_t dx, int16_t dy);
 
 void guiGraph_DrawForm(guiForm_t *form);
 void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel);
-
+void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox);
 
 
 

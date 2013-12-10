@@ -16,6 +16,7 @@ INPUT(
 ./debug\font_h32.o
 ./debug\font_h10.o
 ./debug\font_h10_bold.o
+./debug\guiCheckBox.o
 ./debug\moc_mainwindow.o
 ./debug\moc_pixeldisplay.o
 );
