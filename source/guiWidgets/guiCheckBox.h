@@ -11,7 +11,16 @@
 #define CHECKBOX_REDRAW_BACKGROUND	  (1<<2)
 
 
+// Size
+#define CHECKBOX_GRAPH_XSIZE  10
+#define CHECKBOX_GRAPH_YSIZE  10
+#define CHECKBOX_TEXT_MARGIN  4
 
+#define CHECKBOX_IMG_CHECKED  checkbox_10x10_checked
+#define CHECKBOX_IMG_EMPTY  checkbox_10x10_empty
+
+// Widget-specific events
+#define CHECKBOX_CHECKED_CHANGED    (0xC0 + 0x00)
 
 
 void guiCheckBox_Initialize(guiCheckBox_t *checkBox, guiGenericWidget_t *parent);

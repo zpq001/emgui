@@ -18,6 +18,9 @@
 #define GUI_ON_DRAW             0x81
 #define GUI_ON_VISIBLE_CHANGED  0x82
 
+// Event types, specific for widgets start with 0xC0 and can overlap for different widgets
+// those types are declared in widget's header files.
+
 
 // Temporary
 #define GUI_BTN_ESC     (1<<8)

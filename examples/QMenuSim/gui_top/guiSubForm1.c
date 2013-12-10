@@ -108,12 +108,13 @@ void guiSubForm1_Initialize(void)
     checkBox1.acceptFocusByTab = 1;
     checkBox1.x = 5;
     checkBox1.y = 50;
-    checkBox1.width = 60;
+    checkBox1.width = 100;
     checkBox1.height = 18;
     checkBox1.textAlignment = ALIGN_LEFT;
     checkBox1.text = "CheckBox1";
     checkBox1.font = &font_h10;
     checkBox1.hasFrame = 1;
+    checkBox1.isChecked = 1;
 
 
 }
