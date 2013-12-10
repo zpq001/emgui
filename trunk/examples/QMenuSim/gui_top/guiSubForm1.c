@@ -15,6 +15,7 @@
 #include "guiEvents.h"
 #include "guiWidgets.h"
 #include "guiTextLabel.h"
+#include "guiCheckBox.h"
 #include "guiForm.h"
 #include "guiCore.h"
 
@@ -29,7 +30,7 @@ extern void guiLogEvent(char *string);
 static void textLabel1_updateCallback(void);
 static void textLabel2_updateCallback(void);
 
-static uint8_t guiSubForm1_ProcessEvents(guiGenericWidget_t *pWidget, guiEvent_t event);
+static uint8_t guiSubForm1_ProcessEvents(guiGenericWidget_t *widget, guiEvent_t event);
 //static void guiSubForm1_drawStatic(void);
 
 
@@ -42,10 +43,12 @@ static guiTextLabel_t textLabel2;
 static char textLabel2_data[20];
 //static guiWidgetHandler_t textLabel2Handlers[2];
 
+static guiCheckBox_t checkBox1;
 
 //----------- GUI Form  -----------//
+#define SUB_FORM1_ELEMENTS_COUNT 3
 guiForm_t   guiSubForm1;
-static void *guiSubForm1Elements[2];
+static void *guiSubForm1Elements[SUB_FORM1_ELEMENTS_COUNT];
 
 
 void guiSubForm1_Initialize(void)
@@ -55,13 +58,14 @@ void guiSubForm1_Initialize(void)
     guiForm_Initialize(&guiSubForm1);
     guiSubForm1.parent = (guiGenericWidget_t *)&guiMainForm;
     guiSubForm1.processEvent = guiSubForm1_ProcessEvents;
-    guiSubForm1.widgets.count = 2;
+    guiSubForm1.widgets.count = SUB_FORM1_ELEMENTS_COUNT;
     guiSubForm1.widgets.elements = guiSubForm1Elements;
     guiSubForm1.widgets.elements[0] = &textLabel1;
     guiSubForm1.widgets.elements[1] = &textLabel2;
-    guiSubForm1.x = 10;
-    guiSubForm1.y = 10;
-    guiSubForm1.width = 200;
+    guiSubForm1.widgets.elements[2] = &checkBox1;
+    guiSubForm1.x = 5;
+    guiSubForm1.y = 5;
+    guiSubForm1.width = 245;
     guiSubForm1.height = 90;
     guiSubForm1.hasFrame = 1;
 
@@ -73,7 +77,7 @@ void guiSubForm1_Initialize(void)
     textLabel1.x = 5;
     textLabel1.y = 10;
     textLabel1.width = 130;
-    textLabel1.height = 20;
+    textLabel1.height = 18;
     textLabel1.alignment = ALIGN_LEFT;
     textLabel1.text = textLabel1_data;
     //textLabel1.font = &font_h12;
@@ -89,20 +93,36 @@ void guiSubForm1_Initialize(void)
     textLabel2.acceptFocus = 1;
     textLabel2.acceptFocusByTab = 1;
     textLabel2.x = 5;
-    textLabel2.y = 40;
+    textLabel2.y = 30;
     textLabel2.width = 130;
-    textLabel2.height = 20;
+    textLabel2.height = 18;
     textLabel2.alignment = ALIGN_LEFT;
     textLabel2.text = textLabel2_data;
     //textLabel2.font = &font_6x8_mono;
     //textLabel2.font = &font_h12;
-    textLabel2.font = &font_h10_bold;
+    textLabel2.font = &font_h10;
     textLabel2.hasFrame = 1;
+
+    guiCheckBox_Initialize(&checkBox1, (guiGenericWidget_t *)&guiSubForm1);
+    checkBox1.tabIndex = 3;
+    checkBox1.acceptFocusByTab = 1;
+    checkBox1.x = 5;
+    checkBox1.y = 50;
+    checkBox1.width = 60;
+    checkBox1.height = 18;
+    checkBox1.textAlignment = ALIGN_LEFT;
+    checkBox1.text = "CheckBox1";
+    checkBox1.font = &font_h10;
+    checkBox1.hasFrame = 1;
+
+
 }
 
 
-static uint8_t guiSubForm1_ProcessEvents(struct guiGenericWidget_t *pWidget, guiEvent_t event)
+static uint8_t guiSubForm1_ProcessEvents(struct guiGenericWidget_t *widget, guiEvent_t event)
 {
+    uint8_t processResult = GUI_EVENT_ACCEPTED;
+
     // Process GUI messages - select, draw, etc
     switch(event.type)
     {
@@ -126,12 +146,16 @@ static uint8_t guiSubForm1_ProcessEvents(struct guiGenericWidget_t *pWidget, gui
         case GUI_EVENT_BUTTONS_ENCODER:
             if ( ((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_LEFT )
             {
-                guiCore_RequestFocusChange((guiGenericWidget_t *)&textLabel1);
+                guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiSubForm1,-1);
 
             }
             else if ( ((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_RIGHT )
             {
-                guiCore_RequestFocusChange((guiGenericWidget_t *)&textLabel2);
+                guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiSubForm1,1);
+            }
+            else if ( ((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_ESC )
+            {
+                processResult = GUI_EVENT_DECLINE;
             }
             break;
         case GUI_EVENT_FOCUS:
@@ -145,44 +169,33 @@ static uint8_t guiSubForm1_ProcessEvents(struct guiGenericWidget_t *pWidget, gui
             guiSubForm1.redrawFlags |= FORM_REDRAW_FOCUS;
             guiSubForm1.redrawRequired = 1;
             break;
+        case GUI_EVENT_SHOW:
+            // Check if widget is not visible
+            if (guiSubForm1.isVisible == 0)
+            {
+                guiSubForm1.isVisible = 1;
+                // Widget must be fully redrawn - set all flags
+                guiSubForm1.redrawFlags = FORM_REDRAW_FOCUS |
+                                         FORM_REDRAW_BACKGROUND;
+                event.type = GUI_ON_VISIBLE_CHANGED;
+                guiCore_CallEventHandler((guiGenericWidget_t *)&guiSubForm1, event);
+            }
+            break;
+        case GUI_EVENT_HIDE:
+            // Check if widget is visible
+            if (guiSubForm1.isVisible)
+            {
+                guiSubForm1.isVisible = 0;
+                guiCore_InvalidateRect((guiGenericWidget_t *)&guiSubForm1, guiSubForm1.x, guiSubForm1.y,
+                     guiSubForm1.x + guiSubForm1.width - 1, guiSubForm1.y + guiSubForm1.height - 1);
+                event.type = GUI_ON_VISIBLE_CHANGED;
+                guiCore_CallEventHandler((guiGenericWidget_t *)&guiSubForm1, event);
+            }
+            break;
 
     }
 
-/*        case GUI_EVENT_DRAW:
-            guiForm_Draw(&guiSubForm1);     // Draws form and all childs
-            if (guiSubForm1.redrawFlags & WF_REDRAW)
-                guiSubForm1_drawStatic();
-            guiSubForm1.redrawFlags = 0;
-            break;
-        case GUI_EVENT_SELECT:
-            guiCore_SelectWidget(&guiSubForm1.widgets, (guiGenericWidget_t *)&TextLabel1);
-            guiCore_RequestFullRedraw();
-            break;
-        case GUI_EVENT_DESELECT:
-            guiCore_SelectWidget(&guiSubForm1.widgets, 0);
-            break;
-        default:
-            // Process form logic
-            // CHECKME - maybe pass event to selected widget - if appropriate handler is not found,
-            // process here ?
-            // If using containers, there should be a function that allows tabStop for any container, not only for form
-            if (((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_ESC)
-            {
-                guiCore_RequestSwitchForm(&guiSetupForm);
-            }
-            else if (((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_LEFT)
-            {
-                guiCore_SelectNextWidget(&guiSubForm1.widgets, -1);
-            }
-            else if (((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_RIGHT)
-            {
-                guiCore_SelectNextWidget(&guiSubForm1.widgets, 1);
-            }
-                // Pass event to the widgets
-    }
-    guiCore_CallEventHandler((guiGenericWidget_t *)&guiSubForm1,event.type); */
-
-    return GUI_EVENT_ACCEPTED;
+    return processResult;
 }
 
 

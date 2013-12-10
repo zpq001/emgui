@@ -192,8 +192,9 @@ void guiButtonClicked(uint32_t buttonCode)
     argButtons.buttonCode = buttonCode;
     argButtons.encoderDelta = 0;
 
-    guiCore_ProcessEvent(bEvent);
-
+    //guiCore_ProcessEvent(bEvent);
+    guiCore_PostEventToFocused(bEvent);
+    guiCore_ProcessMessageQueue();
 }
 
 void guiEncoderRotated(int32_t delta)

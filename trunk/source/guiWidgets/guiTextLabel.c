@@ -21,14 +21,14 @@
 static uint8_t guiTextLabel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 {
     guiTextLabel_t *textLabel = (guiTextLabel_t *)widget;
-    uint8_t processResult = GUI_EVENT_DECLINE;
+    uint8_t processResult = GUI_EVENT_ACCEPTED;
 
     switch (event.type)
     {
         case GUI_EVENT_DRAW:
-            // Check visibility - already done by core.
-            //if (textLabel->isVisible == 0)
-            //    break;
+            // Check visibility and redraw required flag
+            if ((textLabel->isVisible == 0) || (textLabel->redrawRequired == 0))
+                break;
             // Check if full redraw is required
             if (textLabel->redrawForced)
             {
@@ -37,30 +37,56 @@ static uint8_t guiTextLabel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t 
                                          TEXT_LABEL_REDRAW_TEXT;
             }
             guiGraph_DrawTextLabel(textLabel);
-
-            // TODO - callback
-
+            event.type = GUI_ON_DRAW;
+            guiCore_CallEventHandler(widget, event);
             // Reset flags
             textLabel->redrawFlags = 0;
             textLabel->redrawRequired = 0;
-            processResult = GUI_EVENT_ACCEPTED;
             break;
         case GUI_EVENT_FOCUS:
             textLabel->isFocused = 1;
-            textLabel->redrawFlags |= TEXT_LABEL_REDRAW_FOCUS;
-            textLabel->redrawRequired = 1;
-            guiCore_AcceptFocus((guiGenericWidget_t *)textLabel);
-            processResult = GUI_EVENT_ACCEPTED;
-            break;
+            guiCore_AcceptFocus(widget);
+            goto lbl_focus;
         case GUI_EVENT_UNFOCUS:
             textLabel->isFocused = 0;
+lbl_focus:
             textLabel->redrawFlags |= TEXT_LABEL_REDRAW_FOCUS;
             textLabel->redrawRequired = 1;
-            processResult = GUI_EVENT_ACCEPTED;
+            event.type = GUI_ON_FOCUS_CHANGED;
+            guiCore_CallEventHandler(widget, event);
             break;
+        case GUI_EVENT_SHOW:
+            // Check if widget is not visible
+            if (textLabel->isVisible == 0)
+            {
+                textLabel->isVisible = 1;
+                // Widget must be fully redrawn - set all flags
+                textLabel->redrawFlags = TEXT_LABEL_REDRAW_FOCUS |
+                                         TEXT_LABEL_REDRAW_TEXT;
+                event.type = GUI_ON_VISIBLE_CHANGED;
+                guiCore_CallEventHandler(widget, event);
+            }
+            break;
+        case GUI_EVENT_HIDE:
+            // Check if widget is visible
+            if (textLabel->isVisible)
+            {
+                textLabel->isVisible = 0;
+                guiCore_InvalidateRect(widget,textLabel->x,textLabel->y,
+                      textLabel->x + textLabel->width - 1, textLabel->y + textLabel->height - 1);
+                event.type = GUI_ON_VISIBLE_CHANGED;
+                guiCore_CallEventHandler(widget, event);
+            }
+            break;
+
+        default:
+            // Widget cannot process incoming event. Try to find a handler.
+            processResult = guiCore_CallEventHandler(widget, event);
     }
     return processResult;
 }
+
+
 
 
 void guiTextLabel_Initialize(guiTextLabel_t *textLabel, guiGenericWidget_t *parent)
