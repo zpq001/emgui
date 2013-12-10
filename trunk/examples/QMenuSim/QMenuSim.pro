@@ -35,7 +35,8 @@ SOURCES += main.cpp\
     ../../source/guiGraphics/font_h32.c \
     ../../source/guiGraphics/font_h10.c \
     ../../source/guiGraphics/font_h10_bold.c \
-    ../../source/guiWidgets/guiCheckBox.c
+    ../../source/guiWidgets/guiCheckBox.c \
+    ../../source/guiGraphics/widget_images.c
 	
 
 HEADERS  += mainwindow.h \
@@ -52,7 +53,8 @@ HEADERS  += mainwindow.h \
     ../../source/guiCore/guiCore.h \
     gui_top/guiMainForm.h \
     gui_top/guiSubForm1.h \
-    ../../source/guiWidgets/guiCheckBox.h
+    ../../source/guiWidgets/guiCheckBox.h \
+    ../../source/guiGraphics/guiImages.h
 	
 
 

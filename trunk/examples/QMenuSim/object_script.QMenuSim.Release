@@ -17,6 +17,7 @@ INPUT(
 ./release\font_h10.o
 ./release\font_h10_bold.o
 ./release\guiCheckBox.o
+./release\widget_images.o
 ./release\moc_mainwindow.o
 ./release\moc_pixeldisplay.o
 );

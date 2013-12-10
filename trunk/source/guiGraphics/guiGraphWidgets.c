@@ -9,6 +9,7 @@
 #include "guiGraphHAL.h"
 #include "guiGraphPrimitives.h"
 #include "guiFonts.h"
+#include "guiImages.h"
 #include "guiWidgets.h"
 
 #include "guiForm.h"
@@ -134,9 +135,9 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
         {
             LCD_SetPixelOutputMode(PIXEL_MODE_OR);
             LCD_SetFont(textLabel->font);
-            rect.x1 = wx+1;
-            rect.y1 = wy+1;
-            rect.x2 = wx + textLabel->width - 2;
+            rect.x1 = wx + 1 + TEXT_LABEL_TEXT_MARGIN;
+            rect.y1 = wy + 1;
+            rect.x2 = wx + textLabel->width - 2 - TEXT_LABEL_TEXT_MARGIN;
             rect.y2 = wy + textLabel->height - 2;
             LCD_PrintStringAligned(textLabel->text, &rect, textLabel->alignment, IMAGE_MODE_NORMAL);
         }
@@ -147,6 +148,14 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
 
 void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
 {
+    int8_t y_aligned;
+    rect_t rect;
+    uint8_t *img;
+
+    y_aligned = checkBox->height - CHECKBOX_GRAPH_YSIZE;
+    y_aligned /= 2;
+    y_aligned = wy + y_aligned;
+
     if (checkBox->redrawFlags & CHECKBOX_REDRAW_FOCUS)
     {
         LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
@@ -165,6 +174,37 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
         }
     }
 
+
+    if (checkBox->redrawFlags & CHECKBOX_REDRAW_BACKGROUND)
+    {
+        // Erase rectangle
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        LCD_FillRect(wx+1,wy+1,checkBox->width-2,checkBox->height-2,FILL_WITH_WHITE);
+
+        // Draw string
+        if (checkBox->text)
+        {
+            LCD_SetPixelOutputMode(PIXEL_MODE_OR);
+            LCD_SetFont(checkBox->font);
+            rect.x1 = wx + 2 + CHECKBOX_TEXT_MARGIN + CHECKBOX_GRAPH_XSIZE;
+            rect.y1 = wy + 1;
+            rect.x2 = wx + checkBox->width - 2;
+            rect.y2 = wy + checkBox->height - 2;
+            LCD_PrintStringAligned(checkBox->text, &rect, checkBox->textAlignment, IMAGE_MODE_NORMAL);
+        }
+
+        // Draw rectangle frame
+        //LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        //LCD_DrawRect(wx + 2,y_aligned,CHECKBOX_GRAPH_XSIZE,CHECKBOX_GRAPH_YSIZE,1);
+    }
+
+    LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+    if (checkBox->redrawFlags & CHECKBOX_REDRAW_STATE)
+    {
+        img = (checkBox->isChecked) ? CHECKBOX_IMG_CHECKED :
+                                      CHECKBOX_IMG_EMPTY;
+        LCD_DrawImage(img,wx+2,y_aligned,CHECKBOX_GRAPH_XSIZE, CHECKBOX_GRAPH_YSIZE,IMAGE_MODE_NORMAL);
+    }
 
 
 }

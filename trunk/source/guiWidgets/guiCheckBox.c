@@ -80,7 +80,22 @@ lbl_focus:
                 guiCore_CallEventHandler(widget, event);
             }
             break;
-
+        case GUI_EVENT_BUTTONS_ENCODER:
+            // Check focused, visible, etc
+            if (((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_OK)
+            {
+                checkBox->isChecked = !checkBox->isChecked;
+                checkBox->redrawFlags = CHECKBOX_REDRAW_STATE;
+                checkBox->redrawRequired = 1;
+                event.type = CHECKBOX_CHECKED_CHANGED;
+                guiCore_CallEventHandler(widget, event);
+            }
+            else
+            {
+                // Widget cannot process incoming event. Try to find a handler.
+                processResult = guiCore_CallEventHandler(widget, event);
+            }
+            break;
         default:
             // Widget cannot process incoming event. Try to find a handler.
             processResult = guiCore_CallEventHandler(widget, event);
