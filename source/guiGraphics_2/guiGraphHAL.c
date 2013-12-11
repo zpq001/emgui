@@ -8,7 +8,7 @@ uint32_t guiLcdBuffer[LCD_XSIZE * LCD_YSIZE];
 
 
 
-void guiGraph_putPixel(uint16_t x, uint16_t y, color_t color)
+void LCD_PutPixel(uint16_t x, uint16_t y, color_t color)
 {
 	uint32_t bufferOffset = y;
 	bufferOffset *= LCD_XSIZE;
@@ -19,7 +19,7 @@ void guiGraph_putPixel(uint16_t x, uint16_t y, color_t color)
 	guiLcdBuffer[bufferOffset] = color;
 }
 
-color_t guiGraph_getPixel(uint16_t x, uint16_t y)
+color_t LCD_GetPixel(uint16_t x, uint16_t y)
 {
 	uint32_t bufferOffset = y;
 	bufferOffset *= LCD_XSIZE;

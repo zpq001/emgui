@@ -133,8 +133,8 @@ void guiCheckBox_Initialize(guiCheckBox_t *checkBox, guiGenericWidget_t *parent)
     checkBox->isChecked = 0;
 }
 
-
-void guiCheckBox_SetRedrawFlags(guiCheckBox_t *checkBox, uint8_t flags)
+/*
+void guiButton_SetRedrawFlags(guiButton_t *button, uint8_t flags)
 {
     if (flags)
     {
@@ -142,4 +142,4 @@ void guiCheckBox_SetRedrawFlags(guiCheckBox_t *checkBox, uint8_t flags)
         checkBox->redrawRequired = 1;
     }
 }
-
+*/

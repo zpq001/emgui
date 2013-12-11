@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include "guiEvents.h"
 #include "guiFonts.h"
+#include "guiGraphPrimitives.h"
 
 // Event handler record
 typedef struct {
@@ -203,9 +204,44 @@ typedef struct guiCheckBox_t {
 } guiCheckBox_t;
 
 
+typedef struct guiButton_t {
+    //----- Inherited from generic widget -----//
+    // Pointer to parent widget
+    struct guiGenericWidget_t *parent;
+    // Bit properties:
+    uint8_t acceptFocus : 1;
+    uint8_t acceptFocusByTab : 1;
+    uint8_t isContainer : 1;
+    // Bit state flags:
+    uint8_t isFocused : 1;
+    uint8_t isVisible : 1;
+    uint8_t redrawRequired : 1;
+    uint8_t redrawForced : 1;
+    // Properties
+    uint8_t tag;
+    uint8_t tabIndex;
+    int16_t x;
+    int16_t y;
+    uint16_t width;
+    uint16_t height;
+    // Event processing function
+    uint8_t (*processEvent)(struct guiGenericWidget_t *pWidget, guiEvent_t event);
+    // Handler table
+    guiHandlerTable_t handlers;
+    //-----------------------------------------//
+
+    uint8_t redrawFlags;
+    uint8_t textAlignment;
+    const tFont *font;
+    char *text;
+    uint8_t isPressed : 1;
+    uint8_t isReleased : 1;
+
+} guiButton_t;
 
 
-
+//-----------------------------------------//
+// Common widget fields and properties
 
 
 

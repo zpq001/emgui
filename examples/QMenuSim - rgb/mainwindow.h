@@ -36,6 +36,8 @@ private slots:
     void on_touchPress(void);
     void on_touchRelease(void);
 
+    void on_secondsTimer(void);
+
 private:
     Ui::MainWindow *ui;
 

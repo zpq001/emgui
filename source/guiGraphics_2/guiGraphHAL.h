@@ -5,8 +5,8 @@
 
 
 // Size definitions in points
-#define LCD_XSIZE 320
-#define LCD_YSIZE 240
+#define LCD_XSIZE 300
+#define LCD_YSIZE 200
 
 
 typedef uint32_t color_t;
@@ -22,8 +22,8 @@ typedef uint32_t color_t;
 
 extern color_t guiLcdBuffer[];
 
-void guiGraph_putPixel(uint16_t x, uint16_t y, color_t color);
-color_t guiGraph_getPixel(uint16_t x, uint16_t y);
+void LCD_PutPixel(uint16_t x, uint16_t y, color_t color);
+color_t LCD_GetPixel(uint16_t x, uint16_t y);
 
 
 
