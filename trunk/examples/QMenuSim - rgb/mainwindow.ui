@@ -244,6 +244,19 @@
         <string>OK</string>
        </property>
       </widget>
+      <widget class="QCheckBox" name="checkBox_logEnable">
+       <property name="geometry">
+        <rect>
+         <x>370</x>
+         <y>20</y>
+         <width>70</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>log</string>
+       </property>
+      </widget>
      </widget>
     </item>
     <item>

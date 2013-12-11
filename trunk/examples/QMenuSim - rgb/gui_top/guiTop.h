@@ -1,10 +1,16 @@
 
 #include <stdint.h>
+#include "guiGraphHAL.h"
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+#define DISPLAY_XSIZE   LCD_XSIZE
+#define DISPLAY_YSIZE   LCD_YSIZE
+
 
 /*
 typedef struct {
@@ -32,6 +38,7 @@ void registerLcdUpdateCallback(cbLcdUpdatePtr fptr);
 
 
 // Functions for top-level
+void guiUpdateTime(uint8_t hours, uint8_t minutes, uint8_t seconds);
 void guiInitialize(void);
 void guiDrawAll(void);
 void guiButtonClicked(uint32_t buttonCode);

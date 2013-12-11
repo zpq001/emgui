@@ -4,11 +4,12 @@
 #include <QSignalMapper.h>
 #include <QTimer.h>
 #include <QWheelEvent>
+#include <QLabel>
+#include <QTime>
 
 #include "pixeldisplay.h"
 
 #include "guiTop.h"
-#include "guiGraphHAL.h"
 
 
 
@@ -30,7 +31,8 @@ QSignalMapper *btnReleaseSignalMapper;
 MainWindow* pt2Myself;        // Global variable which points to this.
                               // Used for C callbacks.
 QTimer updateTimer;
-
+QTimer secondsTimer;
+QTime t;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -38,16 +40,11 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->PixelDisplay1->setSize(LCD_XSIZE,LCD_YSIZE);
-    ui->PixelDisplay1->setScale(1.0);
+    ui->PixelDisplay1->setSize(DISPLAY_XSIZE,DISPLAY_YSIZE);
+    ui->PixelDisplay1->setScale(2.0);
     //ui->PixelDisplay1->setDataEncoding(PixelDisplay::MONOCHROME_3310_8bit);
     ui->PixelDisplay1->setDataEncoding(PixelDisplay::RGB_888_32bit);
 
-
-    if (ui->updateCheckBox->checkState())
-    {
-        updateTimer.start(ui->updateSpinBox->value());
-    }
 
     // View
     viewSignalMapper = new QSignalMapper(this);
@@ -94,6 +91,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->updateButton,SIGNAL(clicked()),this,  SLOT(on_LCD_update()));
     connect(&updateTimer,SIGNAL(timeout()),this,SLOT(on_LCD_update()));
+    connect(&secondsTimer,SIGNAL(timeout()),this,SLOT(on_secondsTimer()));
 
     connect(ui->PixelDisplay1, SIGNAL(touchMove()), this, SLOT(on_touchMove()) );
     connect(ui->PixelDisplay1, SIGNAL(touchPress()), this, SLOT(on_touchPress()) );
@@ -110,6 +108,15 @@ MainWindow::MainWindow(QWidget *parent) :
     registerLogCallback((cbLogPtr)&MainWindow::addLogWrapper);
     registerLcdUpdateCallback((cbLcdUpdatePtr)&MainWindow::updateDisplayWrapper);
     guiInitialize();
+
+    // Start seconds timer
+    secondsTimer.start(1000);
+
+    // Start update timer
+    if (ui->updateCheckBox->checkState())
+    {
+        updateTimer.start(ui->updateSpinBox->value());
+    }
 }
 
 MainWindow::~MainWindow()
@@ -124,26 +131,29 @@ MainWindow::~MainWindow()
 void MainWindow::addLogMessage(int type, char *string)
 {
     QString msg;
-    switch(type)
+    if (ui->checkBox_logEnable->checkState())
     {
-        case LOG_FROM_TOP:
-            ui->textEdit->setTextColor( QColor( "blue" ) );
-            msg = QString::fromUtf8("\u21D3");
-            //msg = "v";
-            break;
-        case LOG_FROM_BOTTOM:
-            ui->textEdit->setTextColor( QColor( "red" ) );
-            msg = QString::fromUtf8("\u21D1");
-            //msg = "^";
-            break;
-        default:
-            ui->textEdit->setTextColor( QColor( "black" ) );
-            msg = "?";
-            break;
+        switch(type)
+        {
+            case LOG_FROM_TOP:
+                ui->textEdit->setTextColor( QColor( "blue" ) );
+                msg = QString::fromUtf8("\u21D3");
+                //msg = "v";
+                break;
+            case LOG_FROM_BOTTOM:
+                ui->textEdit->setTextColor( QColor( "red" ) );
+                msg = QString::fromUtf8("\u21D1");
+                //msg = "^";
+                break;
+            default:
+                ui->textEdit->setTextColor( QColor( "black" ) );
+                msg = "?";
+                break;
+        }
+        msg += " ";
+        msg += string;
+        ui->textEdit->append(msg);
     }
-    msg += " ";
-    msg += string;
-    ui->textEdit->append(msg);
 }
 
 
@@ -321,6 +331,16 @@ bool MainWindow::on_keyRelease(QKeyEvent *event)
 void MainWindow::on_wheelEvent(QWheelEvent * event)
 {
     guiEncoderRotated(event->delta()/120 );
+    if (ui->checkBox_updMode->checkState())
+        on_LCD_update();
+}
+
+
+
+void MainWindow::on_secondsTimer(void)
+{
+    t.start();
+    guiUpdateTime(t.hour(),t.minute(),t.second());
     if (ui->checkBox_updMode->checkState())
         on_LCD_update();
 }

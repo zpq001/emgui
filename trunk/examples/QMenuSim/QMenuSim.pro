@@ -15,8 +15,6 @@ INCLUDEPATH += ../common/
 INCLUDEPATH += ../../source/guiWidgets/
 INCLUDEPATH += ../../source/guiCore/
 INCLUDEPATH += ../../source/guiGraphics/
-INCLUDEPATH += ../../source/guiFonts/
-INCLUDEPATH += ../../source/guiForm/
 
 SOURCES += main.cpp\
 		mainwindow.cpp \

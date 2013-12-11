@@ -52,8 +52,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->PixelDisplay2->setScale(2.0);
 
 
-    //StatusLabel_LCD0 = new QLabel(this);
-    //StatusLabel_LCD1 = new QLabel(this);
     StatusLabel_LCD0 = new QLabel(this);
     StatusLabel_LCD1 = new QLabel(this);
     ui->statusBar->addWidget(StatusLabel_LCD0);

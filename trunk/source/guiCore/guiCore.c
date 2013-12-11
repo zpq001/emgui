@@ -334,6 +334,8 @@ void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tab
     for (i = 0; i < container->widgets.count; i++)
     {
         widget = (guiGenericWidget_t *)container->widgets.elements[i];
+        if (widget == 0)
+            continue;
         if ((widget->acceptFocusByTab) && (widget->isVisible))
         {
             if (tabDir >= 0)
