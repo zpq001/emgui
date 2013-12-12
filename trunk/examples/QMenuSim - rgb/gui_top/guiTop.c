@@ -129,19 +129,22 @@ void guiDrawAll(void)
 
 void guiTouchMoved(int x, int y)
 {
-    LCD_PutPixel(x,y,CL_GREEN);
+    //LCD_PutPixel(x,y,CL_RED);
+    guiCore_ProcessTouchEvent(x,y,TOUCH_MOVE);
 }
 
 void guiTouchPressed(int x, int y)
 {
-    LCD_PutPixel(x,y,CL_RED);
-    guiDrawIsComplete();
+    //LCD_PutPixel(x,y,CL_RED);
+    //guiDrawIsComplete();
+    guiCore_ProcessTouchEvent(x,y,TOUCH_PRESS);
 }
 
 void guiTouchReleased(int x, int y)
 {
-    LCD_PutPixel(x,y,CL_YELLOW);
-    guiDrawIsComplete();
+    //LCD_PutPixel(x,y,CL_YELLOW);
+    //guiDrawIsComplete();
+    guiCore_ProcessTouchEvent(x,y,TOUCH_RELEASE);
 }
 
 

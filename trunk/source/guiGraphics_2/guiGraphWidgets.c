@@ -23,10 +23,10 @@ int16_t wx;
 int16_t wy;
 
 const color_t colorPalette1[COLOR_PALETTE_SIZE] = {
-    colorFromRgb(200,200,200),      // COLOR_INDEX_WIDGET_BACKGROUND
-    colorFromRgb(210,210,210),      // COLOR_INDEX_BUTTON_BACKGROUND
-    colorFromRgb(230,230,230),      // COLOR_INDEX_3DFRAME_LIGHT1
-    colorFromRgb(195,195,195),      // COLOR_INDEX_3DFRAME_LIGHT2
+    colorFromRgb(210,210,210),      // COLOR_INDEX_WIDGET_BACKGROUND
+    colorFromRgb(220,220,220),      // COLOR_INDEX_BUTTON_BACKGROUND
+    colorFromRgb(240,240,240),      // COLOR_INDEX_3DFRAME_LIGHT1
+    colorFromRgb(200,200,200),      // COLOR_INDEX_3DFRAME_LIGHT2
     colorFromRgb(100,100,100),      // COLOR_INDEX_3DFRAME_DARK1
     colorFromRgb(150,150,150),      // COLOR_INDEX_3DFRAME_DARK2
     colorFromRgb(0,0,0),            // COLOR_INDEX_FOCUS_FRAME
@@ -230,7 +230,7 @@ void guiGraph_DrawButton(guiButton_t *button)
         }
         else
         {
-            LCD_SetPenColor(colorPalette[COLOR_INDEX_WIDGET_BACKGROUND]);
+            LCD_SetPenColor(colorPalette[COLOR_INDEX_BUTTON_BACKGROUND]);
             LCD_SetLineStyle(LINE_STYLE_SOLID);
         }
 

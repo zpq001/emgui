@@ -218,6 +218,8 @@ void MainWindow::on_touchMove(void)
     if (ui->PixelDisplay1->touchState.isPressed)
     {
         guiTouchMoved(ui->PixelDisplay1->touchState.x, ui->PixelDisplay1->touchState.y);
+        if (ui->checkBox_updMode->checkState())
+            on_LCD_update();
     }
 }
 
@@ -225,12 +227,16 @@ void MainWindow::on_touchPress(void)
 {
     updateStatusBar();
     guiTouchPressed(ui->PixelDisplay1->touchState.x, ui->PixelDisplay1->touchState.y);
+    if (ui->checkBox_updMode->checkState())
+        on_LCD_update();
 }
 
 void MainWindow::on_touchRelease(void)
 {
     updateStatusBar();
     guiTouchReleased(ui->PixelDisplay1->touchState.x, ui->PixelDisplay1->touchState.y);
+    if (ui->checkBox_updMode->checkState())
+        on_LCD_update();
 }
 
 

@@ -28,6 +28,9 @@ const guiEvent_t guiEvent_UNFOCUS = {GUI_EVENT_UNFOCUS, 0};
 const guiEvent_t guiEvent_FOCUS = {GUI_EVENT_FOCUS, 0};
 
 
+    guiEventTouch_t touchArgs;
+
+
 guiMsgQueue_t guiMsgQueue;
 
 
@@ -242,6 +245,119 @@ void guiCore_PostEventToFocused(guiEvent_t event)
 }
 
 
+void guiCore_ConvertToAbsoluteXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y)
+{
+    while(widget->parent != 0)
+    {
+        // Convert XY into parent's coordinates
+        *x += widget->x;
+        *y += widget->y;
+
+        // Move up the tree
+        widget = widget->parent;
+    }
+}
+
+void guiCore_ConvertToRelativeXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y)
+{
+    while(widget->parent != 0)
+    {
+        // Convert XY into parent's coordinates
+        *x -= widget->x;
+        *y -= widget->y;
+
+        // Move up the tree
+        widget = widget->parent;
+    }
+}
+
+/*
+uint8_t guiCore_CheckWidgetXY(guiGenericWidget_t *widget, int16_t x, int16_t y)
+{
+    if (x < 0)
+        return 0;
+    if (x >= widget->width)
+        return 0;
+    if (y < 0)
+        return 0;
+    if (y >= widget->height)
+        return 0;
+
+    return 1;
+}
+*/
+
+void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t state)
+{
+    guiEvent_t event;
+    uint8_t processResult;
+    touchArgs.x = x;
+    touchArgs.y = y;
+    touchArgs.state = state;
+    event.type = GUI_EVENT_TOUCH;
+    event.args = &touchArgs;
+/*
+    // First pass to focused element
+    if (focusedWidget != 0)
+    {
+        // Get relative coordinates
+        guiCore_ConvertToRelativeXY(focusedWidget,&touchArgs.x, &touchArgs.y);
+        processResult = focusedWidget->processEvent(focusedWidget, event);
+        if (processResult == GUI_EVENT_ACCEPTED)
+        {
+            guiCore_ProcessMessageQueue();
+            return;
+        }
+        // Restore coordinates
+        touchArgs.x = x;
+        touchArgs.y = y;
+    }
+
+    // If there is no focused element, or it cannot handle touch event, start from root widget
+*/
+
+    guiCore_AddMessageToQueue(focusedWidget, event);
+    guiCore_ProcessMessageQueue();
+}
+
+
+// Returns widget that has point (x;y) - either one of child widgets or widget itself.
+// If widget is not visible, or not enabled, it is skipped.
+// If no widget is found, 0 is returned
+// X and Y parameters must be relative to container
+guiGenericWidget_t *guiCore_GetWidgetAtXY(guiGenericWidget_t *widget, int16_t x, int16_t y)
+{
+    guiGenericWidget_t *w;
+    uint8_t i;
+    // First check if point lies inside container
+    if ((x < 0) || (x >= widget->width))
+        return 0;
+    if ((y < 0) || (y >= widget->height))
+        return 0;
+
+    if (widget->isContainer)
+    {
+        // Point is inside container or one of it's widgets. Find out which one.
+        for (i=0; i<((guiGenericContainer_t *)widget)->widgets.count; i++)
+        {
+            w = ((guiGenericContainer_t *)widget)->widgets.elements[i];
+            if (w == 0)
+                continue;
+            if ((w->acceptTouch) && (w->isVisible))   // TODO - add isEnabled, etc
+            {
+                if ((x >= w->x) && (x < w->x + w->width) &&
+                    (y >= w->y) && (y < w->y + w->height))
+                {
+                    return w;  // Found
+                }
+            }
+        }
+    }
+    // Not found - return container itself
+    return (guiGenericWidget_t *)widget;
+}
+
+
 
 
 //-------------------------------------------------------//
@@ -283,10 +399,10 @@ void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
         return;
 
     // First tell currently focused widget to loose focus
-    if (focusedWidget != 0)
-    {
-        guiCore_AddMessageToQueue(focusedWidget, guiEvent_UNFOCUS);
-    }
+//    if (focusedWidget != 0)
+//    {
+//        guiCore_AddMessageToQueue(focusedWidget, guiEvent_UNFOCUS);
+//    }
     // Tell new widget to get focus
     if (newFocusedWidget != 0)
     {
@@ -296,6 +412,11 @@ void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
 
 void guiCore_AcceptFocus(guiGenericWidget_t *widget)
 {
+    // First tell currently focused widget to loose focus
+    if (focusedWidget != 0)
+    {
+        guiCore_AddMessageToQueue(focusedWidget, guiEvent_UNFOCUS);
+    }
     focusedWidget = widget;
 }
 

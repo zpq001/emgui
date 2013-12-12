@@ -45,6 +45,7 @@ typedef struct guiGenericWidget_t {
     // Bit properties:
     uint8_t acceptFocus : 1;
     uint8_t acceptFocusByTab : 1;
+    uint8_t acceptTouch : 1;
     uint8_t isContainer : 1;
     // Bit state flags:
     uint8_t isFocused : 1;
@@ -74,6 +75,7 @@ typedef struct guiGenericContainer_t {
     // Bit properties:
     uint8_t acceptFocus : 1;
     uint8_t acceptFocusByTab : 1;
+    uint8_t acceptTouch : 1;
     uint8_t isContainer : 1;
     // Bit state flags:
     uint8_t isFocused : 1;
@@ -105,6 +107,7 @@ typedef struct guiForm_t {
     // Bit properties:
     uint8_t acceptFocus : 1;
     uint8_t acceptFocusByTab : 1;
+    uint8_t acceptTouch : 1;
     uint8_t isContainer : 1;
     // Bit state flags:
     uint8_t isFocused : 1;
@@ -140,6 +143,7 @@ typedef struct guiTextLabel_t {
     // Bit properties:
     uint8_t acceptFocus : 1;
     uint8_t acceptFocusByTab : 1;
+    uint8_t acceptTouch : 1;
     uint8_t isContainer : 1;
     // Bit state flags:
     uint8_t isFocused : 1;
@@ -175,6 +179,7 @@ typedef struct guiCheckBox_t {
     // Bit properties:
     uint8_t acceptFocus : 1;
     uint8_t acceptFocusByTab : 1;
+    uint8_t acceptTouch : 1;
     uint8_t isContainer : 1;
     // Bit state flags:
     uint8_t isFocused : 1;
@@ -211,6 +216,7 @@ typedef struct guiButton_t {
     // Bit properties:
     uint8_t acceptFocus : 1;
     uint8_t acceptFocusByTab : 1;
+    uint8_t acceptTouch : 1;
     uint8_t isContainer : 1;
     // Bit state flags:
     uint8_t isFocused : 1;
@@ -235,7 +241,7 @@ typedef struct guiButton_t {
     const tFont *font;
     char *text;
     uint8_t isPressed : 1;
-    uint8_t isReleased : 1;
+    uint8_t keepTouch : 1;
 
 } guiButton_t;
 

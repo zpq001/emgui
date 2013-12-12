@@ -12,6 +12,7 @@
 #define GUI_EVENT_SHOW          0x07
 #define GUI_EVENT_UNFOCUS       0x08
 #define GUI_EVENT_FOCUS         0x09
+#define GUI_EVENT_TOUCH         0x0A
 
 // Event types for callbacks (common widget event handlers)
 #define GUI_ON_FOCUS_CHANGED    0x80
@@ -29,6 +30,11 @@
 #define GUI_BTN_OK      (1<<11)
 
 
+#define TOUCH_PRESS     (1<<0)
+#define TOUCH_RELEASE   (1<<1)
+#define TOUCH_MOVE      (1<<2)
+
+
 // Event struct, common for all GUI elements
 typedef struct {
     uint8_t type;
@@ -41,6 +47,13 @@ typedef struct {
     uint16_t buttonCode;
     int16_t encoderDelta;
 } guiEventArgButtons_t;
+
+// Event args for touch panel
+typedef struct {
+    int16_t x;
+    int16_t y;
+    uint8_t state;
+} guiEventTouch_t;
 
 
 // Events are found in guiEvents.c

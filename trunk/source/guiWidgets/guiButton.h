@@ -14,6 +14,7 @@
 
 // Widget-specific events
 #define BUTTON_PRESSED_CHANGED    (0xC0 + 0x00)
+#define BUTTON_CLICKED            (0xC0 + 0x01)
 
 
 #define BUTTON_FOCUS_RECT_MARGIN    2
