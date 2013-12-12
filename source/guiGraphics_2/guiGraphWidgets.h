@@ -23,6 +23,8 @@
 
 
 
+const color_t colorPalette1[];
+color_t *colorPalette;
 
 
 extern int16_t wx;

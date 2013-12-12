@@ -47,6 +47,7 @@ void guiCore_Init(guiGenericWidget_t *initialForm);
 void guiCore_RedrawAll(void);
 void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, uint16_t x2, uint16_t y2);
 
+void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t state);
 void guiCore_PostEventToFocused(guiEvent_t event);
 void guiCore_ProcessMessageQueue(void);
 
@@ -55,13 +56,10 @@ void guiCore_AcceptFocus(guiGenericWidget_t *widget);
 
 void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tabDir);
 uint8_t guiCore_CallEventHandler(guiGenericWidget_t *widget, guiEvent_t event);
-/*
-void guiCore_RequestSwitchForm(guiForm_t* pFormToSwitch);
-void guiCore_RequestFullRedraw(void);
 
-void guiCore_SelectWidget(guiWidgetCollection_t *pCollection, guiGenericWidget_t *pWidgetToSelect);
-void guiCore_SelectNextWidget(guiWidgetCollection_t *pCollection, int8_t tabDir);
+void guiCore_ConvertToAbsoluteXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y);
+void guiCore_ConvertToRelativeXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y);
+uint8_t guiCore_CheckWidgetXY(guiGenericWidget_t *widget, int16_t x, int16_t y);
+guiGenericWidget_t *guiCore_GetWidgetAtXY(guiGenericWidget_t *container, int16_t x, int16_t y);
 
-uint8_t guiCore_CallEventHandler(guiGenericWidget_t *pWidget, uint8_t eventType);
-*/
 #endif

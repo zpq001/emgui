@@ -111,6 +111,7 @@ void guiCheckBox_Initialize(guiCheckBox_t *checkBox, guiGenericWidget_t *parent)
     checkBox->parent = parent;
     checkBox->acceptFocus = 0;
     checkBox->acceptFocusByTab = 0;
+    checkBox->acceptTouch = 0;
     checkBox->isContainer = 0;
     checkBox->isFocused = 0;
     checkBox->isVisible = 1;

@@ -2,6 +2,16 @@
     Module button
 
 
+    State flow:
+
+
+    unfocused, unpressed      [touch press inside button]     ->    focused, pressed  (set_focus, press, accept)
+                              [touch press outside button]    ->    decline
+    focused,   unpressed      [touch press inside button]     ->    focused, pressed  (press, accept)
+    focused,   pressed        [touch release]                 ->    focused, unpressed (release, accept)
+    focused,   pressed        [touch move]                    ->    accept
+
+
 
 
 **********************************************************/
@@ -16,12 +26,39 @@
 #include "guiGraphWidgets.h"
 
 
+typedef struct {
+    uint8_t setVisible : 1;
+    uint8_t setNotVisible : 1;
+    uint8_t setFocused : 1;
+    uint8_t setUnfocused : 1;
+    uint8_t setPressed : 1;
+    uint8_t setReleased : 1;
+    uint8_t callClickedHandler : 1;
+
+
+} btn_proc_flags_t;
+
+static btn_proc_flags_t f;
+
+
 
 
 static uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 {
     guiButton_t *button = (guiButton_t *)widget;
     uint8_t processResult = GUI_EVENT_ACCEPTED;
+    int16_t x,y;
+    uint8_t touchState;
+    uint8_t touchInsideWidget;
+
+    // Clear all flags
+    f.setVisible = 0;
+    f.setNotVisible = 0;
+    f.setFocused = 0;
+    f.setUnfocused = 0;
+    f.setPressed = 0;
+    f.setReleased = 0;
+    f.callClickedHandler = 0;
 
     switch (event.type)
     {
@@ -45,48 +82,34 @@ static uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t eve
             button->redrawRequired = 0;
             break;
         case GUI_EVENT_FOCUS:
-            button->isFocused = 1;
-            guiCore_AcceptFocus(widget);
-            goto lbl_focus;
+            if (button->isFocused == 0)
+                f.setFocused = 1;
+            break;
         case GUI_EVENT_UNFOCUS:
-            button->isFocused = 0;
-lbl_focus:
-            button->redrawFlags |= BUTTON_REDRAW_FOCUS;
-            button->redrawRequired = 1;
-            event.type = GUI_ON_FOCUS_CHANGED;
-            guiCore_CallEventHandler(widget, event);
+            if (button->isFocused)
+            {
+                f.setUnfocused = 1;
+                button->keepTouch = 0;
+                if (button->isPressed)
+                    f.setReleased = 1;
+            }
             break;
         case GUI_EVENT_SHOW:
-            // Check if widget is not visible
             if (button->isVisible == 0)
-            {
-                button->isVisible = 1;
-                // Widget must be fully redrawn - set all flags
-                button->redrawForced = 1;
-                event.type = GUI_ON_VISIBLE_CHANGED;
-                guiCore_CallEventHandler(widget, event);
-            }
+                f.setVisible = 1;
             break;
         case GUI_EVENT_HIDE:
-            // Check if widget is visible
             if (button->isVisible)
-            {
-                button->isVisible = 0;
-                guiCore_InvalidateRect(widget,button->x,button->y,
-                      button->x + button->width - 1, button->y + button->height - 1);
-                event.type = GUI_ON_VISIBLE_CHANGED;
-                guiCore_CallEventHandler(widget, event);
-            }
+                f.setNotVisible = 1;
             break;
         case GUI_EVENT_BUTTONS_ENCODER:
             // Check focused, visible, etc
             if (((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_OK)
             {
-                button->isPressed = !button->isPressed;
-                button->redrawFlags = BUTTON_REDRAW_STATE;
-                button->redrawRequired = 1;
-                event.type = BUTTON_PRESSED_CHANGED;
-                guiCore_CallEventHandler(widget, event);
+                if (button->isPressed == 0)
+                    f.setPressed = 1;
+                else
+                    f.setReleased = 1;
             }
             else
             {
@@ -94,10 +117,123 @@ lbl_focus:
                 processResult = guiCore_CallEventHandler(widget, event);
             }
             break;
+        case GUI_EVENT_TOUCH:
+            // Convert coordinates to widget's relative
+            x = ((guiEventTouch_t *)event.args)->x;
+            y = ((guiEventTouch_t *)event.args)->y;
+            guiCore_ConvertToRelativeXY(widget,&x, &y);
+            touchState = ((guiEventTouch_t *)event.args)->state;
+            touchInsideWidget = (guiCore_GetWidgetAtXY(widget,x,y)) ? 1 : 0;
+
+            if (button->keepTouch)
+            {
+                if (touchState == TOUCH_RELEASE)
+                {
+                    if (button->isPressed)
+                        f.setReleased = 1;
+                    if (touchInsideWidget)
+                        f.callClickedHandler = 1;
+                    button->keepTouch = 0;
+                }
+                else    // TOUCH_MOVE
+                {
+                    if ((touchInsideWidget == 0) && (button->isPressed))
+                        f.setReleased = 1;      // Moved out of widget borders
+                    else if ((touchInsideWidget) && (button->isPressed == 0))
+                        f.setPressed = 1;       // Moved into widget borders
+                }
+            }
+            else //if (touchState == TOUCH_PRESS)
+            {
+                // Check if touch point is inside the widget
+                if (touchInsideWidget)
+                {
+                    if (button->isFocused == 0)
+                        f.setFocused = 1;
+                    f.setPressed = 1;
+                    button->keepTouch = 1;
+                }
+                else
+                {
+                    processResult = GUI_EVENT_DECLINE;
+                }
+            }
+            break;
         default:
             // Widget cannot process incoming event. Try to find a handler.
             processResult = guiCore_CallEventHandler(widget, event);
     }
+
+
+
+    //-------------------------------//
+    //-------------------------------//
+
+
+    // Focus change process
+    if ((f.setFocused) || (f.setUnfocused))
+    {
+        if (f.setFocused)
+        {
+            button->isFocused = 1;
+            guiCore_AcceptFocus(widget);
+        }
+        else
+            button->isFocused = 0;
+        button->redrawFlags |= BUTTON_REDRAW_FOCUS;
+        button->redrawRequired = 1;
+        event.type = GUI_ON_FOCUS_CHANGED;
+        guiCore_CallEventHandler(widget, event);
+    }
+
+    // Visible change process
+    if ((f.setVisible) || (f.setNotVisible))
+    {
+        if (f.setVisible)
+        {
+            button->isVisible = 1;
+            button->redrawForced = 1;   // Widget must be fully redrawn - set all flags
+        }
+        else
+        {
+            button->isVisible = 0;
+            guiCore_InvalidateRect(widget,button->x,button->y,
+                  button->x + button->width - 1, button->y + button->height - 1);
+        }
+
+        event.type = GUI_ON_VISIBLE_CHANGED;
+        guiCore_CallEventHandler(widget, event);
+    }
+
+    // Pressed change
+    if ((f.setPressed) || (f.setReleased))
+    {
+        if (f.setPressed)
+        {
+            button->isPressed = 1;
+            button->redrawFlags |= BUTTON_REDRAW_STATE;
+            button->redrawRequired = 1;
+        }
+        else
+        {
+            button->isPressed = 0;
+            button->redrawFlags |= BUTTON_REDRAW_STATE;
+            button->redrawRequired = 1;
+        }
+
+        event.type = BUTTON_PRESSED_CHANGED;
+        guiCore_CallEventHandler(widget, event);
+    }
+
+    // Handlers
+    if (f.callClickedHandler)
+    {
+        event.type = BUTTON_CLICKED;
+        guiCore_CallEventHandler(widget, event);
+    }
+
+
+
     return processResult;
 }
 
@@ -109,6 +245,7 @@ void guiButton_Initialize(guiButton_t *button, guiGenericWidget_t *parent)
     button->parent = parent;
     button->acceptFocus = 0;
     button->acceptFocusByTab = 1;
+    button->acceptTouch = 1;
     button->isContainer = 0;
     button->isFocused = 0;
     button->isVisible = 1;
@@ -118,6 +255,7 @@ void guiButton_Initialize(guiButton_t *button, guiGenericWidget_t *parent)
     button->tabIndex = 0;
     button->processEvent = guiButton_ProcessEvent;
     button->handlers.count = 0;
+    button->keepTouch = 0;
 
     button->redrawFlags = 0;
     button->x = 0;

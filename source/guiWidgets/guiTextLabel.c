@@ -94,6 +94,7 @@ void guiTextLabel_Initialize(guiTextLabel_t *textLabel, guiGenericWidget_t *pare
     textLabel->parent = parent;
     textLabel->acceptFocus = 0;
     textLabel->acceptFocusByTab = 0;
+    textLabel->acceptTouch = 0;
     textLabel->isContainer = 0;
     textLabel->isFocused = 0;
     textLabel->isVisible = 1;
