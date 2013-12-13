@@ -18,6 +18,7 @@ INPUT(
 ./release\widget_images.o
 ./release\guiMainForm.o
 ./release\guiButton.o
+./release\guiPanel.o
 ./release\moc_mainwindow.o
 ./release\moc_pixeldisplay.o
 );

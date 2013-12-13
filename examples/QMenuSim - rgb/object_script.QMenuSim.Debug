@@ -18,6 +18,7 @@ INPUT(
 ./debug\widget_images.o
 ./debug\guiMainForm.o
 ./debug\guiButton.o
+./debug\guiPanel.o
 ./debug\moc_mainwindow.o
 ./debug\moc_pixeldisplay.o
 );

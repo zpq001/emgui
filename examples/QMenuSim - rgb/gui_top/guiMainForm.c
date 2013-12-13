@@ -32,26 +32,18 @@ extern uint8_t timeSeconds;
 
 
 static uint8_t guiMainForm_ProcessEvents(guiGenericWidget_t *widget, guiEvent_t event);
-static uint8_t button1_onPressedChanged(void *sender, guiEvent_t event);
-static uint8_t button1_onClicked(void *sender, guiEvent_t event);
-static uint8_t textLabel_onFocusChanged(void *sender, guiEvent_t event);
-static uint8_t textLabel_onButtonEvent(void *sender, guiEvent_t event);
+static uint8_t button_onClicked(void *sender, guiEvent_t event);
+//static uint8_t textLabel_onFocusChanged(void *sender, guiEvent_t event);
+//static uint8_t textLabel_onButtonEvent(void *sender, guiEvent_t event);
 
 
 //--------- Form elements ---------//
-static guiTextLabel_t textLabel1;
-static guiTextLabel_t textLabel2;
-static guiTextLabel_t textLabel3;
-static guiTextLabel_t textLabel4;
 static guiTextLabel_t textLabel_time;
-static guiTextLabel_t textLabel_hint;
 static char textLabel_time_data[50];
-static guiWidgetHandler_t label_handlers[2];
 
 static guiButton_t button1;
-static guiWidgetHandler_t button1_handlers[2];
 static guiButton_t button2;
-static guiWidgetHandler_t button2_handlers[2];
+static guiWidgetHandler_t button_handlers[1];
 
 //----------- GUI Form  -----------//
 #define MAIN_FORM_ELEMENTS_COUNT 7
@@ -66,7 +58,6 @@ void guiMainForm_Initialize(void)
     guiMainForm.processEvent = guiMainForm_ProcessEvents;
     guiMainForm.widgets.count = MAIN_FORM_ELEMENTS_COUNT;
     guiMainForm.widgets.elements = guiMainFormElements;
-//    guiMainForm.widgets.elements[0] = 0;//&guiSubForm1;
     guiMainForm.widgets.elements[0] = &textLabel_time;
     guiMainForm.widgets.elements[1] = &button1;
     guiMainForm.widgets.elements[2] = &button2;
@@ -74,12 +65,6 @@ void guiMainForm_Initialize(void)
     guiMainForm.widgets.elements[4] = 0;
     guiMainForm.widgets.elements[5] = 0;
     guiMainForm.widgets.elements[6] = 0;
-
-/*    guiMainForm.widgets.elements[2] = &textLabel1;
-    guiMainForm.widgets.elements[3] = &textLabel2;
-    guiMainForm.widgets.elements[4] = &textLabel3;
-    guiMainForm.widgets.elements[5] = &textLabel4;
-    guiMainForm.widgets.elements[6] = &textLabel_hint; */
 
     guiMainForm.isVisible = 1;
     guiMainForm.redrawRequired = 1;
@@ -102,120 +87,33 @@ void guiMainForm_Initialize(void)
     textLabel_time.text = textLabel_time_data;
     textLabel_time.font = &font_6x8_mono;
 
-    // Initialize text label for hint
-    guiTextLabel_Initialize(&textLabel_hint, (guiGenericWidget_t *)&guiMainForm);
-    textLabel_hint.tabIndex = 0;
-    textLabel_hint.acceptFocus = 0;
-    textLabel_hint.acceptFocusByTab = 0;
-    textLabel_hint.x = 128 + 10;
-    textLabel_hint.y = 10;
-    textLabel_hint.width = 100;
-    textLabel_hint.height = 14;
-    textLabel_hint.alignment = ALIGN_CENTER;
-    textLabel_hint.text = 0;
-    textLabel_hint.font = &font_h10_bold;
-    textLabel_hint.hasFrame = 1;
-    textLabel_hint.tag = 10;
-
-    // Initialize other labels
-    guiTextLabel_Initialize(&textLabel1, (guiGenericWidget_t *)&guiMainForm);
-    textLabel1.tabIndex = 10;
-    textLabel1.acceptFocus = 0;
-    textLabel1.acceptFocusByTab = 1;
-    textLabel1.x = 20;
-    textLabel1.y = 10;
-    textLabel1.width = 70;
-    textLabel1.height = 14;
-    textLabel1.alignment = ALIGN_LEFT;
-    textLabel1.text = "Form 1";
-    textLabel1.font = &font_h10;
-    textLabel1.handlers.count = 2;
-    textLabel1.handlers.elements = label_handlers;
-    textLabel1.tag = 11;
-
-    guiTextLabel_Initialize(&textLabel2, (guiGenericWidget_t *)&guiMainForm);
-    textLabel2.tabIndex = 11;
-    textLabel2.acceptFocus = 0;
-    textLabel2.acceptFocusByTab = 1;
-    textLabel2.x = 20;
-    textLabel2.y = 30;
-    textLabel2.width = 70;
-    textLabel2.height = 14;
-    textLabel2.alignment = ALIGN_LEFT;
-    textLabel2.text = "Form 2";
-    textLabel2.font = &font_h10;
-    textLabel2.handlers.count = 2;
-    textLabel2.handlers.elements = label_handlers;
-    textLabel2.tag = 12;
-
-    guiTextLabel_Initialize(&textLabel3, (guiGenericWidget_t *)&guiMainForm);
-    textLabel3.tabIndex = 12;
-    textLabel3.acceptFocus = 0;
-    textLabel3.acceptFocusByTab = 1;
-    textLabel3.x = 20;
-    textLabel3.y = 50;
-    textLabel3.width = 70;
-    textLabel3.height = 14;
-    textLabel3.alignment = ALIGN_LEFT;
-    textLabel3.text = "Form 3";
-    textLabel3.font = &font_h10;
-    textLabel3.handlers.count = 2;
-    textLabel3.handlers.elements = label_handlers;
-    textLabel3.tag = 13;
-
-    guiTextLabel_Initialize(&textLabel4, (guiGenericWidget_t *)&guiMainForm);
-    textLabel4.tabIndex = 13;
-    textLabel4.acceptFocus = 0;
-    textLabel4.acceptFocusByTab = 1;
-    textLabel4.x = 20;
-    textLabel4.y = 70;
-    textLabel4.width = 70;
-    textLabel4.height = 14;
-    textLabel4.alignment = ALIGN_LEFT;
-    textLabel4.text = "Form 4";
-    textLabel4.font = &font_h10;
-    textLabel4.handlers.count = 2;
-    textLabel4.handlers.elements = label_handlers;
-    textLabel4.tag = 14;
-
-    label_handlers[0].eventType = GUI_ON_FOCUS_CHANGED;
-    label_handlers[0].handler = textLabel_onFocusChanged;
-    label_handlers[1].eventType = GUI_EVENT_BUTTONS_ENCODER;
-    label_handlers[1].handler = textLabel_onButtonEvent;
-
     // Setup button1
     guiButton_Initialize(&button1,  (guiGenericWidget_t *)&guiMainForm);
-    button1.x = 10;
-    button1.y = 20;
-    button1.width = 60;
-    button1.height = 20;
-    button1.text = "Hi there!";
+    button1.x = 5;
+    button1.y = guiMainForm.height - 22;
+    button1.width = 50;
+    button1.height = 18;
+    button1.text = "Btn 1";
     button1.font = &font_h10;
     button1.tabIndex = 15;
-    button1.handlers.elements = button1_handlers;
-    button1.handlers.count = 2;
-    // Setup button1 handlers
-    button1.handlers.elements[0].eventType = BUTTON_PRESSED_CHANGED;
-    button1.handlers.elements[0].handler = button1_onPressedChanged;
-    button1.handlers.elements[1].eventType = BUTTON_CLICKED;
-    button1.handlers.elements[1].handler = button1_onClicked;
+    button1.handlers.elements = button_handlers;
+    button1.handlers.count = 1;
 
     // Setup button2
     guiButton_Initialize(&button2,  (guiGenericWidget_t *)&guiMainForm);
-    button2.x = 10;
-    button2.y = 60;
-    button2.width = 60;
-    button2.height = 20;
-    button2.text = "Button 2";
+    button2.x = 60;
+    button2.y = guiMainForm.height - 22;
+    button2.width = 50;
+    button2.height = 18;
+    button2.text = "Btn 2";
     button2.font = &font_h10;
     button2.tabIndex = 16;
-    button2.handlers.elements = button2_handlers;
-    button2.handlers.count = 0;
-    // Setup button1 handlers
-    //button2.handlers.elements[0].eventType = BUTTON_PRESSED_CHANGED;
-    //button2.handlers.elements[0].handler = button1_onPressedChanged;
-    //button2.handlers.elements[1].eventType = BUTTON_CLICKED;
-    //button2.handlers.elements[1].handler = button1_onClicked;
+    button2.handlers.elements = button_handlers;
+    button2.handlers.count = 1;
+
+    // Setup button handlers
+    button_handlers[0].eventType = BUTTON_CLICKED;
+    button_handlers[0].handler = button_onClicked;
 
 }
 
@@ -311,7 +209,18 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
 
 
 
+static uint8_t button_onClicked(void *sender, guiEvent_t event)
+{
+    guiLogEvent("Button clicked");
 
+
+
+
+    return GUI_EVENT_ACCEPTED;
+}
+
+
+/*
 static uint8_t button1_onPressedChanged(void *sender, guiEvent_t event)
 {
     if (button1.isPressed)
@@ -324,9 +233,9 @@ static uint8_t button1_onClicked(void *sender, guiEvent_t event)
 {
     guiLogEvent("Button 1 clicked");
 }
+*/
 
-
-
+/*
 static uint8_t textLabel_onFocusChanged(void *sender, guiEvent_t event)
 {
     guiGenericWidget_t *textLabel = (guiGenericWidget_t *)sender;
@@ -380,5 +289,5 @@ static uint8_t textLabel_onButtonEvent(void *sender, guiEvent_t event)
     }
     return GUI_EVENT_DECLINE;
 }
-
+*/
 
