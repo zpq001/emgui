@@ -33,7 +33,7 @@ typedef struct {
 
 void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, uint8_t maxTag, uint8_t mode);
 
-
+void guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState);
 
 //extern guiForm_t *currentForm;
 //extern uint8_t globalRedrawFlags;

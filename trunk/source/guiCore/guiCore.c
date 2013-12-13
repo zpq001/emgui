@@ -530,6 +530,48 @@ void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, 
 
 
 
+//=======================================================//
+//=======================================================//
+//                                                       //
+//              Generic widget API fucntions             //
+//                                                       //
+//=======================================================//
+
+
+
+void guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState)
+{
+    guiEvent_t event;
+    if (widget == 0) return;
+    if (newVisibleState)
+    {
+        // Show widget
+        if (widget->isVisible) return;
+        widget->isVisible = 1;
+        widget->redrawForced = 1;
+    }
+    else
+    {
+        // Hide widget
+        if (widget->isVisible == 0) return;
+        widget->isVisible = 0;
+        guiCore_InvalidateRect(widget, widget->x, widget->y,
+              widget->x + widget->width - 1, widget->y + widget->height - 1);
+    }
+    // Visible state changed - call handler
+    if (widget->handlers.count != 0)
+    {
+        event.type = GUI_ON_VISIBLE_CHANGED;
+        event.args = 0;
+        guiCore_CallEventHandler(widget, event);
+    }
+}
+
+
+
+
+
+
 
 
 

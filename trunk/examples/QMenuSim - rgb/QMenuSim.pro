@@ -35,7 +35,8 @@ SOURCES += main.cpp\
     ../../source/guiGraphics_2/font_6x8_mono.c \
     ../../source/guiGraphics_2/widget_images.c \
     gui_top/guiMainForm.c \
-    ../../source/guiWidgets/guiButton.c
+    ../../source/guiWidgets/guiButton.c \
+    ../../source/guiWidgets/guiPanel.c
 
 HEADERS  += mainwindow.h \
     ../common/pixeldisplay.h \
@@ -52,7 +53,8 @@ HEADERS  += mainwindow.h \
 	../../source/guiCore/guiEvents.h \
 	../../source/guiCore/guiCore.h \
     gui_top/guiMainForm.h \
-    ../../source/guiWidgets/guiButton.h
+    ../../source/guiWidgets/guiButton.h \
+    ../../source/guiWidgets/guiPanel.h
 	
 
 
