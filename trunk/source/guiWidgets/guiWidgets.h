@@ -243,6 +243,7 @@ typedef struct guiCheckBox_t {
     char *text;
     uint8_t hasFrame : 1;
     uint8_t isChecked : 1;
+    uint8_t keepTouch : 1;
 
 } guiCheckBox_t;
 

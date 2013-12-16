@@ -18,9 +18,65 @@
 
 
 
+void guiCheckbox_SetFocused(guiCheckBox_t *checkbox, uint8_t newFocusedState)
+{
+    guiEvent_t event;
+    if (checkbox == 0) return;
+
+    if (newFocusedState)
+    {
+        // Set focus on panel
+        if (checkbox->isFocused) return;
+        checkbox->isFocused = 1;
+        guiCore_AcceptFocus((guiGenericWidget_t *)checkbox);
+    }
+    else
+    {
+        // Focus was removed
+        if (checkbox->isFocused == 0) return;
+        checkbox->isFocused = 0;
+    }
+    // Focused state changed - call handler
+    checkbox->redrawFlags |= CHECKBOX_REDRAW_FOCUS;
+    checkbox->redrawRequired = 1;
+    event.type = GUI_ON_FOCUS_CHANGED;
+    event.args = 0;
+    guiCore_CallEventHandler((guiGenericWidget_t *)checkbox, event);
+}
+
+
+void guiCheckbox_SetChecked(guiCheckBox_t *checkBox, uint8_t newCheckedState)
+{
+    guiEvent_t event;
+    if (checkBox == 0) return;
+
+    if (newCheckedState)
+    {
+        // Check
+        if (checkBox->isChecked) return;
+        checkBox->isChecked = 1;
+    }
+    else
+    {
+        // Uncheck
+        if (checkBox->isChecked == 0) return;
+        checkBox->isChecked = 0;
+    }
+    // Checked state changed - call handler
+    checkBox->redrawFlags |= CHECKBOX_REDRAW_STATE;
+    checkBox->redrawRequired = 1;
+    event.type = CHECKBOX_CHECKED_CHANGED;
+    event.args = 0;
+    guiCore_CallEventHandler((guiGenericWidget_t *)checkBox, event);
+}
+
+
 static uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 {
     guiCheckBox_t *checkBox = (guiCheckBox_t *)widget;
+    int16_t x,y;
+    uint8_t touchState;
+    uint8_t touchInsideWidget;
     uint8_t processResult = GUI_EVENT_ACCEPTED;
 
     switch (event.type)
@@ -96,6 +152,37 @@ lbl_focus:
                 processResult = guiCore_CallEventHandler(widget, event);
             }
             break;
+        case GUI_EVENT_TOUCH:
+            // Convert coordinates to widget's relative
+            x = ((guiEventTouch_t *)event.args)->x;
+            y = ((guiEventTouch_t *)event.args)->y;
+            guiCore_ConvertToRelativeXY(widget,&x, &y);
+            touchState = ((guiEventTouch_t *)event.args)->state;
+            touchInsideWidget = (guiCore_GetWidgetAtXY(widget,x,y)) ? 1 : 0;
+
+            if (checkBox->keepTouch)
+            {
+                if (touchState == TOUCH_RELEASE)
+                {
+                    checkBox->keepTouch = 0;
+                }
+            }
+            else
+            {
+                // Check if touch point is inside the widget
+                if (touchInsideWidget)
+                {
+                    if (checkBox->isFocused == 0)
+                        guiCheckbox_SetFocused(checkBox,1);
+                    guiCheckbox_SetChecked(checkBox, !checkBox->isChecked);
+                    checkBox->keepTouch = 1;
+                }
+                else
+                {
+                    processResult = GUI_EVENT_DECLINE;
+                }
+            }
+            break;
         default:
             // Widget cannot process incoming event. Try to find a handler.
             processResult = guiCore_CallEventHandler(widget, event);
@@ -121,6 +208,7 @@ void guiCheckBox_Initialize(guiCheckBox_t *checkBox, guiGenericWidget_t *parent)
     checkBox->tabIndex = 0;
     checkBox->processEvent = guiCheckBox_ProcessEvent;
     checkBox->handlers.count = 0;
+    checkBox->keepTouch = 0;
 
     checkBox->redrawFlags = 0;
     checkBox->x = 0;
