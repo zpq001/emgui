@@ -69,7 +69,7 @@ void LCD_FillRect(rect_t* rect);
 void LCD_DrawHorLine(uint16_t x, uint16_t y, uint16_t length);
 void LCD_DrawVertLine(uint16_t x, uint16_t y, uint16_t length);
 void LCD_DrawRect(rect_t *rect);
-
+void LCD_drawPackedImage(const uint8_t *img, uint16_t x_pos, uint16_t y_pos, uint16_t img_width, uint16_t img_height);
 
 void LCD_PrintString(char *str, uint8_t x, uint8_t y);
 void LCD_PrintStringAligned(char *str, rect_t *rect, uint8_t alignment);

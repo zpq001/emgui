@@ -130,6 +130,8 @@ typedef struct guiForm_t {
     guiWidgetCollection_t widgets;
     uint8_t redrawFlags;
     uint8_t hasFrame : 1;
+    uint8_t focusFallsThrough : 1;
+    uint8_t keepTouch : 1;
 
 } guiForm_t;
 
@@ -163,7 +165,10 @@ typedef struct guiPanel_t {
 
     guiWidgetCollection_t widgets;
     uint8_t redrawFlags;
-    uint8_t hasFrame : 1;
+    uint8_t focusFallsThrough : 1;
+    uint8_t keepTouch : 1;
+    uint8_t frame : 3;
+    uint8_t showFocus : 1;
 
 } guiPanel_t;
 

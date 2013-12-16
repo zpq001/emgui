@@ -31,6 +31,11 @@ typedef struct {
 #define ITEMS_OUT_OF_RANGE_ARE_VISIBLE      0x04
 #define ITEMS_OUT_OF_RANGE_ARE_INVISIBLE    0x08
 
+// Check tabIndex result
+#define TABINDEX_IS_MAX     2
+#define TABINDEX_IS_MIN     1
+#define TABINDEX_IS_NORM    0
+
 void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, uint8_t maxTag, uint8_t mode);
 
 void guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState);
@@ -54,7 +59,12 @@ void guiCore_ProcessMessageQueue(void);
 void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget);
 void guiCore_AcceptFocus(guiGenericWidget_t *widget);
 
+uint8_t guiCore_GetWidgetIndex(guiGenericWidget_t *widget);
+uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget);
+
 void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tabDir);
+guiGenericWidget_t *guiCore_GetNextFocusWidget(guiGenericContainer_t *container, int8_t tabDir);
+
 uint8_t guiCore_CallEventHandler(guiGenericWidget_t *widget, guiEvent_t event);
 
 void guiCore_ConvertToAbsoluteXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y);

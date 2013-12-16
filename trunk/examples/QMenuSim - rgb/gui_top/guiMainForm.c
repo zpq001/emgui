@@ -20,10 +20,13 @@
 #include "guiTextLabel.h"
 #include "guiButton.h"
 #include "guiForm.h"
+#include "guiPanel.h"
 
 
 // Other forms - in order to switch between them
 #include "guiMainForm.h"
+#include "guiPanel1.h"
+#include "guiPanel2.h"
 
 extern void guiLogEvent(char *string);
 extern uint8_t timeHours;
@@ -47,22 +50,22 @@ static guiWidgetHandler_t button_handlers[1];
 
 //----------- GUI Form  -----------//
 #define MAIN_FORM_ELEMENTS_COUNT 7
-guiForm_t     guiMainForm;
+guiPanel_t     guiMainForm;
 static void *guiMainFormElements[MAIN_FORM_ELEMENTS_COUNT];
 
 
 void guiMainForm_Initialize(void)
 {
     // Initialize form
-    guiForm_Initialize(&guiMainForm);
+    guiPanel_Initialize(&guiMainForm, 0);   // Root has no parent
     guiMainForm.processEvent = guiMainForm_ProcessEvents;
     guiMainForm.widgets.count = MAIN_FORM_ELEMENTS_COUNT;
     guiMainForm.widgets.elements = guiMainFormElements;
     guiMainForm.widgets.elements[0] = &textLabel_time;
     guiMainForm.widgets.elements[1] = &button1;
     guiMainForm.widgets.elements[2] = &button2;
-    guiMainForm.widgets.elements[3] = 0;
-    guiMainForm.widgets.elements[4] = 0;
+    guiMainForm.widgets.elements[3] = &guiPanel1;
+    guiMainForm.widgets.elements[4] = &guiPanel2;
     guiMainForm.widgets.elements[5] = 0;
     guiMainForm.widgets.elements[6] = 0;
 
@@ -74,6 +77,9 @@ void guiMainForm_Initialize(void)
     guiMainForm.width = 300;
     guiMainForm.height = 200;
 
+    guiMainForm.showFocus = 0;
+    //guiMainForm.focusFallsThrough = 1;
+
     // Initialize text label for time display
     guiTextLabel_Initialize(&textLabel_time, (guiGenericWidget_t *)&guiMainForm);
     textLabel_time.tabIndex = 0;
@@ -82,7 +88,7 @@ void guiMainForm_Initialize(void)
     textLabel_time.x = guiMainForm.width - 80;
     textLabel_time.y = guiMainForm.height - 24;
     textLabel_time.width = 60;
-    textLabel_time.height = 24;
+    textLabel_time.height = 20;
     textLabel_time.alignment = ALIGN_CENTER;
     textLabel_time.text = textLabel_time_data;
     textLabel_time.font = &font_6x8_mono;
@@ -93,7 +99,7 @@ void guiMainForm_Initialize(void)
     button1.y = guiMainForm.height - 22;
     button1.width = 50;
     button1.height = 18;
-    button1.text = "Btn 1";
+    button1.text = "Panel 1";
     button1.font = &font_h10;
     button1.tabIndex = 15;
     button1.handlers.elements = button_handlers;
@@ -105,7 +111,7 @@ void guiMainForm_Initialize(void)
     button2.y = guiMainForm.height - 22;
     button2.width = 50;
     button2.height = 18;
-    button2.text = "Btn 2";
+    button2.text = "Panel 2";
     button2.font = &font_h10;
     button2.tabIndex = 16;
     button2.handlers.elements = button_handlers;
@@ -115,15 +121,18 @@ void guiMainForm_Initialize(void)
     button_handlers[0].eventType = BUTTON_CLICKED;
     button_handlers[0].handler = button_onClicked;
 
+
+    guiPanel1_Initialize((guiGenericWidget_t *)&guiMainForm);
+    guiPanel2_Initialize((guiGenericWidget_t *)&guiMainForm);
 }
 
 
 static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiEvent_t event)
 {
-    int16_t x,y;
+    //int16_t x,y;
     guiEventArgButtons_t *argButtons;
-    guiGenericWidget_t *w;
-    uint8_t touchState;
+    //guiGenericWidget_t *w;
+    //uint8_t touchState;
 
     // Process GUI messages - focus, draw, etc
     switch(event.type)
@@ -140,68 +149,44 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
                 guiMainForm.redrawFlags = FORM_REDRAW_FOCUS |
                                          FORM_REDRAW_BACKGROUND;
             }
-            guiGraph_DrawForm(&guiMainForm);
+            guiGraph_DrawPanel(&guiMainForm);
             // Draw static elemens
-            if (guiMainForm.redrawFlags & FORM_REDRAW_BACKGROUND)
+            if (guiMainForm.redrawFlags & (FORM_REDRAW_BACKGROUND | FORM_REDRAW_FOCUS))
             {
-                //LCD_DrawHorLine(0,110,255);
                 LCD_SetLineStyle(LINE_STYLE_SOLID);
-
                 LCD_SetPenColor(colorPalette[COLOR_INDEX_3DFRAME_DARK1]);
-                LCD_DrawHorLine(0,guiMainForm.height - 25,guiMainForm.width);
+                LCD_DrawHorLine(3,guiMainForm.height - 25,guiMainForm.width - 6);
             }
             // Reset flags
             guiMainForm.redrawFlags = 0;
             guiMainForm.redrawRequired = 0;
             break;
         case GUI_EVENT_FOCUS:
-            guiCore_AcceptFocus((guiGenericWidget_t *)&guiMainForm);
-            //guiCore_RequestFocusChange(guiMainForm.widgets.elements[guiMainForm.widgets.focusedIndex]);
+            guiPanel_SetFocused((guiPanel_t *)&guiMainForm, 1);
             guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,1);
             break;
         case GUI_EVENT_UNFOCUS:
-            // do smth
+            guiPanel_SetFocused((guiPanel_t *)&guiMainForm, 0);
             break;
-
         case GUI_EVENT_BUTTONS_ENCODER:
             argButtons = (guiEventArgButtons_t *)event.args;
             if (argButtons->buttonCode & GUI_BTN_LEFT)
+            {
                 guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,-1);
+            }
             else if (argButtons->buttonCode & GUI_BTN_RIGHT)
+            {
                 guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,1);
+            }
             else if (argButtons->buttonCode & GUI_BTN_ESC)
             {
-                //guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiSubForm1,guiEvent_HIDE);
-                //guiCore_SetVisibleByTag(&guiMainForm.widgets, 10,20,ITEMS_IN_RANGE_ARE_VISIBLE);
+                // Keep focus on first button
                 guiCore_RequestFocusChange((guiGenericWidget_t *)&guiMainForm);
             }
             break;
-
          case GUI_EVENT_TOUCH:
-            // Convert coordinates to widget's relative
-            x = ((guiEventTouch_t *)event.args)->x;
-            y = ((guiEventTouch_t *)event.args)->y;
-            guiCore_ConvertToRelativeXY(widget,&x, &y);
-            touchState = ((guiEventTouch_t *)event.args)->state;
-            w = guiCore_GetWidgetAtXY((guiGenericWidget_t *)&guiMainForm, x, y);
-
-            // Determine if touch point lies inside one of child widgets
-            if (w == 0)
-            {
-                // point does not lie inside container (main form)
-                // Skip that.
-            }
-            else if (w != (guiGenericWidget_t *)&guiMainForm)
-            {
-                // Point belogs to one of child widgets - pass touch event to it.
-                guiCore_AddMessageToQueue(w,event);
-            }
-            else
-            {
-                // Point belogs to container itself
-                guiCore_AcceptFocus((guiGenericWidget_t *)&guiMainForm);
-            }
-
+            // Call base container handler
+            guiPanel_ProcessEvent((guiGenericWidget_t *)&guiMainForm, event);
             break;
     }
     return GUI_EVENT_ACCEPTED;
@@ -212,9 +197,26 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
 static uint8_t button_onClicked(void *sender, guiEvent_t event)
 {
     guiLogEvent("Button clicked");
+    guiButton_t *button = (guiButton_t *)sender;
 
-
-
+    if (button == &button1)
+    {
+        if (guiPanel1.isVisible == 0)
+        {
+            guiCore_SetVisibleByTag(&guiMainForm.widgets,20,30,ITEMS_IN_RANGE_ARE_INVISIBLE);
+            guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel1, guiEvent_SHOW);
+            //guiCore_RequestFocusChange((guiGenericWidget_t *)&guiPanel1);
+        }
+    }
+    else if (button == &button2)
+    {
+        if (guiPanel2.isVisible == 0)
+        {
+            guiCore_SetVisibleByTag(&guiMainForm.widgets,20,30,ITEMS_IN_RANGE_ARE_INVISIBLE);
+            guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel2, guiEvent_SHOW);
+            //guiCore_RequestFocusChange((guiGenericWidget_t *)&guiPanel2);
+        }
+    }
 
     return GUI_EVENT_ACCEPTED;
 }

@@ -37,6 +37,9 @@ void guiForm_Initialize(guiForm_t *form)
     form->tabIndex = 0;
     form->processEvent = guiForm_ProcessEvent;
     form->handlers.count = 0;
+    form->acceptTouch = 1;
+    form->focusFallsThrough = 0;
+    form->keepTouch = 0;
 
     form->widgets.count = 0;
     form->widgets.focusedIndex = 0;

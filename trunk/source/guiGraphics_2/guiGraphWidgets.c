@@ -14,6 +14,7 @@
 #include "guiWidgets.h"
 
 #include "guiForm.h"
+#include "guiPanel.h"
 #include "guiTextLabel.h"
 #include "guiCheckBox.h"
 #include "guiButton.h"
@@ -106,10 +107,75 @@ void guiGraph_Draw3DFrame(rect_t *rect, uint8_t frameState)
 
 
 //-------------------------------------------------------//
+// Draw a panel
+//
+//
+//-------------------------------------------------------//
+void guiGraph_DrawPanel(guiPanel_t *panel)
+{
+    rect_t rect1;
+
+    if (panel->redrawFlags & PANEL_REDRAW_BACKGROUND)
+    {
+        // Background
+        LCD_SetFillColor(colorPalette1[COLOR_INDEX_WIDGET_BACKGROUND]);
+        rect1.x1 = wx;
+        rect1.x2 = wx + panel->width - 1;
+        rect1.y1 = wy;
+        rect1.y2 = wy + panel->height - 1;
+        LCD_FillRect(&rect1);
+
+        /* Frame
+        rect1.x1 = wx;
+        rect1.x2 = wx + panel->width - 1;
+        rect1.y1 = wy;
+        rect1.y2 = wy + panel->height - 1; */
+
+        if ((panel->frame == FRAME3D_SUNKEN) || (panel->frame == FRAME3D_RAISED))
+        {
+            guiGraph_Draw3DFrame(&rect1, panel->frame);
+        }
+        else if (panel->frame == FRAME_SINGLE)
+        {
+            LCD_SetPenColor(colorPalette[COLOR_INDEX_3DFRAME_DARK1]);
+            LCD_SetLineStyle(LINE_STYLE_SOLID);
+            LCD_DrawRect(&rect1);
+        }
+
+    }
+
+    if (panel->redrawFlags & (PANEL_REDRAW_BACKGROUND | PANEL_REDRAW_FOCUS))
+    {
+        if (panel->showFocus)
+        {
+            if (panel->isFocused)
+            {
+                LCD_SetPenColor(colorPalette[COLOR_INDEX_FOCUS_FRAME]);
+                LCD_SetLineStyle(LINE_STYLE_DOTTED);
+            }
+            else
+            {
+                LCD_SetPenColor(colorPalette[COLOR_INDEX_WIDGET_BACKGROUND]);
+                LCD_SetLineStyle(LINE_STYLE_SOLID);
+            }
+            rect1.x1 = wx + PANEL_FOCUS_RECT_MARGIN;
+            rect1.x2 = wx + panel->width - 1 - PANEL_FOCUS_RECT_MARGIN;
+            rect1.y1 = wy + PANEL_FOCUS_RECT_MARGIN;
+            rect1.y2 = wy + panel->height - 1 - PANEL_FOCUS_RECT_MARGIN;
+            LCD_DrawRect(&rect1);
+        }
+    }
+}
+
+
+
+
+//-------------------------------------------------------//
 // Draw a form
 //
 //
 //-------------------------------------------------------//
+/*
 void guiGraph_DrawForm(guiForm_t *form)
 {
     rect_t rect1;
@@ -124,7 +190,7 @@ void guiGraph_DrawForm(guiForm_t *form)
         LCD_FillRect(&rect1);
     }
 }
-
+*/
 
 //-------------------------------------------------------//
 // Draw a textLabel
@@ -190,6 +256,83 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
 
 void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
 {
+    int8_t y_aligned;
+    rect_t rect1;
+    uint8_t *img;
+
+    y_aligned = checkBox->height - CHECKBOX_GRAPH_YSIZE;
+    y_aligned /= 2;
+    y_aligned = wy + y_aligned;
+
+
+    rect1.x1 = wx;
+    rect1.x2 = wx + checkBox->width - 1;
+    rect1.y1 = wy;
+    rect1.y2 = wy + checkBox->height - 1;
+
+
+    if (checkBox->redrawFlags & CHECKBOX_REDRAW_BACKGROUND)
+    {
+       // Erase rectangle
+        LCD_SetFillColor(colorPalette1[COLOR_INDEX_WIDGET_BACKGROUND]);
+        LCD_FillRect(&rect1);
+
+       // Draw string
+       if (checkBox->text)
+       {
+           LCD_SetPenColor(colorPalette1[COLOR_INDEX_TEXT_ACTIVE]);
+           LCD_SetFont(checkBox->font);
+           rect1.x1 = wx + 2 + CHECKBOX_GRAPH_XSIZE + CHECKBOX_TEXT_MARGIN;
+           rect1.y1 = wy + 1;
+           rect1.x2 = wx + checkBox->width - 2;
+           rect1.y2 = wy + checkBox->height - 2;
+           LCD_PrintStringAligned(checkBox->text, &rect1, checkBox->textAlignment);
+       }
+
+       // Draw rectangle frame
+       //LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+       //LCD_DrawRect(wx + 2,y_aligned,CHECKBOX_GRAPH_XSIZE,CHECKBOX_GRAPH_YSIZE,1);
+    }
+
+
+    if (checkBox->redrawFlags & (CHECKBOX_REDRAW_STATE | CHECKBOX_REDRAW_BACKGROUND))
+    {
+        LCD_SetPenColor(CL_BLACK);
+        LCD_SetAltPenColor(CL_WHITE);
+        img = (checkBox->isChecked) ? CHECKBOX_IMG_CHECKED :
+                                     CHECKBOX_IMG_EMPTY;
+        LCD_SetImageOutput(IMAGE_PAINT_SET_PIXELS | IMAGE_PAINT_VOID_PIXELS);
+        LCD_drawPackedImage(img, wx+2, y_aligned, CHECKBOX_GRAPH_XSIZE, CHECKBOX_GRAPH_YSIZE);
+    }
+
+
+
+    if (checkBox->redrawFlags & (CHECKBOX_REDRAW_FOCUS | CHECKBOX_REDRAW_BACKGROUND))
+    {
+        rect1.x1 = wx + 2 + CHECKBOX_GRAPH_XSIZE + CHECKBOX_TEXT_MARGIN/2;
+        rect1.y1 = wy + 1;
+        rect1.x2 = wx + checkBox->width - 2;
+        rect1.y2 = wy + checkBox->height - 2;
+
+        if (checkBox->isFocused)
+        {
+          LCD_SetLineStyle(LINE_STYLE_DOTTED);
+          LCD_SetPenColor(colorPalette[COLOR_INDEX_FOCUS_FRAME]);
+          LCD_DrawRect(&rect1);
+        }
+        else
+        {
+          LCD_SetLineStyle(LINE_STYLE_SOLID);
+          LCD_SetPenColor(colorPalette[COLOR_INDEX_WIDGET_BACKGROUND]);
+        //     if (checkBox->hasFrame)
+              LCD_DrawRect(&rect1);
+        //     else
+        //         LCD_DrawRect(wx,wy,checkBox->width,checkBox->height);
+        }
+    }
+
+
+
 }
 
 

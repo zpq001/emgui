@@ -392,6 +392,20 @@ void guiCore_ProcessMessageQueue(void)
 }
 
 
+// Returns index of a widget in parent's collection
+uint8_t guiCore_GetWidgetIndex(guiGenericWidget_t *widget)
+{
+    uint8_t i;
+    if (widget == 0) return 0;
+    if (widget->parent == 0) return 0;
+    for (i = 0; i < ((guiGenericContainer_t *)widget->parent)->widgets.count; i++)
+    {
+        if (((guiGenericContainer_t *)widget->parent)->widgets.elements[i] == widget)
+            return i;
+    }
+    return 0;   // error - widget is not present in parent's collection
+}
+
 
 void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
 {
@@ -410,16 +424,60 @@ void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
     }
 }
 
+
 void guiCore_AcceptFocus(guiGenericWidget_t *widget)
 {
+    uint8_t index;
     // First tell currently focused widget to loose focus
     if (focusedWidget != 0)
     {
         guiCore_AddMessageToQueue(focusedWidget, guiEvent_UNFOCUS);
     }
     focusedWidget = widget;
+    index = guiCore_GetWidgetIndex(focusedWidget);
+    if ((guiGenericContainer_t *)widget->parent != 0)
+        ((guiGenericContainer_t *)widget->parent)->widgets.focusedIndex = index;
 }
 
+
+// Checks widget's tabindex in parent's collection.
+// If current widget is the last in the collection that can be focused,
+//      TABINDEX_IS_MAX is returned.
+// If current widget is the first in the collection that can be focused,
+//      TABINDEX_IS_MIN is returned.
+// Else TABINDEX_IS_NORM is returned.
+uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget)
+{
+    // TODO - add canBeFocused() function
+    uint8_t i;
+    uint8_t currTabIndex;
+    uint8_t maxTabIndex;
+    uint8_t minTabIndex;
+    guiGenericWidget_t *w;
+    if (widget == 0) return 0;
+
+    currTabIndex = widget->tabIndex;
+    maxTabIndex = currTabIndex;
+    minTabIndex = currTabIndex;
+
+    for (i = 0; i < ((guiGenericContainer_t *)widget->parent)->widgets.count; i++)
+    {
+        w = ((guiGenericContainer_t *)widget->parent)->widgets.elements[i];
+        if (w == 0) continue;
+        if ((w->acceptFocusByTab == 0) || (w->isVisible == 0)) continue;
+        if (w->tabIndex > widget->tabIndex)
+            maxTabIndex = w->tabIndex;
+        else if (w->tabIndex < widget->tabIndex)
+            minTabIndex = w->tabIndex;
+    }
+
+    if (currTabIndex == maxTabIndex)
+        return TABINDEX_IS_MAX;
+    if (currTabIndex == minTabIndex)
+        return TABINDEX_IS_MIN;
+
+    return TABINDEX_IS_NORM;
+}
 
 
 
@@ -475,9 +533,63 @@ void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tab
     if (minWidgetIndex < container->widgets.count)
     {
         widget = container->widgets.elements[minWidgetIndex];
-        container->widgets.focusedIndex = minWidgetIndex;
+        //container->widgets.focusedIndex = minWidgetIndex;
         guiCore_RequestFocusChange(widget);
     }
+}
+
+
+//-------------------------------------------------------//
+//  Gets next widget in collection to focus on
+//
+//-------------------------------------------------------//
+guiGenericWidget_t *guiCore_GetNextFocusWidget(guiGenericContainer_t *container, int8_t tabDir)
+{
+    uint8_t currentTabIndex;
+    uint8_t i;
+    int16_t minTabIndex = 0x200;   // maximum x2
+    int16_t tmp;
+    uint8_t minWidgetIndex = container->widgets.count;
+    guiGenericWidget_t *widget;
+
+    currentTabIndex = 0;
+
+    // Check if current widget belongs to specified container's collection
+    if (focusedWidget)
+    {
+        if (focusedWidget->parent == (guiGenericWidget_t *)container)
+            currentTabIndex = focusedWidget->tabIndex;
+    }
+
+
+    // Find widget with next tabIndex
+    for (i = 0; i < container->widgets.count; i++)
+    {
+        widget = (guiGenericWidget_t *)container->widgets.elements[i];
+        if (widget == 0)
+            continue;
+        if ((widget->acceptFocusByTab) && (widget->isVisible))
+        {
+            if (tabDir >= 0)
+                tmp = (widget->tabIndex <= currentTabIndex) ? widget->tabIndex + 256 : widget->tabIndex;
+            else
+                tmp = (widget->tabIndex >= currentTabIndex) ? -(widget->tabIndex - 256) : -widget->tabIndex;
+
+            if (tmp < minTabIndex)
+            {
+                minTabIndex = tmp;
+                minWidgetIndex = i;
+            }
+        }
+    }
+
+    if (minWidgetIndex < container->widgets.count)
+    {
+        widget = container->widgets.elements[minWidgetIndex];
+        //container->widgets.focusedIndex = minWidgetIndex;
+        return widget;
+    }
+    return 0;
 }
 
 
