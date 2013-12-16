@@ -209,7 +209,9 @@ void LCD_drawPackedImage(const uint8_t *img, uint16_t x_pos, uint16_t y_pos, uin
             if (temp & bit_mask)
             {
                 if (imageOutputMode & IMAGE_PAINT_SET_PIXELS)
+                {
                     LCD_PutPixel(x,y_pos,penColor);
+                }
             }
             else if (imageOutputMode & IMAGE_PAINT_VOID_PIXELS)
             {

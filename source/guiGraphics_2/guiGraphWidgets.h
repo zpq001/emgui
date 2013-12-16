@@ -17,9 +17,11 @@
 #define COLOR_INDEX_TEXT_ACTIVE         7
 
 
-
+#define FRAME_NONE                      0x00
 #define FRAME3D_RAISED                  0x01
 #define FRAME3D_SUNKEN                  0x02
+#define FRAME_SINGLE                    0x03
+
 
 
 
@@ -33,7 +35,8 @@ extern int16_t wy;
 void guiGraph_SetBaseXY(int16_t x, int16_t y);
 void guiGraph_OffsetBaseXY(int16_t dx, int16_t dy);
 
-void guiGraph_DrawForm(guiForm_t *form);
+void guiGraph_DrawPanel(guiPanel_t *panel);
+//void guiGraph_DrawForm(guiForm_t *form);
 void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel);
 void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox);
 

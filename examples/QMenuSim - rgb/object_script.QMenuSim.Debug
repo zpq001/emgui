@@ -9,7 +9,6 @@ INPUT(
 ./debug\guiGraphHAL.o
 ./debug\guiTextLabel.o
 ./debug\guiCheckBox.o
-./debug\guiForm.o
 ./debug\guiCore.o
 ./debug\font_h32.o
 ./debug\font_h10_bold.o
@@ -19,6 +18,8 @@ INPUT(
 ./debug\guiMainForm.o
 ./debug\guiButton.o
 ./debug\guiPanel.o
+./debug\guiPanel1.o
+./debug\guiPanel2.o
 ./debug\moc_mainwindow.o
 ./debug\moc_pixeldisplay.o
 );

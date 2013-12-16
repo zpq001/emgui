@@ -27,7 +27,6 @@ SOURCES += main.cpp\
 	../../source/guiGraphics_2/guiGraphHAL.c \
 	../../source/guiWidgets/guiTextLabel.c \
 	../../source/guiWidgets/guiCheckBox.c \
-	../../source/guiWidgets/guiForm.c \
 	../../source/guiCore/guiCore.c \
     ../../source/guiGraphics_2/font_h32.c \
     ../../source/guiGraphics_2/font_h10_bold.c \
@@ -36,7 +35,9 @@ SOURCES += main.cpp\
     ../../source/guiGraphics_2/widget_images.c \
     gui_top/guiMainForm.c \
     ../../source/guiWidgets/guiButton.c \
-    ../../source/guiWidgets/guiPanel.c
+    ../../source/guiWidgets/guiPanel.c \
+    gui_top/guiPanel1.c \
+    gui_top/guiPanel2.c
 
 HEADERS  += mainwindow.h \
     ../common/pixeldisplay.h \
@@ -49,12 +50,13 @@ HEADERS  += mainwindow.h \
 	../../source/guiWidgets/guiWidgets.h \
 	../../source/guiWidgets/guiTextLabel.h \
 	../../source/guiWidgets/guiCheckBox.h \
-	../../source/guiWidgets/guiForm.h \
 	../../source/guiCore/guiEvents.h \
 	../../source/guiCore/guiCore.h \
     gui_top/guiMainForm.h \
     ../../source/guiWidgets/guiButton.h \
-    ../../source/guiWidgets/guiPanel.h
+    ../../source/guiWidgets/guiPanel.h \
+    gui_top/guiPanel1.h \
+    gui_top/guiPanel2.h
 	
 
 
