@@ -289,6 +289,13 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
            LCD_PrintStringAligned(checkBox->text, &rect1, checkBox->textAlignment);
        }
 
+       // Check frame
+       rect1.x1 = wx;
+       rect1.x2 = wx + 3 + CHECKBOX_GRAPH_XSIZE;
+       rect1.y1 = y_aligned - 2;
+       rect1.y2 = y_aligned + 1 + CHECKBOX_GRAPH_YSIZE;
+       guiGraph_Draw3DFrame(&rect1, FRAME3D_SUNKEN);
+
        // Draw rectangle frame
        //LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
        //LCD_DrawRect(wx + 2,y_aligned,CHECKBOX_GRAPH_XSIZE,CHECKBOX_GRAPH_YSIZE,1);
@@ -303,13 +310,14 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
                                      CHECKBOX_IMG_EMPTY;
         LCD_SetImageOutput(IMAGE_PAINT_SET_PIXELS | IMAGE_PAINT_VOID_PIXELS);
         LCD_drawPackedImage(img, wx+2, y_aligned, CHECKBOX_GRAPH_XSIZE, CHECKBOX_GRAPH_YSIZE);
+
     }
 
 
 
     if (checkBox->redrawFlags & (CHECKBOX_REDRAW_FOCUS | CHECKBOX_REDRAW_BACKGROUND))
     {
-        rect1.x1 = wx + 2 + CHECKBOX_GRAPH_XSIZE + CHECKBOX_TEXT_MARGIN/2;
+        rect1.x1 = wx + 3 + CHECKBOX_GRAPH_XSIZE + CHECKBOX_TEXT_MARGIN/2;
         rect1.y1 = wy + 1;
         rect1.x2 = wx + checkBox->width - 2;
         rect1.y2 = wy + checkBox->height - 2;

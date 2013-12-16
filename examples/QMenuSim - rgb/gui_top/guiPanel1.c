@@ -99,7 +99,7 @@ void guiPanel1_Initialize(guiGenericWidget_t *parent)
     checkBox1.font = &font_h10;
     checkBox1.tabIndex = 12;
     checkBox1.acceptFocusByTab = 1;
-    checkBox1.acceptTouch = 0;
+    checkBox1.acceptTouch = 1;
 
     // Setup button handlers
     //button_handlers[0].eventType = BUTTON_CLICKED;
