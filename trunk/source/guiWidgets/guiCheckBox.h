@@ -35,9 +35,21 @@
 #define CHECKBOX_CHECKED_CHANGED    (0xC0 + 0x00)
 
 
-void guiCheckBox_Initialize(guiCheckBox_t *checkBox, guiGenericWidget_t *parent);
-void guiCheckBox_SetRedrawFlags(guiCheckBox_t *checkBox, uint8_t flags);
+// Widget-specific keys
+#define CHECKBOX_KEY_OK     0x01
 
+//typedef struct {
+//    uint8_t key_ok : 1;
+//} checkboxKeyState_t;
+
+
+
+void guiCheckBox_Initialize(guiCheckBox_t *checkBox, guiGenericWidget_t *parent);
+void guiCheckbox_SetFocused(guiCheckBox_t *checkbox, uint8_t newFocusedState);
+void guiCheckbox_SetChecked(guiCheckBox_t *checkBox, uint8_t newCheckedState);
+void guiCheckbox_SetVisible(guiCheckBox_t *checkBox, uint8_t newVisibleState);
+uint8_t guiCheckbox_DefaultKeyConverter(guiEvent_t *keyEvent);
+uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event);
 
 
 

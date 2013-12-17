@@ -76,7 +76,7 @@ static uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t eve
             }
             guiGraph_DrawButton(button);
             event.type = GUI_ON_DRAW;
-            guiCore_CallEventHandler(widget, event);
+            guiCore_CallEventHandler(widget, &event);
             // Reset flags
             button->redrawFlags = 0;
             button->redrawRequired = 0;
@@ -102,9 +102,9 @@ static uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t eve
             if (button->isVisible)
                 f.setNotVisible = 1;
             break;
-        case GUI_EVENT_BUTTONS_ENCODER:
+        case GUI_EVENT_KEY: //GUI_EVENT_BUTTONS_ENCODER:
             // Check focused, visible, etc
-            if (((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_OK)
+        /*    if (((guiEventArgButtons_t *)event.args)->buttonCode & GUI_BTN_OK)
             {
                 if (button->isPressed == 0)
                     f.setPressed = 1;
@@ -115,14 +115,15 @@ static uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t eve
             {
                 // Widget cannot process incoming event. Try to find a handler.
                 processResult = guiCore_CallEventHandler(widget, event);
-            }
+            } */
+            processResult = GUI_EVENT_DECLINE;
             break;
         case GUI_EVENT_TOUCH:
             // Convert coordinates to widget's relative
-            x = ((guiEventTouch_t *)event.args)->x;
-            y = ((guiEventTouch_t *)event.args)->y;
+            x = (int16_t)event.lparam;
+            y = (int16_t)event.hparam;
             guiCore_ConvertToRelativeXY(widget,&x, &y);
-            touchState = ((guiEventTouch_t *)event.args)->state;
+            touchState = (int16_t)event.spec;
             touchInsideWidget = (guiCore_GetWidgetAtXY(widget,x,y)) ? 1 : 0;
 
             if (button->keepTouch)
@@ -161,7 +162,7 @@ static uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t eve
             break;
         default:
             // Widget cannot process incoming event. Try to find a handler.
-            processResult = guiCore_CallEventHandler(widget, event);
+            processResult = guiCore_CallEventHandler(widget, &event);
     }
 
 
@@ -183,7 +184,7 @@ static uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t eve
         button->redrawFlags |= BUTTON_REDRAW_FOCUS;
         button->redrawRequired = 1;
         event.type = GUI_ON_FOCUS_CHANGED;
-        guiCore_CallEventHandler(widget, event);
+        guiCore_CallEventHandler(widget, &event);
     }
 
     // Visible change process
@@ -202,7 +203,7 @@ static uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t eve
         }
 
         event.type = GUI_ON_VISIBLE_CHANGED;
-        guiCore_CallEventHandler(widget, event);
+        guiCore_CallEventHandler(widget, &event);
     }
 
     // Pressed change
@@ -222,14 +223,14 @@ static uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t eve
         }
 
         event.type = BUTTON_PRESSED_CHANGED;
-        guiCore_CallEventHandler(widget, event);
+        guiCore_CallEventHandler(widget, &event);
     }
 
     // Handlers
     if (f.callClickedHandler)
     {
         event.type = BUTTON_CLICKED;
-        guiCore_CallEventHandler(widget, event);
+        guiCore_CallEventHandler(widget, &event);
     }
 
 
