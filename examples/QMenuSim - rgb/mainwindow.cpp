@@ -249,16 +249,16 @@ void MainWindow::on_ControlButtonPress(int btn)
     switch(btn)
     {
         case BTN_ESC:
-            guiButtonClicked((1<<8));
+            guiButtonPressed(KEY_ESC);
             break;
         case BTN_LEFT:
-            guiButtonClicked((1<<9));
+            guiButtonPressed(KEY_LEFT);
             break;
         case BTN_RIGHT:
-            guiButtonClicked((1<<10));
+            guiButtonPressed(KEY_RIGHT);
             break;
         case BTN_OK:
-            guiButtonClicked((1<<11));
+            guiButtonPressed(KEY_OK);
             break;
     }
     if (ui->checkBox_updMode->checkState())
@@ -267,7 +267,23 @@ void MainWindow::on_ControlButtonPress(int btn)
 
 void MainWindow::on_ControlButtonRelease(int btn)
 {
-
+    switch(btn)
+    {
+        case BTN_ESC:
+            guiButtonReleased(KEY_ESC);
+            break;
+        case BTN_LEFT:
+            guiButtonReleased(KEY_LEFT);
+            break;
+        case BTN_RIGHT:
+            guiButtonReleased(KEY_RIGHT);
+            break;
+        case BTN_OK:
+            guiButtonReleased(KEY_OK);
+            break;
+    }
+    if (ui->checkBox_updMode->checkState())
+        on_LCD_update();
 }
 
 

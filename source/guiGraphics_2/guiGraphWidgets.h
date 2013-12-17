@@ -25,7 +25,7 @@
 
 
 
-const color_t colorPalette1[];
+extern const color_t colorPalette1[];
 color_t *colorPalette;
 
 

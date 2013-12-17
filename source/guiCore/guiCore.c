@@ -28,8 +28,6 @@ const guiEvent_t guiEvent_UNFOCUS = {GUI_EVENT_UNFOCUS, 0};
 const guiEvent_t guiEvent_FOCUS = {GUI_EVENT_FOCUS, 0};
 
 
-    guiEventTouch_t touchArgs;
-
 
 guiMsgQueue_t guiMsgQueue;
 
@@ -42,12 +40,12 @@ guiGenericWidget_t *focusedWidget;
 //=======================================================//
 
 
-uint8_t guiCore_AddMessageToQueue(guiGenericWidget_t *target, guiEvent_t event)
+uint8_t guiCore_AddMessageToQueue(const guiGenericWidget_t *target, const guiEvent_t *event)
 {
     if (guiMsgQueue.count < GUI_CORE_QUEUE_SIZE)
     {
-        guiMsgQueue.queue[guiMsgQueue.tail].event = event;
-        guiMsgQueue.queue[guiMsgQueue.tail].target = target;
+        guiMsgQueue.queue[guiMsgQueue.tail].event = *event;
+        guiMsgQueue.queue[guiMsgQueue.tail].target = (guiGenericWidget_t *)target;
         guiMsgQueue.count++;
         guiMsgQueue.tail++;
         if (guiMsgQueue.tail == GUI_CORE_QUEUE_SIZE)
@@ -168,7 +166,7 @@ void guiCore_RedrawAll(void)
 
     // Update root widget. Root widget can further call
     // update for any other widget.
-    guiCore_AddMessageToQueue(rootWidget, guiEvent_UPDATE);
+    guiCore_AddMessageToQueue(rootWidget, &guiEvent_UPDATE);
     guiCore_ProcessMessageQueue();
 
     // Start widget tree traverse from root widget
@@ -236,12 +234,51 @@ void guiCore_RedrawAll(void)
 
 
 
+
+void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t touchState)
+{
+    guiEvent_t event;
+    event.type = GUI_EVENT_TOUCH;
+    event.spec = touchState;
+    event.lparam = (uint16_t)x;
+    event.hparam = (uint16_t)y;
+    guiCore_AddMessageToQueue(focusedWidget, &event);
+    guiCore_ProcessMessageQueue();
+}
+
+void guiCore_ProcessButtonEvent(uint16_t code, uint8_t spec)
+{
+    guiEvent_t event;
+    event.type = GUI_EVENT_KEY;
+    event.spec = spec;
+    event.lparam = code;
+    guiCore_AddMessageToQueue(focusedWidget, &event);
+    guiCore_ProcessMessageQueue();
+}
+
+void guiCore_ProcessEncoderEvent(int16_t increment)
+{
+    guiEvent_t event;
+    event.type = GUI_EVENT_ENCODER;
+    event.spec = 0;
+    event.lparam = (uint16_t)increment;
+    guiCore_AddMessageToQueue(focusedWidget, &event);
+    guiCore_ProcessMessageQueue();
+}
+
+
+
+
+
+
+
+
 // CHECKME
 void guiCore_PostEventToFocused(guiEvent_t event)
 {
     if (focusedWidget == 0)
         return;                 // Should not normally happen ?
-    guiCore_AddMessageToQueue(focusedWidget, event);
+    guiCore_AddMessageToQueue(focusedWidget, &event);
 }
 
 
@@ -287,38 +324,6 @@ uint8_t guiCore_CheckWidgetXY(guiGenericWidget_t *widget, int16_t x, int16_t y)
 }
 */
 
-void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t state)
-{
-    guiEvent_t event;
-    uint8_t processResult;
-    touchArgs.x = x;
-    touchArgs.y = y;
-    touchArgs.state = state;
-    event.type = GUI_EVENT_TOUCH;
-    event.args = &touchArgs;
-/*
-    // First pass to focused element
-    if (focusedWidget != 0)
-    {
-        // Get relative coordinates
-        guiCore_ConvertToRelativeXY(focusedWidget,&touchArgs.x, &touchArgs.y);
-        processResult = focusedWidget->processEvent(focusedWidget, event);
-        if (processResult == GUI_EVENT_ACCEPTED)
-        {
-            guiCore_ProcessMessageQueue();
-            return;
-        }
-        // Restore coordinates
-        touchArgs.x = x;
-        touchArgs.y = y;
-    }
-
-    // If there is no focused element, or it cannot handle touch event, start from root widget
-*/
-
-    guiCore_AddMessageToQueue(focusedWidget, event);
-    guiCore_ProcessMessageQueue();
-}
 
 
 // Returns widget that has point (x;y) - either one of child widgets or widget itself.
@@ -420,7 +425,7 @@ void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
     // Tell new widget to get focus
     if (newFocusedWidget != 0)
     {
-        guiCore_AddMessageToQueue(newFocusedWidget, guiEvent_FOCUS);
+        guiCore_AddMessageToQueue(newFocusedWidget, &guiEvent_FOCUS);
     }
 }
 
@@ -431,7 +436,7 @@ void guiCore_AcceptFocus(guiGenericWidget_t *widget)
     // First tell currently focused widget to loose focus
     if (focusedWidget != 0)
     {
-        guiCore_AddMessageToQueue(focusedWidget, guiEvent_UNFOCUS);
+        guiCore_AddMessageToQueue(focusedWidget, &guiEvent_UNFOCUS);
     }
     focusedWidget = widget;
     index = guiCore_GetWidgetIndex(focusedWidget);
@@ -595,14 +600,14 @@ guiGenericWidget_t *guiCore_GetNextFocusWidget(guiGenericContainer_t *container,
 
 
 
-
-uint8_t guiCore_CallEventHandler(guiGenericWidget_t *widget, guiEvent_t event)
+// CHECKME - const modifiers
+uint8_t guiCore_CallEventHandler(guiGenericWidget_t *widget, guiEvent_t *event)
 {
     uint8_t i;
     uint8_t handlerResult = GUI_EVENT_DECLINE;
     for(i=0; i<widget->handlers.count; i++)
     {
-        if (widget->handlers.elements[i].eventType == event.type)
+        if (widget->handlers.elements[i].eventType == event->type)
         {
             handlerResult = widget->handlers.elements[i].handler(widget, event);
         }
@@ -627,13 +632,13 @@ void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, 
         {
             if (widget->isVisible == 0)
                 //widget->processEvent(widget, guiEvent_SHOW);
-                guiCore_AddMessageToQueue(widget, guiEvent_SHOW);
+                guiCore_AddMessageToQueue(widget, &guiEvent_SHOW);
         }
         else if ((tagInRange == ITEMS_IN_RANGE_ARE_INVISIBLE) || (tagInRange == ITEMS_OUT_OF_RANGE_ARE_INVISIBLE))
         {
             if (widget->isVisible)
                 //widget->processEvent(widget, guiEvent_HIDE);
-                guiCore_AddMessageToQueue(widget, guiEvent_HIDE);
+                guiCore_AddMessageToQueue(widget, &guiEvent_HIDE);
         }
     }
 }
@@ -674,16 +679,34 @@ void guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState)
     if (widget->handlers.count != 0)
     {
         event.type = GUI_ON_VISIBLE_CHANGED;
-        event.args = 0;
-        guiCore_CallEventHandler(widget, event);
+        guiCore_CallEventHandler(widget, &event);
     }
 }
 
 
 
+void guiCore_DecodeWidgetTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, widgetTouchState_t *decodedTouchState)
+{
+    // Convert coordinates to widget's relative
+    decodedTouchState->x = (int16_t)touchEvent->lparam;
+    decodedTouchState->y = (int16_t)touchEvent->hparam;
+    guiCore_ConvertToRelativeXY(widget,&decodedTouchState->x, &decodedTouchState->y);
+    decodedTouchState->state = touchEvent->spec;
+    // Determine if touch point lies inside the widget
+    decodedTouchState->isInsideWidget = (guiCore_GetWidgetAtXY(widget,decodedTouchState->x, decodedTouchState->y)) ? 1 : 0;
+}
 
 
-
+void guiCore_DecodeContainerTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, containerTouchState_t *decodedTouchState)
+{
+    // Convert coordinates to widget's relative
+    decodedTouchState->x = (int16_t)touchEvent->lparam;
+    decodedTouchState->y = (int16_t)touchEvent->hparam;
+    guiCore_ConvertToRelativeXY(widget,&decodedTouchState->x, &decodedTouchState->y);
+    decodedTouchState->state = touchEvent->spec;
+    // Determine if touch point lies inside the widget
+    decodedTouchState->widgetAtXY = guiCore_GetWidgetAtXY(widget,decodedTouchState->x, decodedTouchState->y);
+}
 
 
 

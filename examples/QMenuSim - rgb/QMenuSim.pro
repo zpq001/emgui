@@ -37,7 +37,8 @@ SOURCES += main.cpp\
     ../../source/guiWidgets/guiButton.c \
     ../../source/guiWidgets/guiPanel.c \
     gui_top/guiPanel1.c \
-    gui_top/guiPanel2.c
+    gui_top/guiPanel2.c \
+    gui_top/guiEventConverter.c
 
 HEADERS  += mainwindow.h \
     ../common/pixeldisplay.h \
@@ -56,7 +57,8 @@ HEADERS  += mainwindow.h \
     ../../source/guiWidgets/guiButton.h \
     ../../source/guiWidgets/guiPanel.h \
     gui_top/guiPanel1.h \
-    gui_top/guiPanel2.h
+    gui_top/guiPanel2.h \
+    gui_top/guiEventConverter.h
 	
 
 

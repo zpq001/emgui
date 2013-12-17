@@ -16,8 +16,8 @@
 
 // Event handler record
 typedef struct {
-    uint8_t eventType;                                                      // Event type
-    uint8_t (*handler)(void *sender, guiEvent_t event);       // Related callback function pointer
+    uint8_t eventType;                                         // Event type
+    uint8_t (*handler)(void *sender, guiEvent_t *event);       // Related callback function pointer
 } guiWidgetHandler_t;
 
 // Event handlers table
@@ -169,6 +169,8 @@ typedef struct guiPanel_t {
     uint8_t keepTouch : 1;
     uint8_t frame : 3;
     uint8_t showFocus : 1;
+    uint8_t useDefaultKeyConverter : 1;
+    uint8_t useDefaultEncoderHandler : 1;
 
 } guiPanel_t;
 
@@ -244,6 +246,8 @@ typedef struct guiCheckBox_t {
     uint8_t hasFrame : 1;
     uint8_t isChecked : 1;
     uint8_t keepTouch : 1;
+    uint8_t useDefaultKeyConverter : 1;
+
 
 } guiCheckBox_t;
 

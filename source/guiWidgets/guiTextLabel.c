@@ -38,7 +38,7 @@ static uint8_t guiTextLabel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t 
             }
             guiGraph_DrawTextLabel(textLabel);
             event.type = GUI_ON_DRAW;
-            guiCore_CallEventHandler(widget, event);
+            guiCore_CallEventHandler(widget, &event);
             // Reset flags
             textLabel->redrawFlags = 0;
             textLabel->redrawRequired = 0;
@@ -53,7 +53,7 @@ lbl_focus:
             textLabel->redrawFlags |= TEXT_LABEL_REDRAW_FOCUS;
             textLabel->redrawRequired = 1;
             event.type = GUI_ON_FOCUS_CHANGED;
-            guiCore_CallEventHandler(widget, event);
+            guiCore_CallEventHandler(widget, &event);
             break;
         case GUI_EVENT_SHOW:
             // Check if widget is not visible
@@ -64,7 +64,7 @@ lbl_focus:
                 textLabel->redrawFlags = TEXT_LABEL_REDRAW_FOCUS |
                                          TEXT_LABEL_REDRAW_TEXT;
                 event.type = GUI_ON_VISIBLE_CHANGED;
-                guiCore_CallEventHandler(widget, event);
+                guiCore_CallEventHandler(widget, &event);
             }
             break;
         case GUI_EVENT_HIDE:
@@ -75,13 +75,13 @@ lbl_focus:
                 guiCore_InvalidateRect(widget,textLabel->x,textLabel->y,
                       textLabel->x + textLabel->width - 1, textLabel->y + textLabel->height - 1);
                 event.type = GUI_ON_VISIBLE_CHANGED;
-                guiCore_CallEventHandler(widget, event);
+                guiCore_CallEventHandler(widget, &event);
             }
             break;
 
         default:
             // Widget cannot process incoming event. Try to find a handler.
-            processResult = guiCore_CallEventHandler(widget, event);
+            processResult = guiCore_CallEventHandler(widget, &event);
     }
     return processResult;
 }

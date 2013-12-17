@@ -7,12 +7,14 @@
 // Event types for widgets
 #define GUI_EVENT_DRAW         0x01
 #define GUI_EVENT_UPDATE       0x04
-#define GUI_EVENT_BUTTONS_ENCODER       0x05
+//#define GUI_EVENT_BUTTONS_ENCODER       0x05
 #define GUI_EVENT_HIDE          0x06
 #define GUI_EVENT_SHOW          0x07
 #define GUI_EVENT_UNFOCUS       0x08
 #define GUI_EVENT_FOCUS         0x09
 #define GUI_EVENT_TOUCH         0x0A
+#define GUI_EVENT_KEY           0x0B
+#define GUI_EVENT_ENCODER       0x0C
 
 // Event types for callbacks (common widget event handlers)
 #define GUI_ON_FOCUS_CHANGED    0x80
@@ -23,37 +25,27 @@
 // those types are declared in widget's header files.
 
 
-// Temporary
-#define GUI_BTN_ESC     (1<<8)
-#define GUI_BTN_LEFT    (1<<9)
-#define GUI_BTN_RIGHT   (1<<10)
-#define GUI_BTN_OK      (1<<11)
 
 
-#define TOUCH_PRESS     (1<<0)
-#define TOUCH_RELEASE   (1<<1)
-#define TOUCH_MOVE      (1<<2)
+
+
 
 
 // Event struct, common for all GUI elements
 typedef struct {
     uint8_t type;
-    void *args;
+    uint8_t spec;
+    uint16_t lparam;
+    uint16_t hparam;
+    //void *args;
 } guiEvent_t;
 
 
-// Event args for buttons and encoder
-typedef struct {
-    uint16_t buttonCode;
-    int16_t encoderDelta;
-} guiEventArgButtons_t;
 
-// Event args for touch panel
-typedef struct {
-    int16_t x;
-    int16_t y;
-    uint8_t state;
-} guiEventTouch_t;
+
+
+
+
 
 
 // Events are found in guiEvents.c

@@ -35,7 +35,7 @@ extern uint8_t timeSeconds;
 
 
 static uint8_t guiMainForm_ProcessEvents(guiGenericWidget_t *widget, guiEvent_t event);
-static uint8_t button_onClicked(void *sender, guiEvent_t event);
+static uint8_t button_onClicked(void *sender, guiEvent_t *event);
 //static uint8_t textLabel_onFocusChanged(void *sender, guiEvent_t event);
 //static uint8_t textLabel_onButtonEvent(void *sender, guiEvent_t event);
 
@@ -130,7 +130,7 @@ void guiMainForm_Initialize(void)
 static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiEvent_t event)
 {
     //int16_t x,y;
-    guiEventArgButtons_t *argButtons;
+ //   guiEventArgButtons_t *argButtons;
     //guiGenericWidget_t *w;
     //uint8_t touchState;
 
@@ -168,20 +168,28 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
         case GUI_EVENT_UNFOCUS:
             guiPanel_SetFocused((guiPanel_t *)&guiMainForm, 0);
             break;
-        case GUI_EVENT_BUTTONS_ENCODER:
-            argButtons = (guiEventArgButtons_t *)event.args;
-            if (argButtons->buttonCode & GUI_BTN_LEFT)
-            {
+        case GUI_EVENT_ENCODER:
+            if ((int16_t)event.lparam < 0)
                 guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,-1);
-            }
-            else if (argButtons->buttonCode & GUI_BTN_RIGHT)
-            {
+            else if ((int16_t)event.lparam > 0)
                 guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,1);
-            }
-            else if (argButtons->buttonCode & GUI_BTN_ESC)
+            break;
+        case GUI_EVENT_KEY:
+            if (event.spec == DEFAULT_KEY_EVENT_DOWN)
             {
-                // Keep focus on first button
-                guiCore_RequestFocusChange((guiGenericWidget_t *)&guiMainForm);
+                if (event.lparam == DEFAULT_KEY_LEFT)
+                {
+                    guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,-1);
+                }
+                else if (event.lparam == DEFAULT_KEY_RIGHT)
+                {
+                    guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,1);
+                }
+                else if (event.lparam == DEFAULT_KEY_ESC)
+                {
+                    // Keep focus on first button
+                    guiCore_RequestFocusChange((guiGenericWidget_t *)&guiMainForm);
+                }
             }
             break;
          case GUI_EVENT_TOUCH:
@@ -194,7 +202,7 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
 
 
 
-static uint8_t button_onClicked(void *sender, guiEvent_t event)
+static uint8_t button_onClicked(void *sender, guiEvent_t *event)
 {
     guiLogEvent("Button clicked");
     guiButton_t *button = (guiButton_t *)sender;
@@ -204,7 +212,7 @@ static uint8_t button_onClicked(void *sender, guiEvent_t event)
         if (guiPanel1.isVisible == 0)
         {
             guiCore_SetVisibleByTag(&guiMainForm.widgets,20,30,ITEMS_IN_RANGE_ARE_INVISIBLE);
-            guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel1, guiEvent_SHOW);
+            guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel1, &guiEvent_SHOW);
             //guiCore_RequestFocusChange((guiGenericWidget_t *)&guiPanel1);
         }
     }
@@ -213,7 +221,7 @@ static uint8_t button_onClicked(void *sender, guiEvent_t event)
         if (guiPanel2.isVisible == 0)
         {
             guiCore_SetVisibleByTag(&guiMainForm.widgets,20,30,ITEMS_IN_RANGE_ARE_INVISIBLE);
-            guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel2, guiEvent_SHOW);
+            guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel2, &guiEvent_SHOW);
             //guiCore_RequestFocusChange((guiGenericWidget_t *)&guiPanel2);
         }
     }

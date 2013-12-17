@@ -22,7 +22,7 @@
 #include "guiPanel.h"
 
 
-static uint8_t panel2_onDraw(void *sender, guiEvent_t event);
+static uint8_t panel2_onDraw(void *sender, guiEvent_t *event);
 
 
 //-------- Panel elements ---------//
@@ -97,7 +97,7 @@ void guiPanel2_Initialize(guiGenericWidget_t *parent)
 
 
 
-static uint8_t panel2_onDraw(void *sender, guiEvent_t event)
+static uint8_t panel2_onDraw(void *sender, guiEvent_t *event)
 {
     if (guiPanel2.redrawFlags & PANEL_REDRAW_BACKGROUND)
     {
