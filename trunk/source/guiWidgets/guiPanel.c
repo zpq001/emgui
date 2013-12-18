@@ -1,5 +1,5 @@
 /**********************************************************
-    Module guiForm
+    Module guiPanel
 
 
 
@@ -7,109 +7,108 @@
 **********************************************************/
 
 #include <stdint.h>
-#include "guiFonts.h"
-#include "guiGraphPrimitives.h"
-#include "guiGraphWidgets.h"
 #include "guiEvents.h"
 #include "guiCore.h"
 #include "guiWidgets.h"
+#include "guiGraphWidgets.h"
 #include "guiPanel.h"
 
 
-static containerTouchState_t touch;
-
-
-
-void guiPanel_SetFocused(guiPanel_t *panel, uint8_t newFocusedState)
+//-------------------------------------------------------//
+// Panel key handler
+//
+// Returns GUI_EVENT_ACCEPTED if key is processed,
+//         GUI_EVENT_DECLINE otherwise
+//-------------------------------------------------------//
+uint8_t guiPanel_ProcessKey(guiPanel_t *panel, uint8_t key)
 {
-    guiEvent_t event;
-    if (panel == 0) return;
-
-    if (newFocusedState)
+    guiGenericWidget_t *w;
+    if (panel->isFocused)
     {
-        // Set focus on panel
-        if (panel->isFocused) return;
-        panel->isFocused = 1;
-        guiCore_AcceptFocus((guiGenericWidget_t *)panel);
+        if (key == PANEL_KEY_SELECT)
+            guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,1);
+        else
+            return GUI_EVENT_DECLINE;
     }
     else
     {
-        // Focus was removed
-        if (panel->isFocused == 0) return;
-        panel->isFocused = 0;
+        // Key event came from child elements
+        w = panel->widgets.elements[ panel->widgets.focusedIndex ];
+        if (key == PANEL_KEY_PREV)
+        {
+            // Check if event should be passed to parent
+            if ((panel->focusFallsThrough) && (guiCore_CheckWidgetTabIndex(w) == TABINDEX_IS_MIN))
+                return GUI_EVENT_DECLINE;
+            guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,-1);
+        }
+        else if (key == PANEL_KEY_NEXT)
+        {
+            // Check if event should be passed to parent
+            if ((panel->focusFallsThrough) && (guiCore_CheckWidgetTabIndex(w) == TABINDEX_IS_MAX))
+                return GUI_EVENT_DECLINE;
+            guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,1);
+        }
+        else if (key == PANEL_KEY_ESC)
+        {
+            if (panel->focusFallsThrough)
+                return GUI_EVENT_DECLINE;
+            //guiPanel_SetFocused(panel, 1);
+            guiCore_SetFocused((guiGenericWidget_t *)panel,1);
+        }
+        else
+        {
+            return GUI_EVENT_DECLINE;   // unknown key
+        }
     }
-    // Focused state changed - call handler
-    panel->redrawFlags |= PANEL_REDRAW_FOCUS;
-    panel->redrawRequired = 1;
-    event.type = GUI_ON_FOCUS_CHANGED;
-    guiCore_CallEventHandler((guiGenericWidget_t *)panel, &event);
+    return GUI_EVENT_ACCEPTED;
 }
 
 
 
 
-
-uint8_t guiPanel_DefaultKeyConverter(guiEvent_t *keyEvent)
-{
-    keyEvent->hparam = 0;
-    if (keyEvent->spec == DEFAULT_KEY_EVENT_DOWN)
-    {
-        if (keyEvent->lparam == DEFAULT_KEY_OK)
-            keyEvent->hparam = PANEL_KEY_OK;
-        else if (keyEvent->lparam == DEFAULT_KEY_ESC)
-            keyEvent->hparam = PANEL_KEY_ESC;
-        else if (keyEvent->lparam == DEFAULT_KEY_LEFT)
-            keyEvent->hparam = PANEL_KEY_LEFT;
-        else if (keyEvent->lparam == DEFAULT_KEY_RIGHT)
-            keyEvent->hparam = PANEL_KEY_RIGHT;
-    }
-    if (keyEvent->hparam)
-        return GUI_EVENT_ACCEPTED;
-    else
-        return GUI_EVENT_DECLINE;
-}
-
-
-
-
+//-------------------------------------------------------//
+// Panel event handler
+//
+// Returns GUI_EVENT_ACCEPTED if event is processed,
+//         GUI_EVENT_DECLINE otherwise
+//-------------------------------------------------------//
 uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 {
     uint8_t processResult = GUI_EVENT_ACCEPTED;
     guiPanel_t *panel = (guiPanel_t *)widget;
-    guiGenericWidget_t *w;
+    uint8_t key;
+    containerTouchState_t touch;
 
     // Process GUI messages - focus, draw, etc
     switch(event.type)
     {
           case GUI_EVENT_DRAW:
-            // Check if full redraw is required
-            if (panel->redrawForced)
-            {
-                // Widget must be fully redrawn - set all flags
-                panel->redrawFlags = PANEL_REDRAW_FOCUS | PANEL_REDRAW_BACKGROUND;
-            }
             guiGraph_DrawPanel(panel);
+            // Call handler
             event.type = GUI_ON_DRAW;
             guiCore_CallEventHandler((guiGenericWidget_t *)panel, &event);
-            // Reset flags
-            panel->redrawFlags = 0;
+            // Reset flags - redrawForced will be reset by core
+            panel->redrawFocus = 0;
             panel->redrawRequired = 0;
             break;
         case GUI_EVENT_FOCUS:
-            if (panel->isVisible == 0)  // TODO - add isEnabled
+            if (PANEL_ACCEPTS_FOCUS_EVENT(panel))
+            {
+                guiCore_SetFocused((guiGenericWidget_t *)panel,1);
+                if (panel->focusFallsThrough)
+                {
+                    guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,1);
+                    //guiCore_RequestFocusChange(panel->widgets.elements[ panel->widgets.focusedIndex ]);
+                }
+            }
+            else
             {
                 processResult = GUI_EVENT_DECLINE;      // Cannot accept focus
-                break;
-            }
-            guiPanel_SetFocused(panel, 1);
-            if (panel->focusFallsThrough)
-            {
-                guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,1);
-                //guiCore_RequestFocusChange(panel->widgets.elements[ panel->widgets.focusedIndex ]);
             }
             break;
         case GUI_EVENT_UNFOCUS:
-            guiPanel_SetFocused(panel, 0);
+            guiCore_SetFocused((guiGenericWidget_t *)panel, 0);
+            panel->keepTouch = 0;
             break;
         case GUI_EVENT_SHOW:
             guiCore_SetVisible((guiGenericWidget_t *)panel, 1);
@@ -118,102 +117,85 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             guiCore_SetVisible((guiGenericWidget_t *)panel, 0);
             break;
         case GUI_EVENT_ENCODER:
-            if ((panel->isVisible == 0))  // TODO - add isEnabled
+            processResult = GUI_EVENT_DECLINE;
+            if (PANEL_ACCEPTS_ENCODER_EVENT(panel))
             {
-                processResult = GUI_EVENT_DECLINE;      // Cannot accept buttons event
-                break;
+                if (panel->useDefaultEncoderHandler)
+                {
+                    key = (int16_t)event.lparam < 0 ? PANEL_KEY_PREV :
+                          ((int16_t)event.lparam > 0 ? PANEL_KEY_NEXT : 0);
+                    if (key != 0)
+                        processResult = guiPanel_ProcessKey(panel,key);
+                }
+                // Call ENCODER event handler
+                processResult |= guiCore_CallEventHandler(widget, &event);
             }
-            if (panel->useDefaultEncoderHandler)
-            {
-                event.hparam = (int16_t)event.lparam < 0 ? PANEL_KEY_LEFT :
-                               ((int16_t)event.lparam > 0 ? PANEL_KEY_RIGHT : 0);
-                goto lbl_1;
-            }
-            processResult = guiCore_CallEventHandler(widget, &event);
-            if (processResult == GUI_EVENT_ACCEPTED)
-                goto lbl_1;
             break;
         case GUI_EVENT_KEY:
-            if ((panel->isVisible == 0))  // TODO - add isEnabled
+            processResult = GUI_EVENT_DECLINE;
+            if (PANEL_ACCEPTS_KEY_EVENT(panel))
             {
-                processResult = GUI_EVENT_DECLINE;      // Cannot accept buttons event
-                break;
-            }
-            // Call user-defined key converter as handler if specified
-            // CHECKME - useDefaultKeyHandler ?
-            processResult = (panel->useDefaultKeyConverter) ? guiPanel_DefaultKeyConverter(&event):
-                                                              guiCore_CallEventHandler(widget, &event);
-            if (processResult == GUI_EVENT_DECLINE) break;
-lbl_1:
-            if (panel->isFocused)
-            {
-                if (event.hparam == PANEL_KEY_OK)
-                    guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,1);
-                else
-                    processResult = GUI_EVENT_DECLINE;
-            }
-            else
-            {
-                // Event came from child elements
-                w = panel->widgets.elements[ panel->widgets.focusedIndex ];
-                if (event.hparam == PANEL_KEY_LEFT)
+                if ((panel->useDefaultKeyHandler) && (event.spec == DEFAULT_KEY_EVENT_DOWN))
                 {
-                    // Check if event should be passed to parent
-                    if ((panel->focusFallsThrough) && (guiCore_CheckWidgetTabIndex(w) == TABINDEX_IS_MIN))
-                    {
-                        processResult = GUI_EVENT_DECLINE;
-                        break;
-                    }
-                    guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,-1);
+                    if (event.lparam == DEFAULT_KEY_OK)
+                        key = PANEL_KEY_SELECT;
+                    else if (event.lparam == DEFAULT_KEY_ESC)
+                        key = PANEL_KEY_ESC;
+                    else if (event.lparam == DEFAULT_KEY_LEFT)
+                        key = PANEL_KEY_PREV;
+                    else if (event.lparam == DEFAULT_KEY_RIGHT)
+                        key = PANEL_KEY_NEXT;
+                    else
+                        key = 0;
+                    if (key != 0)
+                        processResult = guiPanel_ProcessKey(panel,key);
                 }
-                else if (event.hparam == PANEL_KEY_RIGHT)
-                {
-                    // Check if event should be passed to parent
-                    if ((panel->focusFallsThrough) && (guiCore_CheckWidgetTabIndex(w) == TABINDEX_IS_MAX))
-                    {
-                        processResult = GUI_EVENT_DECLINE;
-                        break;
-                    }
-                    guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,1);
-                }
-                else if (event.hparam == PANEL_KEY_ESC)
-                {
-                    if (panel->focusFallsThrough)
-                    {
-                        processResult = GUI_EVENT_DECLINE;
-                        break;
-                    }
-                    guiPanel_SetFocused(panel, 1);
-                }
+                // Call KEY event handler
+                processResult |= guiCore_CallEventHandler(widget, &event);
             }
             break;
          case GUI_EVENT_TOUCH:
-            guiCore_DecodeContainerTouchEvent((guiGenericWidget_t *)panel, &event, &touch);
-            if (panel->keepTouch)
+            if (PANEL_ACCEPTS_TOUCH_EVENT(panel))
             {
-                if (touch.state == TOUCH_RELEASE)
-                    panel->keepTouch = 0;
+                // Convert touch event
+                guiCore_DecodeContainerTouchEvent((guiGenericWidget_t *)panel, &event, &touch);
+                // Check if widget holds the touch
+                if (panel->keepTouch)
+                {
+                    if (touch.state == TOUCH_RELEASE)
+                        panel->keepTouch = 0;
+                }
+                else if (touch.state != TOUCH_RELEASE)
+                {
+                    // Determine if touch point lies inside one of child widgets
+                    if (touch.widgetAtXY == 0)
+                    {
+                        // Touch point does not lie inside panel - skip that.
+                        processResult = GUI_EVENT_DECLINE;
+                        break;
+                    }
+                    else if (touch.widgetAtXY != (guiGenericWidget_t *)panel)
+                    {
+                        // Point belogs to one of child widgets - pass touch event to it.
+                        guiCore_AddMessageToQueue(touch.widgetAtXY, &event);
+                    }
+                    else
+                    {
+                        // Point belogs to panel itself
+                        guiCore_SetFocused((guiGenericWidget_t *)panel,1);
+                        panel->keepTouch = 1;
+                    }
+                }
+                // Call touch handler - return value is ignored
+                event.type = GUI_ON_TOUCH_EVENT;
+                event.spec = touch.state;
+                event.lparam = (uint16_t)touch.x;
+                event.hparam = (uint16_t)touch.y;
+                guiCore_CallEventHandler(widget, &event);
             }
             else
             {
-                // Determine if touch point lies inside one of child widgets
-                if (touch.widgetAtXY == 0)
-                {
-                    // Touch point does not lie inside panel - skip that.
-                    processResult = GUI_EVENT_DECLINE;
-                }
-                else if (touch.widgetAtXY != (guiGenericWidget_t *)panel)
-                {
-                    // Point belogs to one of child widgets - pass touch event to it.
-                    guiCore_AddMessageToQueue(touch.widgetAtXY, &event);
-                }
-                else
-                {
-                    // Point belogs to panel itself
-                    guiPanel_SetFocused(panel, 1);
-                    panel->keepTouch = 1;
-                    // TODO - touch handlers!
-                }
+                processResult = GUI_EVENT_DECLINE;      // Cannot process touch event
             }
             break;
     }
@@ -222,7 +204,10 @@ lbl_1:
 
 
 
-
+//-------------------------------------------------------//
+// Panel default init
+//
+//-------------------------------------------------------//
 void guiPanel_Initialize(guiPanel_t *panel, guiGenericWidget_t *parent)
 {
     panel->parent = parent;
@@ -240,13 +225,13 @@ void guiPanel_Initialize(guiPanel_t *panel, guiGenericWidget_t *parent)
     panel->acceptTouch = 1;
     panel->focusFallsThrough = 0;
     panel->keepTouch = 0;
-    panel->useDefaultKeyConverter = 1;
+    panel->useDefaultKeyHandler = 1;
     panel->useDefaultEncoderHandler = 1;
 
     panel->widgets.count = 0;
     panel->widgets.focusedIndex = 0;
     panel->widgets.traverseIndex = 0;
-    panel->redrawFlags = 0;
+    panel->redrawFocus = 0;
     panel->frame = FRAME_NONE;
     panel->showFocus = 1;
 }

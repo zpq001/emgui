@@ -35,7 +35,7 @@ extern uint8_t timeSeconds;
 
 
 static uint8_t guiMainForm_ProcessEvents(guiGenericWidget_t *widget, guiEvent_t event);
-static uint8_t button_onClicked(void *sender, guiEvent_t *event);
+static uint8_t button_onPressed(void *sender, guiEvent_t *event);
 //static uint8_t textLabel_onFocusChanged(void *sender, guiEvent_t event);
 //static uint8_t textLabel_onButtonEvent(void *sender, guiEvent_t event);
 
@@ -117,9 +117,17 @@ void guiMainForm_Initialize(void)
     button2.handlers.elements = button_handlers;
     button2.handlers.count = 1;
 
+    // Toggle buttons
+    button1.isToggle = 1;
+    button1.isPressOnly = 1;
+    button2.isToggle = 1;
+    button2.isPressOnly = 1;
+
+    button1.isPressed = 1;
+
     // Setup button handlers
-    button_handlers[0].eventType = BUTTON_CLICKED;
-    button_handlers[0].handler = button_onClicked;
+    button_handlers[0].eventType = BUTTON_PRESSED_CHANGED;
+    button_handlers[0].handler = button_onPressed;
 
 
     guiPanel1_Initialize((guiGenericWidget_t *)&guiMainForm);
@@ -129,11 +137,6 @@ void guiMainForm_Initialize(void)
 
 static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiEvent_t event)
 {
-    //int16_t x,y;
- //   guiEventArgButtons_t *argButtons;
-    //guiGenericWidget_t *w;
-    //uint8_t touchState;
-
     // Process GUI messages - focus, draw, etc
     switch(event.type)
     {
@@ -143,30 +146,26 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
             break;
           case GUI_EVENT_DRAW:
             // Check if full redraw is required
-            if (guiMainForm.redrawForced)
-            {
-                // Widget must be fully redrawn - set all flags
-                guiMainForm.redrawFlags = FORM_REDRAW_FOCUS |
-                                         FORM_REDRAW_BACKGROUND;
-            }
             guiGraph_DrawPanel(&guiMainForm);
             // Draw static elemens
-            if (guiMainForm.redrawFlags & (FORM_REDRAW_BACKGROUND | FORM_REDRAW_FOCUS))
+            if ((guiMainForm.redrawForced) || (guiMainForm.redrawFocus))
             {
                 LCD_SetLineStyle(LINE_STYLE_SOLID);
                 LCD_SetPenColor(colorPalette[COLOR_INDEX_3DFRAME_DARK1]);
                 LCD_DrawHorLine(3,guiMainForm.height - 25,guiMainForm.width - 6);
             }
             // Reset flags
-            guiMainForm.redrawFlags = 0;
+            //guiMainForm.redrawFlags = 0;
+            guiMainForm.redrawFocus = 0;
             guiMainForm.redrawRequired = 0;
             break;
         case GUI_EVENT_FOCUS:
-            guiPanel_SetFocused((guiPanel_t *)&guiMainForm, 1);
+            guiCore_SetFocused((guiGenericWidget_t *)&guiMainForm, 1);
             guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,1);
             break;
         case GUI_EVENT_UNFOCUS:
-            guiPanel_SetFocused((guiPanel_t *)&guiMainForm, 0);
+            guiCore_SetFocused((guiGenericWidget_t *)&guiMainForm, 0);
+            guiMainForm.keepTouch = 0;
             break;
         case GUI_EVENT_ENCODER:
             if ((int16_t)event.lparam < 0)
@@ -202,30 +201,33 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
 
 
 
-static uint8_t button_onClicked(void *sender, guiEvent_t *event)
+static uint8_t button_onPressed(void *sender, guiEvent_t *event)
 {
-    guiLogEvent("Button clicked");
     guiButton_t *button = (guiButton_t *)sender;
 
-    if (button == &button1)
+    if (button->isPressed)
     {
-        if (guiPanel1.isVisible == 0)
+        if (button == &button1)
         {
-            guiCore_SetVisibleByTag(&guiMainForm.widgets,20,30,ITEMS_IN_RANGE_ARE_INVISIBLE);
-            guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel1, &guiEvent_SHOW);
-            //guiCore_RequestFocusChange((guiGenericWidget_t *)&guiPanel1);
+            guiButton_SetPressed(&button2, 0);
+            if (guiPanel1.isVisible == 0)
+            {
+                guiCore_SetVisibleByTag(&guiMainForm.widgets,20,30,ITEMS_IN_RANGE_ARE_INVISIBLE);
+                guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel1, &guiEvent_SHOW);
+                //guiCore_RequestFocusChange((guiGenericWidget_t *)&guiPanel1);
+            }
+        }
+        else if (button == &button2)
+        {
+            guiButton_SetPressed(&button1, 0);
+            if (guiPanel2.isVisible == 0)
+            {
+                guiCore_SetVisibleByTag(&guiMainForm.widgets,20,30,ITEMS_IN_RANGE_ARE_INVISIBLE);
+                guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel2, &guiEvent_SHOW);
+                //guiCore_RequestFocusChange((guiGenericWidget_t *)&guiPanel2);
+            }
         }
     }
-    else if (button == &button2)
-    {
-        if (guiPanel2.isVisible == 0)
-        {
-            guiCore_SetVisibleByTag(&guiMainForm.widgets,20,30,ITEMS_IN_RANGE_ARE_INVISIBLE);
-            guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel2, &guiEvent_SHOW);
-            //guiCore_RequestFocusChange((guiGenericWidget_t *)&guiPanel2);
-        }
-    }
-
     return GUI_EVENT_ACCEPTED;
 }
 

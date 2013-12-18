@@ -656,21 +656,28 @@ void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, 
 
 
 
-void guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState)
+//-------------------------------------------------------//
+//  Shows or hides a widget.
+//
+// This function does not perform any widget state checks
+//      except visible state.
+// Returns 1 if new state was applied. Otherwise returns 0.
+//-------------------------------------------------------//
+uint8_t guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState)
 {
     guiEvent_t event;
-    if (widget == 0) return;
+    if (widget == 0) return 0;
     if (newVisibleState)
     {
         // Show widget
-        if (widget->isVisible) return;
+        if (widget->isVisible) return 0;
         widget->isVisible = 1;
         widget->redrawForced = 1;
     }
     else
     {
         // Hide widget
-        if (widget->isVisible == 0) return;
+        if (widget->isVisible == 0) return 0;
         widget->isVisible = 0;
         guiCore_InvalidateRect(widget, widget->x, widget->y,
               widget->x + widget->width - 1, widget->y + widget->height - 1);
@@ -681,8 +688,47 @@ void guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState)
         event.type = GUI_ON_VISIBLE_CHANGED;
         guiCore_CallEventHandler(widget, &event);
     }
+    return 1;
 }
 
+
+
+//-------------------------------------------------------//
+//  Sets or clears focus on widget.
+//
+// This function does not perform any widget state checks
+//      except focused state.
+// Returns 1 if new state was applied. Otherwise returns 0.
+//-------------------------------------------------------//
+uint8_t guiCore_SetFocused(guiGenericWidget_t *widget, uint8_t newFocusedState)
+{
+    guiEvent_t event;
+    if (widget == 0) return 0;
+
+    if (newFocusedState)
+    {
+        // Set focus on widget
+        if (widget->isFocused) return 0;
+        widget->isFocused = 1;
+        guiCore_AcceptFocus(widget);
+    }
+    else
+    {
+        // Focus was removed
+        if (widget->isFocused == 0) return 0;
+        widget->isFocused = 0;
+    }
+    // Focused state changed - call handler
+    widget->redrawFocus = 1;
+    widget->redrawRequired = 1;
+    // Focus state changed - call handler
+    if (widget->handlers.count != 0)
+    {
+        event.type = GUI_ON_FOCUS_CHANGED;
+        guiCore_CallEventHandler(widget, &event);
+    }
+    return 1;
+}
 
 
 void guiCore_DecodeWidgetTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, widgetTouchState_t *decodedTouchState)
