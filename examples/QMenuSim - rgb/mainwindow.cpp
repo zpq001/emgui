@@ -78,10 +78,10 @@ MainWindow::MainWindow(QWidget *parent) :
     btnReleaseSignalMapper->setMapping(ui->pushButton_left, BTN_LEFT);
     btnReleaseSignalMapper->setMapping(ui->pushButton_right, BTN_RIGHT);
     btnReleaseSignalMapper->setMapping(ui->pushButton_ok, BTN_OK);
-    connect(ui->pushButton_esc, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
-    connect(ui->pushButton_left, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
-    connect(ui->pushButton_right, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
-    connect(ui->pushButton_ok, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
+    connect(ui->pushButton_esc, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
+    connect(ui->pushButton_left, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
+    connect(ui->pushButton_right, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
+    connect(ui->pushButton_ok, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
     connect(btnReleaseSignalMapper, SIGNAL(mapped(const int &)), this, SLOT(on_ControlButtonRelease(const int &)));
 
 
@@ -343,9 +343,25 @@ bool MainWindow::on_keyPress(QKeyEvent *event)
 bool MainWindow::on_keyRelease(QKeyEvent *event)
 {
     bool eventIsHandled = true;
-    // ....
-
-    eventIsHandled = false;
+    switch(event->key())
+    {
+        case Qt::Key_Escape:
+        case Qt::Key_Backspace:
+            on_ControlButtonRelease(BTN_ESC);
+            break;
+        case Qt::Key_Left:
+            on_ControlButtonRelease(BTN_LEFT);
+            break;
+        case Qt::Key_Right:
+            on_ControlButtonRelease(BTN_RIGHT);
+            break;
+        case Qt::Key_Return:
+        case Qt::Key_Space:
+            on_ControlButtonRelease(BTN_OK);
+            break;
+        default:
+            eventIsHandled = false;
+    }
     return eventIsHandled;
 }
 

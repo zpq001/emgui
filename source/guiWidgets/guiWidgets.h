@@ -54,6 +54,8 @@ typedef struct guiGenericWidget_t {
                                     // Widget should set this flag itself.
     uint8_t redrawForced : 1;       // This flag is set by GUI core when widget must be redrawn
                                     // redrawRequired is set along with redrawForced.
+    uint8_t redrawFocus : 1;        // Flag is set when widget focus must be redrawn.
+                                    // redrawRequired is set along with redrawFocus.
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -82,6 +84,7 @@ typedef struct guiGenericContainer_t {
     uint8_t isVisible : 1;
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
+    uint8_t redrawFocus : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -114,6 +117,7 @@ typedef struct guiForm_t {
     uint8_t isVisible : 1;
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
+    uint8_t redrawFocus : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -150,6 +154,7 @@ typedef struct guiPanel_t {
     uint8_t isVisible : 1;
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
+    uint8_t redrawFocus : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -164,12 +169,11 @@ typedef struct guiPanel_t {
     //-----------------------------------------//
 
     guiWidgetCollection_t widgets;
-    uint8_t redrawFlags;
     uint8_t focusFallsThrough : 1;
     uint8_t keepTouch : 1;
     uint8_t frame : 3;
     uint8_t showFocus : 1;
-    uint8_t useDefaultKeyConverter : 1;
+    uint8_t useDefaultKeyHandler : 1;
     uint8_t useDefaultEncoderHandler : 1;
 
 } guiPanel_t;
@@ -190,6 +194,7 @@ typedef struct guiTextLabel_t {
     uint8_t isVisible : 1;
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
+    uint8_t redrawFocus : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -226,6 +231,7 @@ typedef struct guiCheckBox_t {
     uint8_t isVisible : 1;
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
+    uint8_t redrawFocus : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -239,14 +245,14 @@ typedef struct guiCheckBox_t {
     guiHandlerTable_t handlers;
     //-----------------------------------------//
 
-    uint8_t redrawFlags;
     uint8_t textAlignment;
     const tFont *font;
     char *text;
     uint8_t hasFrame : 1;
     uint8_t isChecked : 1;
     uint8_t keepTouch : 1;
-    uint8_t useDefaultKeyConverter : 1;
+    uint8_t useDefaultKeyHandler : 1;
+    uint8_t redrawCheckedState : 1;
 
 
 } guiCheckBox_t;
@@ -266,6 +272,7 @@ typedef struct guiButton_t {
     uint8_t isVisible : 1;
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
+    uint8_t redrawFocus : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -279,14 +286,60 @@ typedef struct guiButton_t {
     guiHandlerTable_t handlers;
     //-----------------------------------------//
 
-    uint8_t redrawFlags;
+    uint8_t redrawPressedState : 1;
     uint8_t textAlignment;
     const tFont *font;
     char *text;
     uint8_t isPressed : 1;
     uint8_t keepTouch : 1;
+    uint8_t useDefaultKeyHandler : 1;
+    uint8_t isToggle : 1;
+    uint8_t isPressOnly : 1;
 
 } guiButton_t;
+
+
+
+typedef struct guiRadioButton_t {
+    //----- Inherited from generic widget -----//
+    // Pointer to parent widget
+    struct guiGenericWidget_t *parent;
+    // Bit properties:
+    uint8_t acceptFocus : 1;
+    uint8_t acceptFocusByTab : 1;
+    uint8_t acceptTouch : 1;
+    uint8_t isContainer : 1;
+    // Bit state flags:
+    uint8_t isFocused : 1;
+    uint8_t isVisible : 1;
+    uint8_t redrawRequired : 1;
+    uint8_t redrawForced : 1;
+    uint8_t redrawFocus : 1;
+    // Properties
+    uint8_t tag;
+    uint8_t tabIndex;
+    int16_t x;
+    int16_t y;
+    uint16_t width;
+    uint16_t height;
+    // Event processing function
+    uint8_t (*processEvent)(struct guiGenericWidget_t *pWidget, guiEvent_t event);
+    // Handler table
+    guiHandlerTable_t handlers;
+    //-----------------------------------------//
+
+    uint8_t redrawCheckedState : 1;
+    uint8_t textAlignment;
+    const tFont *font;
+    char *text;
+    uint8_t isChecked : 1;
+    uint8_t keepTouch : 1;
+    uint8_t useDefaultKeyHandler : 1;
+
+} guiRadioButton_t;
+
+
+
 
 
 //-----------------------------------------//

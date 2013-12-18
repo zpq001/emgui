@@ -99,7 +99,8 @@ void guiPanel2_Initialize(guiGenericWidget_t *parent)
 
 static uint8_t panel2_onDraw(void *sender, guiEvent_t *event)
 {
-    if (guiPanel2.redrawFlags & PANEL_REDRAW_BACKGROUND)
+    //if (guiPanel2.redrawFlags & PANEL_REDRAW_BACKGROUND)
+    if (guiPanel2.redrawForced)
     {
         LCD_SetFont(&font_h10_bold);
         LCD_SetPenColor(CL_BLUE);

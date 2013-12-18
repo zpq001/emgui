@@ -19,6 +19,7 @@
 #include "guiWidgets.h"
 #include "guiTextLabel.h"
 #include "guiCheckBox.h"
+#include "guiRadioButton.h"
 #include "guiButton.h"
 #include "guiPanel.h"
 
@@ -30,9 +31,10 @@ static uint8_t panel1_onDraw(void *sender, guiEvent_t *event);
 static guiButton_t button1;
 static guiButton_t button2;
 static guiCheckBox_t checkBox1;
+static guiRadioButton_t radioButton1;
 
 //----------- GUI Form  -----------//
-#define PANEL1_ELEMENTS_COUNT 3
+#define PANEL1_ELEMENTS_COUNT 4
 guiPanel_t guiPanel1;
 static void *guiPanel1Elements[PANEL1_ELEMENTS_COUNT];
 static guiWidgetHandler_t panel1_handlers[1];
@@ -47,7 +49,7 @@ void guiPanel1_Initialize(guiGenericWidget_t *parent)
     guiPanel1.widgets.elements[0] = &button1;
     guiPanel1.widgets.elements[1] = &button2;
     guiPanel1.widgets.elements[2] = &checkBox1;
-    //guiPanel1.widgets.elements[4] = 0;
+    guiPanel1.widgets.elements[3] = &radioButton1;
     //guiPanel1.widgets.elements[5] = 0;
     //guiPanel1.widgets.elements[6] = 0;
     guiPanel1.handlers.count = 1;
@@ -105,6 +107,17 @@ void guiPanel1_Initialize(guiGenericWidget_t *parent)
     //button_handlers[0].eventType = BUTTON_CLICKED;
     //button_handlers[0].handler = button_onClicked;
 
+    guiRadioButton_Initialize(&radioButton1, (guiGenericWidget_t *)&guiPanel1);
+    radioButton1.x = 110;
+    radioButton1.y = 20;
+    radioButton1.width = 80;
+    radioButton1.height = 16;
+    radioButton1.text = "My radio 1";
+    radioButton1.font = &font_h10;
+    radioButton1.tabIndex = 13;
+    radioButton1.acceptFocusByTab = 1;
+    radioButton1.acceptTouch = 1;
+
     guiPanel1.handlers.elements[0].eventType = GUI_ON_DRAW;
     guiPanel1.handlers.elements[0].handler = panel1_onDraw;
 }
@@ -113,7 +126,8 @@ void guiPanel1_Initialize(guiGenericWidget_t *parent)
 
 static uint8_t panel1_onDraw(void *sender, guiEvent_t *event)
 {
-    if (guiPanel1.redrawFlags & PANEL_REDRAW_BACKGROUND)
+    //if (guiPanel1.redrawFlags & PANEL_REDRAW_BACKGROUND)
+    if (guiPanel1.redrawForced)
     {
         LCD_SetFont(&font_h10_bold);
         LCD_SetPenColor(CL_BLUE);

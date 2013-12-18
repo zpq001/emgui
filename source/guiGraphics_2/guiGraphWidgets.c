@@ -18,6 +18,7 @@
 #include "guiTextLabel.h"
 #include "guiCheckBox.h"
 #include "guiButton.h"
+#include "guiRadioButton.h"
 
 
 int16_t wx;
@@ -115,7 +116,7 @@ void guiGraph_DrawPanel(guiPanel_t *panel)
 {
     rect_t rect1;
 
-    if (panel->redrawFlags & PANEL_REDRAW_BACKGROUND)
+    if (panel->redrawForced)
     {
         // Background
         LCD_SetFillColor(colorPalette1[COLOR_INDEX_WIDGET_BACKGROUND]);
@@ -144,7 +145,7 @@ void guiGraph_DrawPanel(guiPanel_t *panel)
 
     }
 
-    if (panel->redrawFlags & (PANEL_REDRAW_BACKGROUND | PANEL_REDRAW_FOCUS))
+    if ((panel->redrawForced) || (panel->redrawFocus))
     {
         if (panel->showFocus)
         {
@@ -271,7 +272,7 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
     rect1.y2 = wy + checkBox->height - 1;
 
 
-    if (checkBox->redrawFlags & CHECKBOX_REDRAW_BACKGROUND)
+    if (checkBox->redrawForced)
     {
        // Erase rectangle
         LCD_SetFillColor(colorPalette1[COLOR_INDEX_WIDGET_BACKGROUND]);
@@ -302,7 +303,7 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
     }
 
 
-    if (checkBox->redrawFlags & (CHECKBOX_REDRAW_STATE | CHECKBOX_REDRAW_BACKGROUND))
+    if ((checkBox->redrawForced) || (checkBox->redrawCheckedState))
     {
         LCD_SetPenColor(CL_BLACK);
         LCD_SetAltPenColor(CL_WHITE);
@@ -315,7 +316,7 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
 
 
 
-    if (checkBox->redrawFlags & (CHECKBOX_REDRAW_FOCUS | CHECKBOX_REDRAW_BACKGROUND))
+    if ((checkBox->redrawForced) || (checkBox->redrawFocus))
     {
         rect1.x1 = wx + 3 + CHECKBOX_GRAPH_XSIZE + CHECKBOX_TEXT_MARGIN/2;
         rect1.y1 = wy + 1;
@@ -347,6 +348,89 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
 
 
 
+void guiGraph_DrawRadioButton(guiRadioButton_t *button)
+{
+    int8_t y_aligned;
+    int8_t x_aligned;
+    rect_t rect1;
+
+    rect1.x1 = wx;
+    rect1.x2 = wx + button->width - 1;
+    rect1.y1 = wy;
+    rect1.y2 = wy + button->height - 1;
+
+
+    y_aligned = wy + button->height / 2;
+    x_aligned = wx + RADIOBUTTON_RADIUS;
+
+
+    if (button->redrawForced)
+    {
+        // Erase rectangle
+        LCD_SetFillColor(colorPalette1[COLOR_INDEX_WIDGET_BACKGROUND]);
+        //LCD_SetFillColor(CL_WHITE);
+        LCD_FillRect(&rect1);
+
+        // Draw string
+        if (button->text)
+        {
+            LCD_SetPenColor(colorPalette1[COLOR_INDEX_TEXT_ACTIVE]);
+            LCD_SetFont(button->font);
+            rect1.x1 = wx + 2 + RADIOBUTTON_RADIUS*2 + RADIOBUTTON_TEXT_MARGIN;
+            rect1.y1 = wy + 1;
+            rect1.x2 = wx + button->width - 2;
+            rect1.y2 = wy + button->height - 2;
+            LCD_PrintStringAligned(button->text, &rect1, button->textAlignment);
+        }
+    }
+
+
+    if ((button->redrawForced) || (button->redrawCheckedState))
+    {
+        LCD_SetFillColor(CL_WHITE);
+        LCD_DrawFilledCircle(x_aligned,y_aligned,RADIOBUTTON_RADIUS);
+        LCD_SetPenColor(colorFromRgb(70,70,70));
+        LCD_DrawCircle(x_aligned,y_aligned,RADIOBUTTON_RADIUS);
+        LCD_SetPenColor(colorFromRgb(140,140,140));
+        LCD_DrawCircle(x_aligned,y_aligned,RADIOBUTTON_RADIUS-1);
+        //LCD_SetPenColor(colorPalette1[COLOR_INDEX_3DFRAME_DARK1]);
+        //LCD_DrawCircle(x_aligned,y_aligned,RADIOBUTTON_RADIUS-1);
+
+        if (button->isChecked)
+        {
+            LCD_SetFillColor(CL_BLACK);
+            LCD_DrawFilledCircle(x_aligned,y_aligned,RADIOBUTTON_CHECK_RADIUS);
+        }
+    }
+
+
+
+    if ((button->redrawForced) || (button->redrawFocus))
+    {
+        rect1.x1 = wx + 3 + RADIOBUTTON_RADIUS*2 + RADIOBUTTON_TEXT_MARGIN/2;
+        rect1.y1 = wy + 1;
+        rect1.x2 = wx + button->width - 2;
+        rect1.y2 = wy + button->height - 2;
+
+        if (button->isFocused)
+        {
+          LCD_SetLineStyle(LINE_STYLE_DOTTED);
+          LCD_SetPenColor(colorPalette[COLOR_INDEX_FOCUS_FRAME]);
+          LCD_DrawRect(&rect1);
+        }
+        else
+        {
+          LCD_SetLineStyle(LINE_STYLE_SOLID);
+          LCD_SetPenColor(colorPalette[COLOR_INDEX_WIDGET_BACKGROUND]);
+          LCD_DrawRect(&rect1);
+        }
+    }
+
+}
+
+
+
+
 
 
 //-------------------------------------------------------//
@@ -363,7 +447,7 @@ void guiGraph_DrawButton(guiButton_t *button)
     rect1.y2 = wy + button->height - 3;
 
 
-    if (button->redrawFlags & BUTTON_REDRAW_BACKGROUND)
+    if (button->redrawForced)
     {
         LCD_SetFillColor(colorPalette1[COLOR_INDEX_BUTTON_BACKGROUND]);
         LCD_FillRect(&rect1);
@@ -372,7 +456,7 @@ void guiGraph_DrawButton(guiButton_t *button)
         LCD_PrintStringAligned(button->text, &rect1, button->textAlignment);
     }
 
-    if (button->redrawFlags & (BUTTON_REDRAW_BACKGROUND | BUTTON_REDRAW_FOCUS))
+    if ((button->redrawForced) || (button->redrawFocus))
     {
         if (button->isFocused)
         {
@@ -392,7 +476,7 @@ void guiGraph_DrawButton(guiButton_t *button)
         LCD_DrawRect(&rect1);
     }
 
-    if (button->redrawFlags & BUTTON_REDRAW_STATE)
+    if ((button->redrawForced) || (button->redrawPressedState))
     {
         rect1.x1 = wx;
         rect1.x2 = wx + button->width - 1;
@@ -405,3 +489,4 @@ void guiGraph_DrawButton(guiButton_t *button)
     }
 
 }
+

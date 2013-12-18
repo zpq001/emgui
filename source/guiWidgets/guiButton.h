@@ -5,11 +5,8 @@
 #include "guiWidgets.h"
 
 
-// Redraw flags:
-#define BUTTON_REDRAW_FOCUS     (1<<0)
-#define BUTTON_REDRAW_STATE     (1<<1)
-#define BUTTON_REDRAW_BACKGROUND     (1<<2)
-
+// Appearance
+#define BUTTON_FOCUS_RECT_MARGIN    2
 
 
 // Widget-specific events
@@ -17,12 +14,29 @@
 #define BUTTON_CLICKED            (0xC0 + 0x01)
 
 
-#define BUTTON_FOCUS_RECT_MARGIN    2
+
+// Widget-specific keys
+#define BUTTON_KEY_PRESS     0x01
+#define BUTTON_KEY_RELEASE   0x02
+
+
+
+
+// Widget-specific state checks
+#define BUTTON_ACCEPTS_FOCUS_EVENT(button)  ( (button->isVisible) && (1) )    // TODO - add isEnabled
+#define BUTTON_ACCEPTS_KEY_EVENT(button)    ( (button->isFocused) && \
+                                              (button->isVisible) )           // TODO - add isEnabled
+#define BUTTON_ACCEPTS_TOUCH_EVENT(button)  ( (button->isVisible) )           // TODO - add isEnabled
+
+
 
 
 void guiButton_Initialize(guiButton_t *button, guiGenericWidget_t *parent);
 
-//void guiButton_SetRedrawFlags(guiButton_t *button, uint8_t flags);
+uint8_t guiButton_SetPressed(guiButton_t *button, uint8_t newPressedState);
+void guiButton_Click(guiButton_t *button);
+uint8_t guiButton_ProcessKey(guiButton_t *button, uint8_t key, uint8_t enableClick);
+uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event);
 
 
 

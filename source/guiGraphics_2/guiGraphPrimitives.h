@@ -75,6 +75,9 @@ void LCD_PrintString(char *str, uint8_t x, uint8_t y);
 void LCD_PrintStringAligned(char *str, rect_t *rect, uint8_t alignment);
 
 void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
+//void LCD_DrawCircle(uint16_t Xpos, uint16_t Ypos, uint16_t radius);
+void LCD_DrawCircle(int16_t x0, int16_t y0, int16_t radius);
+void LCD_DrawFilledCircle(int16_t x0, int16_t y0, int16_t radius);
 
 
 #endif

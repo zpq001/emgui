@@ -399,6 +399,12 @@ void LCD_PrintStringAligned(char *str, rect_t *rect, uint8_t alignment)
 }
 
 
+
+//=======================================================//
+//=======================================================//
+//  GRAPHS
+
+
 void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 {
     int16_t dy = 0;
@@ -458,3 +464,70 @@ void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
     }
 }
 
+
+void LCD_DrawCircle(int16_t x0, int16_t y0, int16_t radius)
+{
+    int16_t x = radius;
+    int16_t y = 0;
+    int16_t xChange = 1 - (radius << 1);
+    int16_t yChange = 0;
+    int16_t radiusError = 0;
+
+    while (x >= y)
+    {
+        LCD_PutPixel(x0 - x, y0 + y, penColor);
+        LCD_PutPixel(x0 + x, y0 + y, penColor);
+        LCD_PutPixel(x0 - x, y0 - y, penColor);
+        LCD_PutPixel(x0 + x, y0 - y, penColor);
+
+        LCD_PutPixel(x0 - y, y0 + x, penColor);
+        LCD_PutPixel(x0 + y, y0 + x, penColor);
+        LCD_PutPixel(x0 - y, y0 - x, penColor);
+        LCD_PutPixel(x0 + y, y0 - x, penColor);
+
+        y++;
+        radiusError += yChange;
+        yChange += 2;
+        if (((radiusError << 1) + xChange) > 0)
+        {
+            x--;
+            radiusError += xChange;
+            xChange += 2;
+        }
+    }
+}
+
+
+void LCD_DrawFilledCircle(int16_t x0, int16_t y0, int16_t radius)
+{
+    int16_t x = radius;
+    int16_t y = 0;
+    int16_t xChange = 1 - (radius << 1);
+    int16_t yChange = 0;
+    int16_t radiusError = 0;
+    int16_t i;
+
+    while (x >= y)
+    {
+        for (i = x0 - x; i <= x0 + x; i++)
+        {
+            LCD_PutPixel(i, y0 + y, fillColor);
+            LCD_PutPixel(i, y0 - y, fillColor);
+        }
+        for (i = x0 - y; i <= x0 + y; i++)
+        {
+            LCD_PutPixel(i, y0 + x, fillColor);
+            LCD_PutPixel(i, y0 - x, fillColor);
+        }
+
+        y++;
+        radiusError += yChange;
+        yChange += 2;
+        if (((radiusError << 1) + xChange) > 0)
+        {
+            x--;
+            radiusError += xChange;
+            xChange += 2;
+        }
+    }
+}

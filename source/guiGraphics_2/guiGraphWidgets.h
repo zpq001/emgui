@@ -39,7 +39,7 @@ void guiGraph_DrawPanel(guiPanel_t *panel);
 //void guiGraph_DrawForm(guiForm_t *form);
 void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel);
 void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox);
-
+void guiGraph_DrawRadioButton(guiRadioButton_t *button);
 
 
 void guiGraph_DrawButton(guiButton_t *button);

@@ -1,18 +1,18 @@
 /**********************************************************
-    Module checkBox
-
-
+    Module button
 
 
 **********************************************************/
 
 #include <stdint.h>
-
 #include "guiEvents.h"
 #include "guiCore.h"
 #include "guiWidgets.h"
+#include "guiRadioButton.h"
 #include "guiGraphWidgets.h"
-#include "guiCheckBox.h"
+
+
+
 
 
 
@@ -23,46 +23,47 @@
 //      except isChecked state.
 // Returns 1 if new state was applied. Otherwise returns 0.
 //-------------------------------------------------------//
-uint8_t guiCheckbox_SetChecked(guiCheckBox_t *checkBox, uint8_t newCheckedState)
+uint8_t guiRadioButton_SetChecked(guiRadioButton_t *button, uint8_t newCheckedState)
 {
     guiEvent_t event;
-    if (checkBox == 0) return 0;
+    if (button == 0) return 0;
 
     if (newCheckedState)
     {
         // Check
-        if (checkBox->isChecked) return 0;
-        checkBox->isChecked = 1;
+        if (button->isChecked) return 0;
+        button->isChecked = 1;
     }
     else
     {
         // Uncheck
-        if (checkBox->isChecked == 0) return 0;
-        checkBox->isChecked = 0;
+        if (button->isChecked == 0) return 0;
+        button->isChecked = 0;
     }
     // Checked state changed - call handler
-    checkBox->redrawCheckedState = 1;
-    checkBox->redrawRequired = 1;
-    if (checkBox->handlers.count != 0)
+    button->redrawCheckedState = 1;
+    button->redrawRequired = 1;
+    if (button->handlers.count != 0)
     {
-        event.type = CHECKBOX_CHECKED_CHANGED;
-        guiCore_CallEventHandler((guiGenericWidget_t *)checkBox, &event);
+        event.type = RADIOBUTTON_CHECKED_CHANGED;
+        guiCore_CallEventHandler((guiGenericWidget_t *)button, &event);
     }
     return 1;
 }
 
 
 //-------------------------------------------------------//
-// Checkbox key handler
+// RadioButton key handler
 //
 // Returns GUI_EVENT_ACCEPTED if key is processed,
 //         GUI_EVENT_DECLINE otherwise
 //-------------------------------------------------------//
-uint8_t guiCheckbox_ProcessKey(guiCheckBox_t *checkBox, uint8_t key)
+uint8_t guiRadioButton_ProcessKey(guiRadioButton_t *button, uint8_t key)
 {
-    if (key == CHECKBOX_KEY_SELECT)
+    if (key == RADIOBUTTON_KEY_SELECT)
     {
-        guiCheckbox_SetChecked(checkBox, !checkBox->isChecked);
+        guiRadioButton_SetChecked(button, 1);
+        // Uncheck other parent's radiobuttons!
     }
     else
     {
@@ -73,15 +74,12 @@ uint8_t guiCheckbox_ProcessKey(guiCheckBox_t *checkBox, uint8_t key)
 
 
 
-//-------------------------------------------------------//
-// Checkbox event handler
-//
-// Returns GUI_EVENT_ACCEPTED if event is processed,
-//         GUI_EVENT_DECLINE otherwise
-//-------------------------------------------------------//
-uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
+
+
+
+uint8_t guiRadioButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 {
-    guiCheckBox_t *checkBox = (guiCheckBox_t *)widget;
+    guiRadioButton_t *button = (guiRadioButton_t *)widget;
     uint8_t processResult = GUI_EVENT_ACCEPTED;
     uint8_t key;
     widgetTouchState_t touch;
@@ -89,58 +87,60 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
     switch (event.type)
     {
         case GUI_EVENT_DRAW:
-            guiGraph_DrawCheckBox(checkBox);
+            guiGraph_DrawRadioButton(button);
             // Call handler
             event.type = GUI_ON_DRAW;
             guiCore_CallEventHandler(widget, &event);
             // Reset flags - redrawForced will be reset by core
-            checkBox->redrawFocus = 0;
-            checkBox->redrawCheckedState = 0;
-            checkBox->redrawRequired = 0;
+            button->redrawFocus = 0;
+            button->redrawCheckedState = 0;
+            button->redrawRequired = 0;
             break;
         case GUI_EVENT_FOCUS:
-            if (CHECKBOX_ACCEPTS_FOCUS_EVENT(checkBox))
-                guiCore_SetFocused((guiGenericWidget_t *)checkBox,1);
+            if (RADIOBUTTON_ACCEPTS_FOCUS_EVENT(button))
+                guiCore_SetFocused((guiGenericWidget_t *)button,1);
             else
                 processResult = GUI_EVENT_DECLINE;      // Cannot accept focus
             break;
         case GUI_EVENT_UNFOCUS:
-            guiCore_SetFocused((guiGenericWidget_t *)checkBox,0);
-            checkBox->keepTouch = 0;
+            guiCore_SetFocused((guiGenericWidget_t *)button,0);
+            button->keepTouch = 0;
             break;
         case GUI_EVENT_SHOW:
-            guiCore_SetVisible((guiGenericWidget_t *)checkBox, 1);
+            guiCore_SetVisible((guiGenericWidget_t *)button, 1);
             break;
         case GUI_EVENT_HIDE:
-            guiCore_SetVisible((guiGenericWidget_t *)checkBox, 0);
+            guiCore_SetVisible((guiGenericWidget_t *)button, 0);
             break;
         case GUI_EVENT_KEY:
             processResult = GUI_EVENT_DECLINE;
-            if (CHECKBOX_ACCEPTS_KEY_EVENT(checkBox))
+            if (RADIOBUTTON_ACCEPTS_KEY_EVENT(button))
             {
-                if ((checkBox->useDefaultKeyHandler) && (event.spec == DEFAULT_KEY_EVENT_DOWN))
+                if ((button->useDefaultKeyHandler) && (event.spec == DEFAULT_KEY_EVENT_DOWN))
                 {
                     if (event.lparam == DEFAULT_KEY_OK)
-                        key = CHECKBOX_KEY_SELECT;
+                        key = RADIOBUTTON_KEY_SELECT;
                     else
                         key = 0;
                     if (key != 0)
-                        processResult = guiCheckbox_ProcessKey(checkBox,key);
+                        processResult = guiRadioButton_ProcessKey(button, key);
                 }
                 // Call KEY event handler
                 processResult |= guiCore_CallEventHandler(widget, &event);
             }
             break;
         case GUI_EVENT_TOUCH:
-            if (CHECKBOX_ACCEPTS_TOUCH_EVENT(checkBox))
+            if (RADIOBUTTON_ACCEPTS_TOUCH_EVENT(button))
             {
                 // Convert touch event
-                guiCore_DecodeWidgetTouchEvent((guiGenericWidget_t *)checkBox, &event, &touch);
+                guiCore_DecodeWidgetTouchEvent((guiGenericWidget_t *)button, &event, &touch);
                 // Check if widget holds the touch
-                if (checkBox->keepTouch)
+                if (button->keepTouch)
                 {
                     if (touch.state == TOUCH_RELEASE)
-                        checkBox->keepTouch = 0;
+                    {
+                        button->keepTouch = 0;
+                    }
                 }
                 else if (touch.state != TOUCH_RELEASE)
                 {
@@ -148,9 +148,9 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                     if (touch.isInsideWidget)
                     {
                         // Capture
-                        guiCore_SetFocused((guiGenericWidget_t *)checkBox,1);
-                        guiCheckbox_SetChecked(checkBox, !checkBox->isChecked);
-                        checkBox->keepTouch = 1;
+                        guiCore_SetFocused((guiGenericWidget_t *)button,1);
+                        guiRadioButton_ProcessKey(button, RADIOBUTTON_KEY_SELECT);
+                        button->keepTouch = 1;
                     }
                     else
                     {
@@ -175,45 +175,44 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             // Widget cannot process incoming event. Try to find a handler.
             processResult = guiCore_CallEventHandler(widget, &event);
     }
+
+
     return processResult;
 }
 
 
 
 
-
-//-------------------------------------------------------//
-// Checkbox default init
-//
-//-------------------------------------------------------//
-void guiCheckBox_Initialize(guiCheckBox_t *checkBox, guiGenericWidget_t *parent)
+void guiRadioButton_Initialize(guiRadioButton_t *button, guiGenericWidget_t *parent)
 {
-    checkBox->parent = parent;
-    checkBox->acceptFocus = 0;
-    checkBox->acceptFocusByTab = 0;
-    checkBox->acceptTouch = 0;
-    checkBox->isContainer = 0;
-    checkBox->isFocused = 0;
-    checkBox->isVisible = 1;
-    checkBox->redrawForced = 0;
-    checkBox->redrawRequired = 0;
-    checkBox->tag = 0;
-    checkBox->tabIndex = 0;
-    checkBox->processEvent = guiCheckBox_ProcessEvent;
-    checkBox->handlers.count = 0;
-    checkBox->keepTouch = 0;
-    checkBox->useDefaultKeyHandler = 1;
+    button->parent = parent;
+    button->acceptFocus = 0;
+    button->acceptFocusByTab = 1;
+    button->acceptTouch = 1;
+    button->isContainer = 0;
+    button->isFocused = 0;
+    button->isVisible = 1;
+    button->redrawForced = 0;
+    button->redrawRequired = 0;
+    button->tag = 0;
+    button->tabIndex = 0;
+    button->processEvent = guiRadioButton_ProcessEvent;
+    button->handlers.count = 0;
+    button->keepTouch = 0;
+    button->useDefaultKeyHandler = 1;
 
-    checkBox->redrawFocus = 0;
-    checkBox->redrawCheckedState = 0;
-    checkBox->x = 0;
-    checkBox->y = 0;
-    checkBox->width = 40;
-    checkBox->height = 15;
-    checkBox->textAlignment = ALIGN_LEFT;
-    checkBox->font = &font_6x8_mono;
-    checkBox->text = 0;
-    checkBox->hasFrame = 0;
-    checkBox->isChecked = 0;
+
+    button->redrawCheckedState = 0;
+    button->redrawFocus = 0;
+    button->x = 0;
+    button->y = 0;
+    button->width = 40;
+    button->height = 15;
+    button->textAlignment = ALIGN_CENTER;
+    button->font = &font_6x8_mono;
+    button->text = 0;
+    button->isChecked = 0;
 }
+
+
 

@@ -21,6 +21,7 @@ INPUT(
 ./debug\guiPanel1.o
 ./debug\guiPanel2.o
 ./debug\guiEventConverter.o
+./debug\guiRadioButton.o
 ./debug\moc_mainwindow.o
 ./debug\moc_pixeldisplay.o
 );
