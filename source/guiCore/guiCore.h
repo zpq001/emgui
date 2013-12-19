@@ -21,6 +21,15 @@ typedef struct {
     guiMsg_t queue[GUI_CORE_QUEUE_SIZE];
 } guiMsgQueue_t;
 
+
+typedef struct {
+    int16_t x1;
+    int16_t y1;
+    int16_t x2;
+    int16_t y2;
+} rect16_t;
+
+
 // Event process function result
 #define GUI_EVENT_DECLINE       0x00
 #define GUI_EVENT_ACCEPTED      0x01
@@ -101,6 +110,7 @@ uint8_t guiCore_GetMessageFromQueue(guiGenericWidget_t **target, guiEvent_t *eve
 
 void guiCore_Init(guiGenericWidget_t *initialForm);
 void guiCore_RedrawAll(void);
+uint8_t guiCore_CheckWidgetOvelap(guiGenericWidget_t *widget, rect16_t *rect);
 void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, uint16_t x2, uint16_t y2);
 
 void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t touchState);
@@ -117,7 +127,7 @@ uint8_t guiCore_GetWidgetIndex(guiGenericWidget_t *widget);
 uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget);
 
 void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tabDir);
-guiGenericWidget_t *guiCore_GetNextFocusWidget(guiGenericContainer_t *container, int8_t tabDir);
+//guiGenericWidget_t *guiCore_GetNextFocusWidget(guiGenericContainer_t *container, int8_t tabDir);
 
 uint8_t guiCore_CallEventHandler(guiGenericWidget_t *widget, guiEvent_t *event);
 

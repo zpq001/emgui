@@ -142,20 +142,20 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
     {
           case GUI_EVENT_UPDATE:
             sprintf(textLabel_time.text, "%2d:%02d:%02d", timeHours, timeMinutes, timeSeconds);
-            guiTextLabel_SetRedrawFlags(&textLabel_time, TEXT_LABEL_REDRAW_TEXT);
+            textLabel_time.redrawForced = 1;
+            textLabel_time.redrawRequired = 1;
             break;
           case GUI_EVENT_DRAW:
             // Check if full redraw is required
             guiGraph_DrawPanel(&guiMainForm);
             // Draw static elemens
-            if ((guiMainForm.redrawForced) || (guiMainForm.redrawFocus))
+            if (guiMainForm.redrawForced)
             {
                 LCD_SetLineStyle(LINE_STYLE_SOLID);
                 LCD_SetPenColor(colorPalette[COLOR_INDEX_3DFRAME_DARK1]);
                 LCD_DrawHorLine(3,guiMainForm.height - 25,guiMainForm.width - 6);
             }
             // Reset flags
-            //guiMainForm.redrawFlags = 0;
             guiMainForm.redrawFocus = 0;
             guiMainForm.redrawRequired = 0;
             break;

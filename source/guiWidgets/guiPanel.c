@@ -210,6 +210,7 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 //-------------------------------------------------------//
 void guiPanel_Initialize(guiPanel_t *panel, guiGenericWidget_t *parent)
 {
+    panel->type = WT_PANEL;
     panel->parent = parent;
     panel->acceptFocus = 1;
     panel->acceptFocusByTab = 0;

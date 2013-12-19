@@ -89,6 +89,7 @@ lbl_focus:
 
 void guiTextLabel_Initialize(guiTextLabel_t *textLabel, guiGenericWidget_t *parent)
 {
+    textLabel->type = WT_TEXTLABEL;
     textLabel->parent = parent;
     textLabel->acceptFocus = 0;
     textLabel->acceptFocusByTab = 0;
@@ -113,15 +114,5 @@ void guiTextLabel_Initialize(guiTextLabel_t *textLabel, guiGenericWidget_t *pare
     textLabel->font = &font_6x8_mono;
     textLabel->text = 0;
     textLabel->hasFrame = 0;
-}
-
-
-void guiTextLabel_SetRedrawFlags(guiTextLabel_t *textLabel, uint8_t flags)
-{
-    if (flags)
-    {
-        textLabel->redrawFlags |= flags;
-        textLabel->redrawRequired = 1;
-    }
 }
 

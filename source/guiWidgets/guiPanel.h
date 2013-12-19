@@ -5,12 +5,6 @@
 #include "guiWidgets.h"
 
 
-// Redraw flags:
-//#define PANEL_REDRAW_FOCUS       (1<<0)
-#define PANEL_REDRAW_BACKGROUND  (1<<1)
-
-#define PANEL_FOCUS_RECT_MARGIN    2
-
 
 // Widget-specific keys
 #define PANEL_KEY_SELECT    0x01

@@ -60,7 +60,8 @@ HEADERS  += mainwindow.h \
     gui_top/guiPanel1.h \
     gui_top/guiPanel2.h \
     gui_top/guiEventConverter.h \
-    ../../source/guiWidgets/guiRadioButton.h
+    ../../source/guiWidgets/guiRadioButton.h \
+    gui_top/guiConfig.h
 	
 
 

@@ -14,6 +14,17 @@
 #include "guiFonts.h"
 #include "guiGraphPrimitives.h"
 
+
+// Widget types
+#define WT_PANEL       0x01
+#define WT_BUTTON      0x02
+#define WT_CHECKBOX    0x03
+#define WT_RADIOBUTTON 0x04
+#define WT_TEXTLABEL   0x05
+
+
+
+
 // Event handler record
 typedef struct {
     uint8_t eventType;                                         // Event type
@@ -40,6 +51,8 @@ typedef struct {
 
 // Basic widget type - all widget types MUST have all fileds in their typedef beginning
 typedef struct guiGenericWidget_t {
+    // Widget type (starting with WT_)
+    uint8_t type;
     // Pointer to parent widget
     struct guiGenericWidget_t *parent;
     // Bit properties:
@@ -56,6 +69,7 @@ typedef struct guiGenericWidget_t {
                                     // redrawRequired is set along with redrawForced.
     uint8_t redrawFocus : 1;        // Flag is set when widget focus must be redrawn.
                                     // redrawRequired is set along with redrawFocus.
+    uint8_t keepTouch : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -72,6 +86,8 @@ typedef struct guiGenericWidget_t {
 
 typedef struct guiGenericContainer_t {
     //----- Inherited from generic widget -----//
+    // Widget type (starting with WT_)
+    uint8_t type;
     // Pointer to parent widget
     struct guiGenericWidget_t *parent;
     // Bit properties:
@@ -85,6 +101,7 @@ typedef struct guiGenericContainer_t {
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
     uint8_t redrawFocus : 1;
+    uint8_t keepTouch : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -105,6 +122,8 @@ typedef struct guiGenericContainer_t {
 
 typedef struct guiForm_t {
     //----- Inherited from generic widget -----//
+    // Widget type (starting with WT_)
+    uint8_t type;
     // Pointer to parent widget
     struct guiGenericWidget_t *parent;
     // Bit properties:
@@ -118,6 +137,7 @@ typedef struct guiForm_t {
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
     uint8_t redrawFocus : 1;
+    uint8_t keepTouch : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -135,13 +155,15 @@ typedef struct guiForm_t {
     uint8_t redrawFlags;
     uint8_t hasFrame : 1;
     uint8_t focusFallsThrough : 1;
-    uint8_t keepTouch : 1;
+
 
 } guiForm_t;
 
 
 typedef struct guiPanel_t {
     //----- Inherited from generic widget -----//
+    // Widget type (starting with WT_)
+    uint8_t type;
     // Pointer to parent widget
     struct guiGenericWidget_t *parent;
     // Bit properties:
@@ -155,6 +177,7 @@ typedef struct guiPanel_t {
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
     uint8_t redrawFocus : 1;
+    uint8_t keepTouch : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -170,7 +193,6 @@ typedef struct guiPanel_t {
 
     guiWidgetCollection_t widgets;
     uint8_t focusFallsThrough : 1;
-    uint8_t keepTouch : 1;
     uint8_t frame : 3;
     uint8_t showFocus : 1;
     uint8_t useDefaultKeyHandler : 1;
@@ -182,6 +204,8 @@ typedef struct guiPanel_t {
 
 typedef struct guiTextLabel_t {
     //----- Inherited from generic widget -----//
+    // Widget type (starting with WT_)
+    uint8_t type;
     // Pointer to parent widget
     struct guiGenericWidget_t *parent;
     // Bit properties:
@@ -195,6 +219,7 @@ typedef struct guiTextLabel_t {
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
     uint8_t redrawFocus : 1;
+    uint8_t keepTouch : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -219,6 +244,8 @@ typedef struct guiTextLabel_t {
 
 typedef struct guiCheckBox_t {
     //----- Inherited from generic widget -----//
+    // Widget type (starting with WT_)
+    uint8_t type;
     // Pointer to parent widget
     struct guiGenericWidget_t *parent;
     // Bit properties:
@@ -232,6 +259,7 @@ typedef struct guiCheckBox_t {
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
     uint8_t redrawFocus : 1;
+    uint8_t keepTouch : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -250,7 +278,6 @@ typedef struct guiCheckBox_t {
     char *text;
     uint8_t hasFrame : 1;
     uint8_t isChecked : 1;
-    uint8_t keepTouch : 1;
     uint8_t useDefaultKeyHandler : 1;
     uint8_t redrawCheckedState : 1;
 
@@ -260,6 +287,8 @@ typedef struct guiCheckBox_t {
 
 typedef struct guiButton_t {
     //----- Inherited from generic widget -----//
+    // Widget type (starting with WT_)
+    uint8_t type;
     // Pointer to parent widget
     struct guiGenericWidget_t *parent;
     // Bit properties:
@@ -273,6 +302,7 @@ typedef struct guiButton_t {
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
     uint8_t redrawFocus : 1;
+    uint8_t keepTouch : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -291,7 +321,6 @@ typedef struct guiButton_t {
     const tFont *font;
     char *text;
     uint8_t isPressed : 1;
-    uint8_t keepTouch : 1;
     uint8_t useDefaultKeyHandler : 1;
     uint8_t isToggle : 1;
     uint8_t isPressOnly : 1;
@@ -302,6 +331,8 @@ typedef struct guiButton_t {
 
 typedef struct guiRadioButton_t {
     //----- Inherited from generic widget -----//
+    // Widget type (starting with WT_)
+    uint8_t type;
     // Pointer to parent widget
     struct guiGenericWidget_t *parent;
     // Bit properties:
@@ -315,6 +346,7 @@ typedef struct guiRadioButton_t {
     uint8_t redrawRequired : 1;
     uint8_t redrawForced : 1;
     uint8_t redrawFocus : 1;
+    uint8_t keepTouch : 1;
     // Properties
     uint8_t tag;
     uint8_t tabIndex;
@@ -330,11 +362,12 @@ typedef struct guiRadioButton_t {
 
     uint8_t redrawCheckedState : 1;
     uint8_t textAlignment;
+    uint8_t radioIndex;
     const tFont *font;
     char *text;
     uint8_t isChecked : 1;
-    uint8_t keepTouch : 1;
     uint8_t useDefaultKeyHandler : 1;
+
 
 } guiRadioButton_t;
 

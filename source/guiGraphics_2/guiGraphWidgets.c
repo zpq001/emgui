@@ -13,12 +13,12 @@
 #include "guiImages.h"
 #include "guiWidgets.h"
 
-#include "guiForm.h"
-#include "guiPanel.h"
-#include "guiTextLabel.h"
-#include "guiCheckBox.h"
-#include "guiButton.h"
-#include "guiRadioButton.h"
+//#include "guiForm.h"
+//#include "guiPanel.h"
+//#include "guiTextLabel.h"
+//#include "guiCheckBox.h"
+//#include "guiButton.h"
+//#include "guiRadioButton.h"
 
 
 int16_t wx;
@@ -207,26 +207,25 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
     rect1.y1 = wy;
     rect1.y2 = wy + textLabel->height - 1;
 
-   if (textLabel->redrawFlags & TEXT_LABEL_REDRAW_FOCUS)
-   {
-       if (textLabel->isFocused)
-       {
-           LCD_SetLineStyle(LINE_STYLE_DOTTED);
-           LCD_SetPenColor(colorPalette[COLOR_INDEX_FOCUS_FRAME]);
-       }
-       else
-       {
-           LCD_SetLineStyle(LINE_STYLE_SOLID);
-           if (textLabel->hasFrame)
-                LCD_SetPenColor(CL_GREEN); // FIXME
-           else
-                LCD_SetPenColor(colorPalette[COLOR_INDEX_WIDGET_BACKGROUND]);
-       }
-       LCD_DrawRect(&rect1);
-   }
+    if ((textLabel->redrawForced) || (textLabel->redrawFocus))
+    {
+        if (textLabel->isFocused)
+        {
+            LCD_SetLineStyle(LINE_STYLE_DOTTED);
+            LCD_SetPenColor(colorPalette[COLOR_INDEX_FOCUS_FRAME]);
+        }
+        else
+        {
+            LCD_SetLineStyle(LINE_STYLE_SOLID);
+            if (textLabel->hasFrame)
+                 LCD_SetPenColor(CL_GREEN); // FIXME
+            else
+                 LCD_SetPenColor(colorPalette[COLOR_INDEX_WIDGET_BACKGROUND]);
+        }
+        LCD_DrawRect(&rect1);
+    }
 
-
-   if (textLabel->redrawFlags & TEXT_LABEL_REDRAW_TEXT)
+   if (textLabel->redrawForced)
    {
        // Erase rectangle
 //       LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
@@ -389,9 +388,11 @@ void guiGraph_DrawRadioButton(guiRadioButton_t *button)
     {
         LCD_SetFillColor(CL_WHITE);
         LCD_DrawFilledCircle(x_aligned,y_aligned,RADIOBUTTON_RADIUS);
-        LCD_SetPenColor(colorFromRgb(70,70,70));
+        //LCD_SetPenColor(colorFromRgb(140,140,140));
+        LCD_SetPenColor(colorPalette1[COLOR_INDEX_3DFRAME_DARK2]);
         LCD_DrawCircle(x_aligned,y_aligned,RADIOBUTTON_RADIUS);
-        LCD_SetPenColor(colorFromRgb(140,140,140));
+        //LCD_SetPenColor(colorFromRgb(70,70,70));
+        LCD_SetPenColor(colorPalette1[COLOR_INDEX_3DFRAME_DARK1]);
         LCD_DrawCircle(x_aligned,y_aligned,RADIOBUTTON_RADIUS-1);
         //LCD_SetPenColor(colorPalette1[COLOR_INDEX_3DFRAME_DARK1]);
         //LCD_DrawCircle(x_aligned,y_aligned,RADIOBUTTON_RADIUS-1);
