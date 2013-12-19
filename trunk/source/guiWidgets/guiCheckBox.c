@@ -188,6 +188,7 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 //-------------------------------------------------------//
 void guiCheckBox_Initialize(guiCheckBox_t *checkBox, guiGenericWidget_t *parent)
 {
+    checkBox->type = WT_CHECKBOX;
     checkBox->parent = parent;
     checkBox->acceptFocus = 0;
     checkBox->acceptFocusByTab = 0;

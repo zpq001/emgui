@@ -5,12 +5,7 @@
 #include "guiWidgets.h"
 
 
-// Appearance
-//#define BUTTON_FOCUS_RECT_MARGIN    2
 
-#define RADIOBUTTON_RADIUS  6
-#define RADIOBUTTON_CHECK_RADIUS  2
-#define RADIOBUTTON_TEXT_MARGIN  5
 
 
 // Widget-specific events

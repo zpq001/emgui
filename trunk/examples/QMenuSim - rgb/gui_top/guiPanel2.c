@@ -52,10 +52,9 @@ void guiPanel2_Initialize(guiGenericWidget_t *parent)
     guiPanel2.handlers.elements = panel2_handlers;
 
     guiPanel2.isVisible = 0;
-    guiPanel2.redrawRequired = 0;
-    guiPanel2.redrawForced = 0;
     guiPanel2.x = 15;
     guiPanel2.y = 15;
+    //guiPanel2.y = 35;
     guiPanel2.width = 280;
     guiPanel2.height = 150;
     guiPanel2.acceptFocusByTab = 1;
@@ -72,8 +71,6 @@ void guiPanel2_Initialize(guiGenericWidget_t *parent)
     button1.text = "Btn 1";
     button1.font = &font_h10;
     button1.tabIndex = 10;
-    //button1.handlers.elements = button_handlers;
-    //button1.handlers.count = 1;
 
     // Setup button2
     guiButton_Initialize(&button2,  (guiGenericWidget_t *)&guiPanel2);
@@ -84,12 +81,7 @@ void guiPanel2_Initialize(guiGenericWidget_t *parent)
     button2.text = "Btn 2";
     button2.font = &font_h10;
     button2.tabIndex = 11;
-    //button2.handlers.elements = button_handlers;
-    //button2.handlers.count = 1;
 
-    // Setup button handlers
-    //button_handlers[0].eventType = BUTTON_CLICKED;
-    //button_handlers[0].handler = button_onClicked;
 
     guiPanel2.handlers.elements[0].eventType = GUI_ON_DRAW;
     guiPanel2.handlers.elements[0].handler = panel2_onDraw;
@@ -99,7 +91,7 @@ void guiPanel2_Initialize(guiGenericWidget_t *parent)
 
 static uint8_t panel2_onDraw(void *sender, guiEvent_t *event)
 {
-    //if (guiPanel2.redrawFlags & PANEL_REDRAW_BACKGROUND)
+
     if (guiPanel2.redrawForced)
     {
         LCD_SetFont(&font_h10_bold);
@@ -109,18 +101,4 @@ static uint8_t panel2_onDraw(void *sender, guiEvent_t *event)
     return GUI_EVENT_ACCEPTED;
 }
 
-
-
-
-/*
-static uint8_t button_onClicked(void *sender, guiEvent_t event)
-{
-    guiLogEvent("Button clicked");
-
-
-
-
-    return GUI_EVENT_ACCEPTED;
-}
-*/
 

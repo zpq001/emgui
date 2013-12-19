@@ -53,6 +53,34 @@ uint8_t guiRadioButton_SetChecked(guiRadioButton_t *button, uint8_t newCheckedSt
 
 
 //-------------------------------------------------------//
+// Checks specified radiobutton and clears other
+// radiobuttons which have same parent and radioIndex.
+//
+// This function does not perform any widget state checks
+//      except isChecked state.
+//-------------------------------------------------------//
+void guiRadioButton_CheckExclusive(guiRadioButton_t *button)
+{
+    uint8_t i;
+    guiGenericContainer_t *parent;
+    guiGenericWidget_t *w;
+    if ((button == 0) || (button->isChecked))  return;
+    parent = (guiGenericContainer_t *)button->parent;
+    for (i=0; i<parent->widgets.count; i++)
+    {
+        w = parent->widgets.elements[i];
+        if ((w != 0) && (w->type == WT_RADIOBUTTON))
+        {
+            if ((((guiRadioButton_t *)w)->radioIndex == button->radioIndex) &&
+                    (((guiRadioButton_t *)w)->isChecked))
+                guiRadioButton_SetChecked((guiRadioButton_t *)w, 0);
+        }
+    }
+    guiRadioButton_SetChecked(button, 1);
+}
+
+
+//-------------------------------------------------------//
 // RadioButton key handler
 //
 // Returns GUI_EVENT_ACCEPTED if key is processed,
@@ -62,8 +90,7 @@ uint8_t guiRadioButton_ProcessKey(guiRadioButton_t *button, uint8_t key)
 {
     if (key == RADIOBUTTON_KEY_SELECT)
     {
-        guiRadioButton_SetChecked(button, 1);
-        // Uncheck other parent's radiobuttons!
+        guiRadioButton_CheckExclusive(button);
     }
     else
     {
@@ -185,6 +212,7 @@ uint8_t guiRadioButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event
 
 void guiRadioButton_Initialize(guiRadioButton_t *button, guiGenericWidget_t *parent)
 {
+    button->type = WT_RADIOBUTTON;
     button->parent = parent;
     button->acceptFocus = 0;
     button->acceptFocusByTab = 1;
@@ -201,7 +229,7 @@ void guiRadioButton_Initialize(guiRadioButton_t *button, guiGenericWidget_t *par
     button->keepTouch = 0;
     button->useDefaultKeyHandler = 1;
 
-
+    button->radioIndex = 0;
     button->redrawCheckedState = 0;
     button->redrawFocus = 0;
     button->x = 0;

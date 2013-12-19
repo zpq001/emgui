@@ -275,6 +275,7 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 
 void guiButton_Initialize(guiButton_t *button, guiGenericWidget_t *parent)
 {
+    button->type = WT_BUTTON;
     button->parent = parent;
     button->acceptFocus = 0;
     button->acceptFocusByTab = 1;

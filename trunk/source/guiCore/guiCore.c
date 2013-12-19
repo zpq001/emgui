@@ -7,7 +7,7 @@
 **********************************************************/
 
 #include <stdint.h>
-//#include "guiFonts.h"
+#include "guiConfig.h"
 #include "guiGraphPrimitives.h"
 #include "guiGraphWidgets.h"
 #include "guiEvents.h"
@@ -98,8 +98,8 @@ void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, 
             root widget is reached - i.e. propagate up the tree.
 
         If using Z-order, possibly put all form widgets into single array?
-
     */
+
 
     while (1)
     {
@@ -127,8 +127,8 @@ void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, 
         {
             break;
         }
-
     }
+
 }
 
 
@@ -158,11 +158,30 @@ void guiCore_Init(guiGenericWidget_t *rootObject)
 
 
 
+
+uint8_t guiCore_CheckWidgetOvelap(guiGenericWidget_t *widget, rect16_t *rect)
+{
+    if ((rect->x2 - rect->x1 <= 0) || (rect->y2 - rect->y1 <= 0))
+        return 0;
+    if ( (rect->x2 < widget->x) ||
+         (rect->y2 < widget->y) ||
+         (rect->x1 > widget->x + widget->width - 1) ||
+         (rect->y1 > widget->y + widget->height - 1) )
+        return 0;
+    else
+        return 1;
+}
+
+
 void guiCore_RedrawAll(void)
 {
     guiGenericWidget_t *widget;
     guiGenericWidget_t *nextWidget;
     uint8_t index;
+
+    guiGenericWidget_t *w;
+    uint8_t i;
+    rect16_t inv_rect;
 
     // Update root widget. Root widget can further call
     // update for any other widget.
@@ -184,6 +203,11 @@ void guiCore_RedrawAll(void)
         // Check if widget has children
         if (widget->isContainer)
         {
+            if (((guiGenericContainer_t *)widget)->widgets.traverseIndex == 0)
+            {
+                // The first time visit
+            }
+
             // If container has unprocessed children
             if ( ((guiGenericContainer_t *)widget)->widgets.traverseIndex <
                  ((guiGenericContainer_t *)widget)->widgets.count )
@@ -192,9 +216,7 @@ void guiCore_RedrawAll(void)
                 index = ((guiGenericContainer_t *)widget)->widgets.traverseIndex++;
                 nextWidget = ((guiGenericContainer_t *)widget)->widgets.elements[index];
                 // check if widget actually exists and is visible
-                if (nextWidget == 0)
-                    continue;
-                if (nextWidget->isVisible == 0)
+                if ((nextWidget == 0) || (nextWidget->isVisible == 0))
                     continue;
                 // Check if widget must be redrawn forcibly
                 if (widget->redrawForced)
@@ -202,6 +224,30 @@ void guiCore_RedrawAll(void)
                     nextWidget->redrawForced = 1;
                     nextWidget->redrawRequired = 1;
                 }
+                ///////////////////////////
+#ifdef USE_Z_ORDER_REDRAW
+                if ((widget->redrawForced == 0) &&(nextWidget->redrawRequired))
+                {
+                    // Widget will be redrawn - make overlapping widgets with higher Z index redraw too
+                    inv_rect.x1 = nextWidget->x;
+                    inv_rect.y1 = nextWidget->y;
+                    inv_rect.x2 = nextWidget->x + nextWidget->width - 1;
+                    inv_rect.y2 = nextWidget->y + nextWidget->height - 1;
+                    for (i = index+1; i < ((guiGenericContainer_t *)widget)->widgets.count; i++)
+                    {
+                        w = ((guiGenericContainer_t *)widget)->widgets.elements[i];
+                        if ((w != 0) && (w->isVisible))
+                        {
+                            if (guiCore_CheckWidgetOvelap(w, &inv_rect))
+                            {
+                                w->redrawForced = 1;
+                                w->redrawRequired = 1;
+                            }
+                        }
+                    }
+                }
+#endif
+                ///////////////////////////
                 if ((nextWidget->redrawRequired) || (nextWidget->isContainer))
                 {
                     widget = nextWidget;
@@ -242,7 +288,14 @@ void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t touchState)
     event.spec = touchState;
     event.lparam = (uint16_t)x;
     event.hparam = (uint16_t)y;
+#ifdef ALWAYS_PASS_TOUCH_TO_FOCUSED
     guiCore_AddMessageToQueue(focusedWidget, &event);
+#else
+    if ((focusedWidget != 0) && (focusedWidget->keepTouch))
+        guiCore_AddMessageToQueue(focusedWidget, &event);
+    else
+        guiCore_AddMessageToQueue(rootWidget, &event);
+#endif
     guiCore_ProcessMessageQueue();
 }
 
@@ -308,22 +361,6 @@ void guiCore_ConvertToRelativeXY(guiGenericWidget_t *widget, int16_t *x, int16_t
     }
 }
 
-/*
-uint8_t guiCore_CheckWidgetXY(guiGenericWidget_t *widget, int16_t x, int16_t y)
-{
-    if (x < 0)
-        return 0;
-    if (x >= widget->width)
-        return 0;
-    if (y < 0)
-        return 0;
-    if (y >= widget->height)
-        return 0;
-
-    return 1;
-}
-*/
-
 
 
 // Returns widget that has point (x;y) - either one of child widgets or widget itself.
@@ -333,6 +370,7 @@ uint8_t guiCore_CheckWidgetXY(guiGenericWidget_t *widget, int16_t x, int16_t y)
 guiGenericWidget_t *guiCore_GetWidgetAtXY(guiGenericWidget_t *widget, int16_t x, int16_t y)
 {
     guiGenericWidget_t *w;
+    guiGenericWidget_t *topMostWidget = widget;
     uint8_t i;
     // First check if point lies inside container
     if ((x < 0) || (x >= widget->width))
@@ -353,13 +391,16 @@ guiGenericWidget_t *guiCore_GetWidgetAtXY(guiGenericWidget_t *widget, int16_t x,
                 if ((x >= w->x) && (x < w->x + w->width) &&
                     (y >= w->y) && (y < w->y + w->height))
                 {
-                    return w;  // Found
+                    topMostWidget = w;  // Found
+#ifndef GET_TOPMOST_AT_XY
+                    return w;
+#endif
                 }
             }
         }
     }
     // Not found - return container itself
-    return (guiGenericWidget_t *)widget;
+    return topMostWidget;
 }
 
 
@@ -401,8 +442,8 @@ void guiCore_ProcessMessageQueue(void)
 uint8_t guiCore_GetWidgetIndex(guiGenericWidget_t *widget)
 {
     uint8_t i;
-    if (widget == 0) return 0;
-    if (widget->parent == 0) return 0;
+    if ((widget == 0) || (widget->parent == 0))
+        return 0;
     for (i = 0; i < ((guiGenericContainer_t *)widget->parent)->widgets.count; i++)
     {
         if (((guiGenericContainer_t *)widget->parent)->widgets.elements[i] == widget)
@@ -414,16 +455,8 @@ uint8_t guiCore_GetWidgetIndex(guiGenericWidget_t *widget)
 
 void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
 {
-    if (newFocusedWidget == focusedWidget)
-        return;
-
-    // First tell currently focused widget to loose focus
-//    if (focusedWidget != 0)
-//    {
-//        guiCore_AddMessageToQueue(focusedWidget, guiEvent_UNFOCUS);
-//    }
     // Tell new widget to get focus
-    if (newFocusedWidget != 0)
+    if ((newFocusedWidget != focusedWidget) && (newFocusedWidget != 0))
     {
         guiCore_AddMessageToQueue(newFocusedWidget, &guiEvent_FOCUS);
     }
@@ -439,9 +472,12 @@ void guiCore_AcceptFocus(guiGenericWidget_t *widget)
         guiCore_AddMessageToQueue(focusedWidget, &guiEvent_UNFOCUS);
     }
     focusedWidget = widget;
-    index = guiCore_GetWidgetIndex(focusedWidget);
     if ((guiGenericContainer_t *)widget->parent != 0)
+    {
+        // Store index for container
+        index = guiCore_GetWidgetIndex(focusedWidget);
         ((guiGenericContainer_t *)widget->parent)->widgets.focusedIndex = index;
+    }
 }
 
 
@@ -469,7 +505,7 @@ uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget)
     {
         w = ((guiGenericContainer_t *)widget->parent)->widgets.elements[i];
         if (w == 0) continue;
-        if ((w->acceptFocusByTab == 0) || (w->isVisible == 0)) continue;
+        if ((w->acceptFocusByTab == 0) || (w->isVisible == 0)) continue;    // TODO - add isEnabled
         if (w->tabIndex > widget->tabIndex)
             maxTabIndex = w->tabIndex;
         else if (w->tabIndex < widget->tabIndex)
@@ -548,6 +584,7 @@ void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tab
 //  Gets next widget in collection to focus on
 //
 //-------------------------------------------------------//
+/*
 guiGenericWidget_t *guiCore_GetNextFocusWidget(guiGenericContainer_t *container, int8_t tabDir)
 {
     uint8_t currentTabIndex;
@@ -596,7 +633,7 @@ guiGenericWidget_t *guiCore_GetNextFocusWidget(guiGenericContainer_t *container,
     }
     return 0;
 }
-
+*/
 
 
 
