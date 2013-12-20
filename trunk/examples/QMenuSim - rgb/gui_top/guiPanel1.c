@@ -66,11 +66,8 @@ void guiPanel1_Initialize(guiGenericWidget_t *parent)
     guiPanel1.y = 10;
     guiPanel1.width = 280;
     guiPanel1.height = 150;
-    guiPanel1.acceptFocusByTab = 1;
-    guiPanel1.focusFallsThrough = 1;
     guiPanel1.frame = FRAME3D_SUNKEN;
     guiPanel1.tag = 20;
-    guiPanel1.showFocus = 0;
 
     // Setup button1
     guiButton_Initialize(&button1,  (guiGenericWidget_t *)&guiPanel1);
@@ -105,8 +102,6 @@ void guiPanel1_Initialize(guiGenericWidget_t *parent)
     checkBox1.text = "Box 1";
     checkBox1.font = &font_h10;
     checkBox1.tabIndex = 12;
-    checkBox1.acceptFocusByTab = 1;
-    checkBox1.acceptTouch = 1;
 
     guiCheckBox_Initialize(&checkBox2,(guiGenericWidget_t *)&guiPanel1);
     checkBox2.x = 5;
@@ -116,8 +111,6 @@ void guiPanel1_Initialize(guiGenericWidget_t *parent)
     checkBox2.text = "Box 2";
     checkBox2.font = &font_h10;
     checkBox2.tabIndex = 17;
-    checkBox2.acceptFocusByTab = 1;
-    checkBox2.acceptTouch = 1;
 
 
     guiRadioButton_Initialize(&radioButton1, (guiGenericWidget_t *)&guiPanel1);
@@ -164,7 +157,7 @@ void guiPanel1_Initialize(guiGenericWidget_t *parent)
     radioButton4.acceptFocusByTab = 1;
     radioButton4.acceptTouch = 1;
 
-    guiPanel1.handlers.elements[0].eventType = GUI_ON_DRAW;
+    guiPanel1.handlers.elements[0].eventType = GUI_EVENT_DRAW;
     guiPanel1.handlers.elements[0].handler = panel1_onDraw;
 
     radioButton1.isChecked = 1;

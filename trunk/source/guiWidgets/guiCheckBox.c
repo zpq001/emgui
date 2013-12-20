@@ -6,8 +6,8 @@
 
 **********************************************************/
 
-#include <stdint.h>
-
+#include <stdint.h>         // using integer types
+#include <string.h>         // using memset
 #include "guiEvents.h"
 #include "guiCore.h"
 #include "guiWidgets.h"
@@ -91,7 +91,6 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
         case GUI_EVENT_DRAW:
             guiGraph_DrawCheckBox(checkBox);
             // Call handler
-            event.type = GUI_ON_DRAW;
             guiCore_CallEventHandler(widget, &event);
             // Reset flags - redrawForced will be reset by core
             checkBox->redrawFocus = 0;
@@ -118,7 +117,7 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             processResult = GUI_EVENT_DECLINE;
             if (CHECKBOX_ACCEPTS_KEY_EVENT(checkBox))
             {
-                if ((checkBox->useDefaultKeyHandler) && (event.spec == DEFAULT_KEY_EVENT_DOWN))
+                if (event.spec == DEFAULT_KEY_EVENT_DOWN)
                 {
                     if (event.lparam == DEFAULT_KEY_OK)
                         key = CHECKBOX_KEY_SELECT;
@@ -183,38 +182,19 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 
 
 //-------------------------------------------------------//
-// Checkbox default init
+// Default initialization
 //
 //-------------------------------------------------------//
 void guiCheckBox_Initialize(guiCheckBox_t *checkBox, guiGenericWidget_t *parent)
 {
+    memset(checkBox, 0, sizeof(*checkBox));
     checkBox->type = WT_CHECKBOX;
     checkBox->parent = parent;
-    checkBox->acceptFocus = 0;
-    checkBox->acceptFocusByTab = 0;
-    checkBox->acceptTouch = 0;
-    checkBox->isContainer = 0;
-    checkBox->isFocused = 0;
+    checkBox->acceptFocusByTab = 1;
+    checkBox->acceptTouch = 1;
     checkBox->isVisible = 1;
-    checkBox->redrawForced = 0;
-    checkBox->redrawRequired = 0;
-    checkBox->tag = 0;
-    checkBox->tabIndex = 0;
+    checkBox->showFocus = 1;
     checkBox->processEvent = guiCheckBox_ProcessEvent;
-    checkBox->handlers.count = 0;
-    checkBox->keepTouch = 0;
-    checkBox->useDefaultKeyHandler = 1;
-
-    checkBox->redrawFocus = 0;
-    checkBox->redrawCheckedState = 0;
-    checkBox->x = 0;
-    checkBox->y = 0;
-    checkBox->width = 40;
-    checkBox->height = 15;
     checkBox->textAlignment = ALIGN_LEFT;
-    checkBox->font = &font_6x8_mono;
-    checkBox->text = 0;
-    checkBox->hasFrame = 0;
-    checkBox->isChecked = 0;
 }
 

@@ -9,6 +9,8 @@
 #include <stdio.h>      // due to printf
 #include <stdint.h>
 
+#include "guiConfig.h"
+
 #include "guiFonts.h"
 #include "guiGraphHAL.h"
 #include "guiGraphPrimitives.h"
@@ -19,7 +21,6 @@
 #include "guiWidgets.h"
 #include "guiTextLabel.h"
 #include "guiButton.h"
-#include "guiForm.h"
 #include "guiPanel.h"
 
 
@@ -77,21 +78,16 @@ void guiMainForm_Initialize(void)
     guiMainForm.width = 300;
     guiMainForm.height = 200;
 
-    guiMainForm.showFocus = 0;
-    //guiMainForm.focusFallsThrough = 1;
 
-    // Initialize text label for time display
+    // Text label for time display
     guiTextLabel_Initialize(&textLabel_time, (guiGenericWidget_t *)&guiMainForm);
-    textLabel_time.tabIndex = 0;
-    textLabel_time.acceptFocus = 0;
-    textLabel_time.acceptFocusByTab = 0;
     textLabel_time.x = guiMainForm.width - 80;
-    textLabel_time.y = guiMainForm.height - 24;
+    textLabel_time.y = guiMainForm.height - 22;
     textLabel_time.width = 60;
-    textLabel_time.height = 20;
-    textLabel_time.alignment = ALIGN_CENTER;
+    textLabel_time.height = 16;
     textLabel_time.text = textLabel_time_data;
     textLabel_time.font = &font_6x8_mono;
+    //textLabel_time.acceptFocusByTab = 1;
 
     // Setup button1
     guiButton_Initialize(&button1,  (guiGenericWidget_t *)&guiMainForm);
@@ -132,6 +128,7 @@ void guiMainForm_Initialize(void)
 
     guiPanel1_Initialize((guiGenericWidget_t *)&guiMainForm);
     guiPanel2_Initialize((guiGenericWidget_t *)&guiMainForm);
+
 }
 
 
@@ -140,7 +137,11 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
     // Process GUI messages - focus, draw, etc
     switch(event.type)
     {
-          case GUI_EVENT_UPDATE:
+          case GUI_EVENT_INIT:
+            guiCore_TimerInit(TMR_TIME_UPDATE, 1, 0, (guiGenericWidget_t *)&guiMainForm, 0);
+            guiCore_TimerStart(TMR_TIME_UPDATE, 1);
+            break;
+          case GUI_EVENT_TIMER:
             sprintf(textLabel_time.text, "%2d:%02d:%02d", timeHours, timeMinutes, timeSeconds);
             textLabel_time.redrawForced = 1;
             textLabel_time.redrawRequired = 1;

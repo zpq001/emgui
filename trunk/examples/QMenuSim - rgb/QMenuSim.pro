@@ -38,7 +38,6 @@ SOURCES += main.cpp\
     ../../source/guiWidgets/guiPanel.c \
     gui_top/guiPanel1.c \
     gui_top/guiPanel2.c \
-    gui_top/guiEventConverter.c \
     ../../source/guiWidgets/guiRadioButton.c
 
 HEADERS  += mainwindow.h \
@@ -59,7 +58,6 @@ HEADERS  += mainwindow.h \
     ../../source/guiWidgets/guiPanel.h \
     gui_top/guiPanel1.h \
     gui_top/guiPanel2.h \
-    gui_top/guiEventConverter.h \
     ../../source/guiWidgets/guiRadioButton.h \
     gui_top/guiConfig.h
 	

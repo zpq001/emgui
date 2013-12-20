@@ -5,15 +5,13 @@
 #include "guiWidgets.h"
 
 
-// Redraw flags:
-#define TEXT_LABEL_REDRAW_FOCUS     (1<<0)
-#define TEXT_LABEL_REDRAW_TEXT      (1<<1)
 
-
+// Widget-specific state checks
+#define TEXTLABEL_ACCEPTS_FOCUS_EVENT(label)  ( (label->isVisible) && (1) )    // TODO - add isEnabled
 
 
 void guiTextLabel_Initialize(guiTextLabel_t *textLabel, guiGenericWidget_t *parent);
-
+uint8_t guiTextLabel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event);
 
 
 

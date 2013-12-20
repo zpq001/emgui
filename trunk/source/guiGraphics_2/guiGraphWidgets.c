@@ -13,12 +13,6 @@
 #include "guiImages.h"
 #include "guiWidgets.h"
 
-//#include "guiForm.h"
-//#include "guiPanel.h"
-//#include "guiTextLabel.h"
-//#include "guiCheckBox.h"
-//#include "guiButton.h"
-//#include "guiRadioButton.h"
 
 
 int16_t wx;
@@ -207,7 +201,8 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
     rect1.y1 = wy;
     rect1.y2 = wy + textLabel->height - 1;
 
-    if ((textLabel->redrawForced) || (textLabel->redrawFocus))
+    if ( ((textLabel->redrawForced) || (textLabel->redrawFocus)) &&
+         (textLabel->showFocus))
     {
         if (textLabel->isFocused)
         {
@@ -228,9 +223,6 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
    if (textLabel->redrawForced)
    {
        // Erase rectangle
-//       LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-//       LCD_FillRect(wx+1,wy+1,textLabel->width-2,textLabel->height-2,FILL_WITH_WHITE);
-
        LCD_SetFillColor(colorPalette1[COLOR_INDEX_WIDGET_BACKGROUND]);
        rect1.x1 = wx + 1;
        rect1.x2 = wx  + textLabel->width - 2;
@@ -239,16 +231,15 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
        LCD_FillRect(&rect1);
 
        // Draw string
-       if (textLabel->text)
+       if ((textLabel->text) && (textLabel->font))
        {
-//           LCD_SetPixelOutputMode(PIXEL_MODE_OR);
            LCD_SetFont(textLabel->font);
            LCD_SetPenColor(colorPalette1[COLOR_INDEX_TEXT_ACTIVE]);
            rect1.x1 = wx + 1 + TEXT_LABEL_TEXT_MARGIN;
            rect1.y1 = wy + 1;
            rect1.x2 = wx + textLabel->width - 2 - TEXT_LABEL_TEXT_MARGIN;
            rect1.y2 = wy + textLabel->height - 2;
-           LCD_PrintStringAligned(textLabel->text, &rect1, textLabel->alignment);
+           LCD_PrintStringAligned(textLabel->text, &rect1, textLabel->textAlignment);
        }
    }
 }

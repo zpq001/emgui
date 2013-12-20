@@ -20,7 +20,6 @@ INPUT(
 ./release\guiPanel.o
 ./release\guiPanel1.o
 ./release\guiPanel2.o
-./release\guiEventConverter.o
 ./release\guiRadioButton.o
 ./release\moc_mainwindow.o
 ./release\moc_pixeldisplay.o
