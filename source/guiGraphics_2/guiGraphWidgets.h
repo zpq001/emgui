@@ -2,6 +2,7 @@
 #define __GUI_GRAPH_WIDGETS_
 
 #include <stdint.h>
+#include "guiGraphPrimitives.h"
 #include "guiWidgets.h"
 
 // System color palette size
@@ -80,7 +81,6 @@ void guiGraph_SetBaseXY(int16_t x, int16_t y);
 void guiGraph_OffsetBaseXY(int16_t dx, int16_t dy);
 
 void guiGraph_DrawPanel(guiPanel_t *panel);
-//void guiGraph_DrawForm(guiForm_t *form);
 void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel);
 void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox);
 void guiGraph_DrawRadioButton(guiRadioButton_t *button);

@@ -4,16 +4,13 @@
 
 **********************************************************/
 
-#include <stdint.h>
+#include <stdint.h>         // using integer types
+#include <string.h>         // using memset
 #include "guiEvents.h"
 #include "guiCore.h"
 #include "guiWidgets.h"
 #include "guiButton.h"
-//#include "guiFonts.h"
-//#include "guiGraphPrimitives.h"
 #include "guiGraphWidgets.h"
-
-
 
 
 
@@ -121,7 +118,6 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
         case GUI_EVENT_DRAW:
             guiGraph_DrawButton(button);
             // Call handler
-            event.type = GUI_ON_DRAW;
             guiCore_CallEventHandler(widget, &event);
             // Reset flags - redrawForced will be reset by core
             button->redrawFocus = 0;
@@ -150,17 +146,14 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             processResult = GUI_EVENT_DECLINE;
             if (BUTTON_ACCEPTS_KEY_EVENT(button))
             {
-                if (button->useDefaultKeyHandler)
-                {
-                    if ((event.spec == DEFAULT_KEY_EVENT_DOWN) && (event.lparam == DEFAULT_KEY_OK))
-                        key = BUTTON_KEY_PRESS;
-                    else if ((event.spec == DEFAULT_KEY_EVENT_UP) && (event.lparam == DEFAULT_KEY_OK))
-                        key = BUTTON_KEY_RELEASE;
-                    else
-                        key = 0;
-                    if (key != 0)
-                        guiButton_ProcessKey(button, key, 1);
-                }
+                if ((event.spec == DEFAULT_KEY_EVENT_DOWN) && (event.lparam == DEFAULT_KEY_OK))
+                    key = BUTTON_KEY_PRESS;
+                else if ((event.spec == DEFAULT_KEY_EVENT_UP) && (event.lparam == DEFAULT_KEY_OK))
+                    key = BUTTON_KEY_RELEASE;
+                else
+                    key = 0;
+                if (key != 0)
+                    guiButton_ProcessKey(button, key, 1);
                 // Call KEY event handler
                 processResult |= guiCore_CallEventHandler(widget, &event);
             }
@@ -272,38 +265,21 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                 */
 
 
-
+//-------------------------------------------------------//
+// Default initialization
+//
+//-------------------------------------------------------//
 void guiButton_Initialize(guiButton_t *button, guiGenericWidget_t *parent)
 {
+    memset(button, 0, sizeof(*button));
     button->type = WT_BUTTON;
     button->parent = parent;
-    button->acceptFocus = 0;
     button->acceptFocusByTab = 1;
     button->acceptTouch = 1;
-    button->isContainer = 0;
-    button->isFocused = 0;
     button->isVisible = 1;
-    button->redrawForced = 0;
-    button->redrawRequired = 0;
-    button->tag = 0;
-    button->tabIndex = 0;
+    button->showFocus = 1;
     button->processEvent = guiButton_ProcessEvent;
-    button->handlers.count = 0;
-    button->keepTouch = 0;
-    button->useDefaultKeyHandler = 1;
-    button->isToggle = 0;
-    button->isPressOnly = 0;
-
-    button->redrawPressedState = 0;
-    button->redrawFocus = 0;
-    button->x = 0;
-    button->y = 0;
-    button->width = 40;
-    button->height = 15;
     button->textAlignment = ALIGN_CENTER;
-    button->font = &font_6x8_mono;
-    button->text = 0;
-    button->isPressed = 0;
 }
 
 

@@ -6,7 +6,8 @@
 
 **********************************************************/
 
-#include <stdint.h>
+#include <stdint.h>         // using integer types
+#include <string.h>         // using memset
 #include "guiEvents.h"
 #include "guiCore.h"
 #include "guiWidgets.h"
@@ -85,7 +86,6 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
           case GUI_EVENT_DRAW:
             guiGraph_DrawPanel(panel);
             // Call handler
-            event.type = GUI_ON_DRAW;
             guiCore_CallEventHandler((guiGenericWidget_t *)panel, &event);
             // Reset flags - redrawForced will be reset by core
             panel->redrawFocus = 0;
@@ -120,13 +120,10 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             processResult = GUI_EVENT_DECLINE;
             if (PANEL_ACCEPTS_ENCODER_EVENT(panel))
             {
-                if (panel->useDefaultEncoderHandler)
-                {
-                    key = (int16_t)event.lparam < 0 ? PANEL_KEY_PREV :
-                          ((int16_t)event.lparam > 0 ? PANEL_KEY_NEXT : 0);
-                    if (key != 0)
-                        processResult = guiPanel_ProcessKey(panel,key);
-                }
+                key = (int16_t)event.lparam < 0 ? PANEL_KEY_PREV :
+                      ((int16_t)event.lparam > 0 ? PANEL_KEY_NEXT : 0);
+                if (key != 0)
+                    processResult = guiPanel_ProcessKey(panel,key);
                 // Call ENCODER event handler
                 processResult |= guiCore_CallEventHandler(widget, &event);
             }
@@ -135,7 +132,7 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             processResult = GUI_EVENT_DECLINE;
             if (PANEL_ACCEPTS_KEY_EVENT(panel))
             {
-                if ((panel->useDefaultKeyHandler) && (event.spec == DEFAULT_KEY_EVENT_DOWN))
+                if (event.spec == DEFAULT_KEY_EVENT_DOWN)
                 {
                     if (event.lparam == DEFAULT_KEY_OK)
                         key = PANEL_KEY_SELECT;
@@ -205,36 +202,20 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 
 
 //-------------------------------------------------------//
-// Panel default init
+// Default initialization
 //
 //-------------------------------------------------------//
 void guiPanel_Initialize(guiPanel_t *panel, guiGenericWidget_t *parent)
 {
+    memset(panel, 0, sizeof(*panel));
     panel->type = WT_PANEL;
     panel->parent = parent;
-    panel->acceptFocus = 1;
-    panel->acceptFocusByTab = 0;
-    panel->isFocused = 0;
-    panel->isVisible = 0;
-    panel->redrawForced = 0;
-    panel->redrawRequired = 0;
     panel->isContainer = 1;
-    panel->tag = 0;
-    panel->tabIndex = 0;
-    panel->processEvent = guiPanel_ProcessEvent;
-    panel->handlers.count = 0;
     panel->acceptTouch = 1;
-    panel->focusFallsThrough = 0;
-    panel->keepTouch = 0;
-    panel->useDefaultKeyHandler = 1;
-    panel->useDefaultEncoderHandler = 1;
-
-    panel->widgets.count = 0;
-    panel->widgets.focusedIndex = 0;
-    panel->widgets.traverseIndex = 0;
-    panel->redrawFocus = 0;
+    panel->acceptFocusByTab = 1;
+    panel->focusFallsThrough = 1;
+    panel->processEvent = guiPanel_ProcessEvent;
     panel->frame = FRAME_NONE;
-    panel->showFocus = 1;
 }
 
 

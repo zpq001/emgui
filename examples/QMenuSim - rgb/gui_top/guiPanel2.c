@@ -51,14 +51,13 @@ void guiPanel2_Initialize(guiGenericWidget_t *parent)
     guiPanel2.handlers.count = 1;
     guiPanel2.handlers.elements = panel2_handlers;
 
-    guiPanel2.isVisible = 0;
     guiPanel2.x = 15;
     guiPanel2.y = 15;
     //guiPanel2.y = 35;
     guiPanel2.width = 280;
     guiPanel2.height = 150;
-    guiPanel2.acceptFocusByTab = 1;
     guiPanel2.focusFallsThrough = 0;
+    guiPanel2.showFocus = 1;
     guiPanel2.frame = FRAME3D_RAISED;
     guiPanel2.tag = 21;
 
@@ -83,7 +82,7 @@ void guiPanel2_Initialize(guiGenericWidget_t *parent)
     button2.tabIndex = 11;
 
 
-    guiPanel2.handlers.elements[0].eventType = GUI_ON_DRAW;
+    guiPanel2.handlers.elements[0].eventType = GUI_EVENT_DRAW;
     guiPanel2.handlers.elements[0].handler = panel2_onDraw;
 }
 
