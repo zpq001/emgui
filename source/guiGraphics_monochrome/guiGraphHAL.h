@@ -3,22 +3,22 @@
 
 #include <stdint.h>
 
-/*
-// Size definitions in points
+
+// Size definitions in points for Nokia 1202 LCD
 #define LCD_XSIZE (2*96)
 #define LCD_YSIZE 68
 
 // Buffer size in bytes
 #define LCD_BUFFER_SIZE (2*96*9)
-*/
 
+/*
 // Size definitions in points
 #define LCD_XSIZE (2*128)
 #define LCD_YSIZE 128
 
 // Buffer size in bytes
 #define LCD_BUFFER_SIZE (LCD_XSIZE * 16)
-
+*/
 
 // LCD functions settings
 //#define SOFT_HORIZ_REVERSED

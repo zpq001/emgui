@@ -103,6 +103,10 @@ typedef struct {
 } guiTimer_t;
 
 
+// Modifying these pointers should be done with care!
+extern guiGenericWidget_t *rootWidget;         // Root widget must be present
+extern guiGenericWidget_t *focusedWidget;      // Focused widget gets events from keys/encoder/touch
+
 //===================================================================//
 //                 GUI core message queue functions
 //===================================================================//
@@ -128,8 +132,8 @@ void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t touchState);
 void guiCore_ProcessKeyEvent(uint16_t code, uint8_t spec);
 void guiCore_ProcessEncoderEvent(int16_t increment);
 void guiCore_ProcessTimers(void);
-void guiCore_UpdateAll(void);
 void guiCore_BroadcastEvent(guiEvent_t event, uint8_t(*validator)(guiGenericWidget_t *widget));
+void guiCore_UpdateAll(void);
 uint8_t guiCore_UpdateValidator(guiGenericWidget_t *widget);
 
 

@@ -30,6 +30,7 @@ uint8_t guiTextLabel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             guiCore_CallEventHandler(widget, &event);
             // Reset flags
             textLabel->redrawFocus = 0;
+            textLabel->redrawText = 0;
             textLabel->redrawRequired = 0;
             break;
         case GUI_EVENT_FOCUS:
@@ -65,7 +66,7 @@ void guiTextLabel_Initialize(guiTextLabel_t *textLabel, guiGenericWidget_t *pare
     textLabel->type = WT_TEXTLABEL;
     textLabel->parent = parent;
     textLabel->isVisible = 1;
-    textLabel->showFocus = 1;
+    textLabel->showFocus = 0;
     textLabel->processEvent = guiTextLabel_ProcessEvent;
     textLabel->textAlignment = ALIGN_CENTER;
 }
