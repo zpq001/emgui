@@ -19,18 +19,11 @@
 
 // Event types for callbacks (common widget event handlers)
 #define GUI_ON_FOCUS_CHANGED    0x80
-//#define GUI_ON_DRAW             0x81
 #define GUI_ON_VISIBLE_CHANGED  0x82
 #define GUI_ON_TOUCH_EVENT      0x83
 
-// Event types, specific for widgets start with 0xC0 and can overlap for different widgets
-// those types are declared in widget's header files.
-
-
-
-
-
-
+// Event types, specific for widgets start with 0xC0 and can overlap for different widgets.
+// Those types are declared in widget's header files.
 
 
 // Event struct, common for all GUI elements
@@ -44,11 +37,6 @@ typedef struct {
 
 
 
-
-
-
-
-
 // Events are found in guiCore.c
 extern const guiEvent_t guiEvent_DRAW;
 extern const guiEvent_t guiEvent_DRAW_ALL;
@@ -57,8 +45,6 @@ extern const guiEvent_t guiEvent_DESELECT;
 extern const guiEvent_t guiEvent_UPDATE;
 extern const guiEvent_t guiEvent_HIDE;
 extern const guiEvent_t guiEvent_SHOW;
-extern guiEvent_t guiEvent_TIMER;
-
 
 
 

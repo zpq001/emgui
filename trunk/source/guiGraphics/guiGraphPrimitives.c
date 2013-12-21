@@ -1,19 +1,3 @@
-/**********************************************************
-  Module guiGraphPrimitives contains low-level LCD routines.
-
-  LCD functions description:
-    - Pixel output mode specifies how data in the buffer is updated.
-        Can be PIXEL_MODE_REWRITE - old pixel value is rewrited with new one.
-               PIXEL_MODE_AND - old pixel value is ANDed with new value
-               PIXEL_MODE_OR - old pixel value is ORed with new value
-               PIXEL_MODE_XOR - old pixel value is XORed with new value
-        Every function that modiifes LCD buffer data uses these modes.
-    - pixelValue is an argument
-    - LCD_currentFont specifies font that is used for text
-      Can be set directly
-    - LCD_lineStyle specifies how lines are drawed
-
-**********************************************************/
 
 #include <stdint.h>
 #include "guiGraphPrimitives.h"
@@ -21,38 +5,231 @@
 #include "guiFonts.h"
 
 
-const tFont* LCD_currentFont;
+
+
+color_t penColor;             // Pen is used for drawing lines, frames, circles, etc
+color_t altPenColor;          //
+color_t fillColor;            // Used for filling objects
+const tFont* currentFont;     // Font that currently used
+uint8_t imageOutputMode;       // Specifies text background - OUTPUT_MODE_TRANSPARENT or OUTPUT_MODE_SOLID
+uint8_t lineStyle;
+
+
+const tFont* currentFont;
 
 
 //-------------------------------------------------------//
 // Sets current font for text printing
-//
 //-------------------------------------------------------//
 void LCD_SetFont(const tFont *newFont)
 {
-    if (newFont != LCD_currentFont)
-        LCD_currentFont = newFont;
+    currentFont = newFont;
 }
 
-
 //-------------------------------------------------------//
-// Draws a rectangle using LCD_lineStyle
-//	Parameters:
-//		uint8_t x_pos	- pixel x coordinate
-//		uint8_t y_pos	- pixel y coordinate
-//      uint8_t width
-//      uint8_t height
-//      pixelValue  	- new pixel value, 1 or 0
-// Pixel output mode is set by calling LCD_setPixelOutputMode()
+// Sets pen color
 //-------------------------------------------------------//
-void LCD_DrawRect(uint8_t x_pos, uint8_t y_pos, uint8_t width, uint8_t height, uint8_t pixelValue)
+void LCD_SetPenColor(const color_t newColor)
 {
-    LCD_DrawHorLine(x_pos,y_pos,width,pixelValue);
-    LCD_DrawHorLine(x_pos,y_pos + height - 1,width,pixelValue);
-    LCD_DrawVertLine(x_pos,y_pos,height - 1,pixelValue);
-    LCD_DrawVertLine(x_pos + width - 1,y_pos, height - 1,pixelValue);
+    penColor = newColor;
 }
 
+//-------------------------------------------------------//
+// Sets alternate pen color
+//-------------------------------------------------------//
+void LCD_SetAltPenColor(const color_t newColor)
+{
+    altPenColor = newColor;
+}
+
+//-------------------------------------------------------//
+// Sets alternate pen color
+//-------------------------------------------------------//
+void LCD_SetFillColor(const color_t newColor)
+{
+    fillColor = newColor;
+}
+
+//-------------------------------------------------------//
+// Sets image output mode
+//-------------------------------------------------------//
+void LCD_SetImageOutput(uint8_t newMode)
+{
+    imageOutputMode = newMode & (IMAGE_PAINT_SET_PIXELS | IMAGE_PAINT_VOID_PIXELS);
+}
+
+//-------------------------------------------------------//
+// Sets line style
+//-------------------------------------------------------//
+void LCD_SetLineStyle(uint8_t newStyle)
+{
+    lineStyle = newStyle;
+}
+
+
+
+
+//=======================================================//
+//=======================================================//
+
+
+
+
+//-------------------------------------------------------//
+// Fills a rectangle with fillColor
+//-------------------------------------------------------//
+void LCD_FillRect(rect_t* rect)
+{
+	uint16_t x,y;
+    rect_t drawRect = *rect;
+    for (x=drawRect.x1; x<=drawRect.x2; x++)
+        for (y=drawRect.y1; y<=drawRect.y2; y++)
+            LCD_PutPixel(x,y,fillColor);
+}
+
+//-------------------------------------------------------//
+// Draws horizontal line with penColor
+//-------------------------------------------------------//
+void LCD_DrawHorLine(uint16_t x, uint16_t y, uint16_t length)
+{
+    uint8_t dashCompare;
+    uint8_t dashPeriod;
+    uint8_t dashCounter = 0;
+
+    switch(lineStyle)
+    {
+        case LINE_STYLE_DASHED:
+            dashPeriod = LCD_DASH_PERIOD;
+            dashCompare = LCD_DASH_COMPARE;
+            break;
+        case LINE_STYLE_DOTTED:
+            dashPeriod = LCD_DOT_PERIOD;
+            dashCompare = LCD_DOT_COMPARE;
+            break;
+         default: //LINE_STYLE_SOLID:
+            dashPeriod = 10;
+            dashCompare = 10;   // arbitrary, but >= dashPeriod
+            break;
+    }
+
+    while(length--)
+    {
+        if (dashCounter < dashCompare)
+            LCD_PutPixel(x,y,penColor);
+
+        x++;
+        dashCounter++;
+        if (dashCounter == dashPeriod)
+            dashCounter = 0;
+    }
+}
+
+//-------------------------------------------------------//
+// Draws vertical line with penColor
+//-------------------------------------------------------//
+void LCD_DrawVertLine(uint16_t x, uint16_t y, uint16_t length)
+{
+    uint8_t dashCompare;
+    uint8_t dashPeriod;
+    uint8_t dashCounter = 0;
+
+    switch(lineStyle)
+    {
+        case LINE_STYLE_DASHED:
+            dashPeriod = LCD_DASH_PERIOD;
+            dashCompare = LCD_DASH_COMPARE;
+            break;
+        case LINE_STYLE_DOTTED:
+            dashPeriod = LCD_DOT_PERIOD;
+            dashCompare = LCD_DOT_COMPARE;
+            break;
+         default: //LINE_STYLE_SOLID:
+            dashPeriod = 10;
+            dashCompare = 10;   // arbitrary, but >= dashPeriod
+            break;
+    }
+
+    while(length--)
+    {
+        if (dashCounter < dashCompare)
+            LCD_PutPixel(x,y,penColor);
+
+        y++;
+        dashCounter++;
+        if (dashCounter == dashPeriod)
+            dashCounter = 0;
+    }
+}
+
+//-------------------------------------------------------//
+// Draws rectangle line with penColor
+//-------------------------------------------------------//
+void LCD_DrawRect(rect_t *rect)
+{
+    uint16_t width, height;
+    if ((rect->x1 > rect->x2) || (rect->y1 > rect->y2))
+        return;
+    width = rect->x2 - rect->x1 + 1;
+    height = rect->y2 - rect->y1 + 1;
+    LCD_DrawVertLine(rect->x1,rect->y1,height);
+    LCD_DrawVertLine(rect->x2,rect->y1,height);
+    LCD_DrawHorLine(rect->x1,rect->y1,width);
+    LCD_DrawHorLine(rect->x1,rect->y2,width);
+}
+
+
+
+//=======================================================//
+//=======================================================//
+//  FONTS
+
+
+//-------------------------------------------------------//
+// Draws B/W packed image, coordinates are absolute.
+// Image is printed using:
+//  - penColor
+//  - altPenColor
+//  - outputMode
+//-------------------------------------------------------//
+void LCD_drawPackedImage(const uint8_t *img, uint16_t x_pos, uint16_t y_pos, uint16_t img_width, uint16_t img_height)
+{
+    uint8_t bit_mask = 0x01;
+    uint8_t temp;
+    uint16_t img_index;
+    uint16_t img_start_index = 0;
+    uint16_t x;
+    uint16_t y_fin = y_pos + img_height;
+
+    while(y_pos < y_fin)
+    {
+        img_index = img_start_index;
+        for (x = x_pos; x < x_pos + img_width; x++)
+        {
+            temp = img[img_index++];
+            if (temp & bit_mask)
+            {
+                if (imageOutputMode & IMAGE_PAINT_SET_PIXELS)
+                {
+                    LCD_PutPixel(x,y_pos,penColor);
+                }
+            }
+            else if (imageOutputMode & IMAGE_PAINT_VOID_PIXELS)
+            {
+                LCD_PutPixel(x,y_pos,altPenColor);
+            }
+        }
+        y_pos++;
+        if (bit_mask == 0x80)
+        {
+            bit_mask = 0x01;
+            img_start_index += img_width;
+        }
+        else
+        {
+            bit_mask = bit_mask << 1;
+        }
+    }
+}
 
 
 //-------------------------------------------------------//
@@ -134,7 +311,7 @@ uint8_t LCD_GetStringWidth(const tFont *font, char *string)
 
     while((c = string[index++]))
     {
-        if (LCD_GetFontItem(LCD_currentFont, c, &charWidth, 0))
+        if (LCD_GetFontItem(currentFont, c, &charWidth, 0))
             length += charWidth + font->spacing;
     }
 
@@ -145,24 +322,22 @@ uint8_t LCD_GetStringWidth(const tFont *font, char *string)
 
 //-------------------------------------------------------//
 // Prints a string with LCD_currentFont at current position
-// mode:
-//     IMAGE_MODE_NORMAL - normal images
-//     IMAGE_MODE_INVERSE - inversed images
+//
 //-------------------------------------------------------//
-void LCD_PrintString(char *str, uint8_t x, uint8_t y, uint8_t mode)
+void LCD_PrintString(char *str, uint8_t x, uint8_t y)
 {
     uint8_t index = 0;
     uint8_t charWidth;
     uint16_t charOffset;
     char c;
 
+    imageOutputMode = IMAGE_PAINT_SET_PIXELS;   // Paint only set pixels in font bitmaps
     while((c = str[index++]))
     {
-
-        if (LCD_GetFontItem(LCD_currentFont, c, &charWidth, &charOffset))
+        if (LCD_GetFontItem(currentFont, c, &charWidth, &charOffset))
         {
-            LCD_DrawImage(&LCD_currentFont->data[charOffset], x, y, charWidth, LCD_currentFont->height, mode);
-            x += charWidth + LCD_currentFont->spacing;
+            LCD_drawPackedImage(&currentFont->data[charOffset], x, y, charWidth, currentFont->height);
+            x += charWidth + currentFont->spacing;
         }
     }
 }
@@ -172,11 +347,8 @@ void LCD_PrintString(char *str, uint8_t x, uint8_t y, uint8_t mode)
 //-------------------------------------------------------//
 // Prints a string with LCD_currentFont inside rectangle using
 //  alignment
-// mode:
-//     IMAGE_MODE_NORMAL - normal images
-//     IMAGE_MODE_INVERSE - inversed images
 //-------------------------------------------------------//
-void LCD_PrintStringAligned(char *str, rect_t *rect, uint8_t alignment, uint8_t mode)
+void LCD_PrintStringAligned(char *str, rect_t *rect, uint8_t alignment)
 {
     uint8_t index = 0;
     uint8_t charWidth;
@@ -193,7 +365,7 @@ void LCD_PrintStringAligned(char *str, rect_t *rect, uint8_t alignment, uint8_t 
     else
     {
         // We need to compute length of whole string in pixels
-        strWidthPx = LCD_GetStringWidth(LCD_currentFont,str);
+        strWidthPx = LCD_GetStringWidth(currentFont,str);
         if (alignment & ALIGN_RIGHT)
             x_aligned = (int16_t)rect->x2 + 1 - strWidthPx;
         else
@@ -207,26 +379,33 @@ void LCD_PrintStringAligned(char *str, rect_t *rect, uint8_t alignment, uint8_t 
     }
     else if (alignment & ALIGN_BOTTOM)
     {
-        y_aligned = (int16_t)rect->y2 + 1 - LCD_currentFont->height;
+        y_aligned = (int16_t)rect->y2 + 1 - currentFont->height;
     }
     else
     {
-        y_aligned = rect->y1 + ((int16_t)(rect->y2 - rect->y1 + 1) - LCD_currentFont->height) / 2;
+        y_aligned = rect->y1 + ((int16_t)(rect->y2 - rect->y1 + 1) - currentFont->height) / 2;
     }
 
     // Now print string
+    imageOutputMode = IMAGE_PAINT_SET_PIXELS;   // Paint only set pixels in font bitmaps
     while((c = str[index++]))
     {
-        if (LCD_GetFontItem(LCD_currentFont, c, &charWidth, &charOffset))
+        if (LCD_GetFontItem(currentFont, c, &charWidth, &charOffset))
         {
-            LCD_DrawImage(&LCD_currentFont->data[charOffset], x_aligned, y_aligned, charWidth, LCD_currentFont->height, mode);
-            x_aligned += charWidth + LCD_currentFont->spacing;
+            LCD_drawPackedImage(&currentFont->data[charOffset], x_aligned, y_aligned, charWidth, currentFont->height);
+            x_aligned += charWidth + currentFont->spacing;
         }
     }
 }
 
 
-void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t mode)
+
+//=======================================================//
+//=======================================================//
+//  GRAPHS
+
+
+void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 {
     int16_t dy = 0;
     int16_t dx = 0;
@@ -252,7 +431,7 @@ void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t mode)
     else stepx = 1;
     dy <<= 1;
     dx <<= 1;
-    LCD_PutPixel(x1,y1,mode);
+    LCD_PutPixel(x1,y1,penColor);
     if (dx > dy)
     {
         fraction = dy - (dx >> 1);
@@ -265,7 +444,7 @@ void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t mode)
             }
             x1 += stepx;
             fraction += dy;
-            LCD_PutPixel(x1,y1,mode);
+            LCD_PutPixel(x1,y1,penColor);
         }
     }
     else
@@ -280,9 +459,75 @@ void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t mode)
             }
             y1 += stepy;
             fraction += dx;
-            LCD_PutPixel(x1,y1,mode);
+            LCD_PutPixel(x1,y1,penColor);
         }
     }
 }
 
 
+void LCD_DrawCircle(int16_t x0, int16_t y0, int16_t radius)
+{
+    int16_t x = radius;
+    int16_t y = 0;
+    int16_t xChange = 1 - (radius << 1);
+    int16_t yChange = 0;
+    int16_t radiusError = 0;
+
+    while (x >= y)
+    {
+        LCD_PutPixel(x0 - x, y0 + y, penColor);
+        LCD_PutPixel(x0 + x, y0 + y, penColor);
+        LCD_PutPixel(x0 - x, y0 - y, penColor);
+        LCD_PutPixel(x0 + x, y0 - y, penColor);
+
+        LCD_PutPixel(x0 - y, y0 + x, penColor);
+        LCD_PutPixel(x0 + y, y0 + x, penColor);
+        LCD_PutPixel(x0 - y, y0 - x, penColor);
+        LCD_PutPixel(x0 + y, y0 - x, penColor);
+
+        y++;
+        radiusError += yChange;
+        yChange += 2;
+        if (((radiusError << 1) + xChange) > 0)
+        {
+            x--;
+            radiusError += xChange;
+            xChange += 2;
+        }
+    }
+}
+
+
+void LCD_DrawFilledCircle(int16_t x0, int16_t y0, int16_t radius)
+{
+    int16_t x = radius;
+    int16_t y = 0;
+    int16_t xChange = 1 - (radius << 1);
+    int16_t yChange = 0;
+    int16_t radiusError = 0;
+    int16_t i;
+
+    while (x >= y)
+    {
+        for (i = x0 - x; i <= x0 + x; i++)
+        {
+            LCD_PutPixel(i, y0 + y, fillColor);
+            LCD_PutPixel(i, y0 - y, fillColor);
+        }
+        for (i = x0 - y; i <= x0 + y; i++)
+        {
+            LCD_PutPixel(i, y0 + x, fillColor);
+            LCD_PutPixel(i, y0 - x, fillColor);
+        }
+
+        y++;
+        radiusError += yChange;
+        yChange += 2;
+        if (((radiusError << 1) + xChange) > 0)
+        {
+            x--;
+            radiusError += xChange;
+            xChange += 2;
+        }
+    }
+}

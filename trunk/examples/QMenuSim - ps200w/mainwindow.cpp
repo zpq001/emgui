@@ -9,8 +9,8 @@
 
 #include "pixeldisplay.h"
 
-#include "guiCore.h"    // key codes
 #include "guiTop.h"
+
 
 
 
@@ -33,6 +33,8 @@ MainWindow* pt2Myself;        // Global variable which points to this.
                               // Used for C callbacks.
 QTimer updateTimer;
 QTimer secondsTimer;
+QLabel *StatusLabel_LCD0;
+QLabel *StatusLabel_LCD1;
 QTime t;
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -41,62 +43,69 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->PixelDisplay1->setSize(DISPLAY_XSIZE,DISPLAY_YSIZE);
+    ui->PixelDisplay1->setSize(DISPLAY_XSIZE, DISPLAY_YSIZE);
+    ui->PixelDisplay1->setDataEncoding(PixelDisplay::MONOCHROME_3310_8bit);
     ui->PixelDisplay1->setScale(2.0);
-    //ui->PixelDisplay1->setDataEncoding(PixelDisplay::MONOCHROME_3310_8bit);
-    ui->PixelDisplay1->setDataEncoding(PixelDisplay::RGB_888_32bit);
+
+    ui->PixelDisplay2->setSize(DISPLAY_XSIZE, DISPLAY_YSIZE);
+    ui->PixelDisplay2->setDataEncoding(PixelDisplay::MONOCHROME_3310_8bit);
+    ui->PixelDisplay2->setScale(2.0);
 
 
-    // View
-    viewSignalMapper = new QSignalMapper(this);
-    viewSignalMapper->setMapping(ui->actionX1, 1);
-    viewSignalMapper->setMapping(ui->actionX2, 2);
-    viewSignalMapper->setMapping(ui->actionX3, 3);
-    viewSignalMapper->setMapping(ui->actionX4, 4);
-    viewSignalMapper->setMapping(ui->actionX5, 5);
-    connect(ui->actionX1, SIGNAL(triggered()), viewSignalMapper, SLOT (map()));
-    connect(ui->actionX2, SIGNAL(triggered()), viewSignalMapper, SLOT (map()));
-    connect(ui->actionX3, SIGNAL(triggered()), viewSignalMapper, SLOT (map()));
-    connect(ui->actionX4, SIGNAL(triggered()), viewSignalMapper, SLOT (map()));
-    connect(ui->actionX5, SIGNAL(triggered()), viewSignalMapper, SLOT (map()));
-    connect(viewSignalMapper, SIGNAL(mapped(const int &)), this, SLOT(on_viewScale_changed(const int &)));
-
-    // Control buttons press
-    btnPressSignalMapper = new QSignalMapper(this);
-    btnPressSignalMapper->setMapping(ui->pushButton_esc, BTN_ESC);
-    btnPressSignalMapper->setMapping(ui->pushButton_left, BTN_LEFT);
-    btnPressSignalMapper->setMapping(ui->pushButton_right, BTN_RIGHT);
-    btnPressSignalMapper->setMapping(ui->pushButton_ok, BTN_OK);
-    connect(ui->pushButton_esc, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
-    connect(ui->pushButton_left, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
-    connect(ui->pushButton_right, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
-    connect(ui->pushButton_ok, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
-    connect(btnPressSignalMapper, SIGNAL(mapped(const int &)), this, SLOT(on_ControlButtonPress(const int &)));
-
-    // Control buttons release
-    btnReleaseSignalMapper = new QSignalMapper(this);
-    btnReleaseSignalMapper->setMapping(ui->pushButton_esc, BTN_ESC);
-    btnReleaseSignalMapper->setMapping(ui->pushButton_left, BTN_LEFT);
-    btnReleaseSignalMapper->setMapping(ui->pushButton_right, BTN_RIGHT);
-    btnReleaseSignalMapper->setMapping(ui->pushButton_ok, BTN_OK);
-    connect(ui->pushButton_esc, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
-    connect(ui->pushButton_left, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
-    connect(ui->pushButton_right, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
-    connect(ui->pushButton_ok, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
-    connect(btnReleaseSignalMapper, SIGNAL(mapped(const int &)), this, SLOT(on_ControlButtonRelease(const int &)));
+    StatusLabel_LCD0 = new QLabel(this);
+    StatusLabel_LCD1 = new QLabel(this);
+    ui->statusBar->addWidget(StatusLabel_LCD0);
+    ui->statusBar->addWidget(StatusLabel_LCD1);
 
 
+    // Signals and slots mapping
 
+        // View
+        viewSignalMapper = new QSignalMapper(this);
+        viewSignalMapper->setMapping(ui->actionX1, 1);
+        viewSignalMapper->setMapping(ui->actionX2, 2);
+        viewSignalMapper->setMapping(ui->actionX3, 3);
+        viewSignalMapper->setMapping(ui->actionX4, 4);
+        viewSignalMapper->setMapping(ui->actionX5, 5);
+        connect(ui->actionX1, SIGNAL(triggered()), viewSignalMapper, SLOT (map()));
+        connect(ui->actionX2, SIGNAL(triggered()), viewSignalMapper, SLOT (map()));
+        connect(ui->actionX3, SIGNAL(triggered()), viewSignalMapper, SLOT (map()));
+        connect(ui->actionX4, SIGNAL(triggered()), viewSignalMapper, SLOT (map()));
+        connect(ui->actionX5, SIGNAL(triggered()), viewSignalMapper, SLOT (map()));
+        connect(viewSignalMapper, SIGNAL(mapped(const int &)), this, SLOT(on_viewScale_changed(const int &)));
 
+        // Control buttons press
+        btnPressSignalMapper = new QSignalMapper(this);
+        btnPressSignalMapper->setMapping(ui->pushButton_esc, BTN_ESC);
+        btnPressSignalMapper->setMapping(ui->pushButton_left, BTN_LEFT);
+        btnPressSignalMapper->setMapping(ui->pushButton_right, BTN_RIGHT);
+        btnPressSignalMapper->setMapping(ui->pushButton_ok, BTN_OK);
+        connect(ui->pushButton_esc, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
+        connect(ui->pushButton_left, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
+        connect(ui->pushButton_right, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
+        connect(ui->pushButton_ok, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
+        connect(btnPressSignalMapper, SIGNAL(mapped(const int &)), this, SLOT(on_ControlButtonPress(const int &)));
 
+        // Control buttons release
+        btnReleaseSignalMapper = new QSignalMapper(this);
+        btnReleaseSignalMapper->setMapping(ui->pushButton_esc, BTN_ESC);
+        btnReleaseSignalMapper->setMapping(ui->pushButton_left, BTN_LEFT);
+        btnReleaseSignalMapper->setMapping(ui->pushButton_right, BTN_RIGHT);
+        btnReleaseSignalMapper->setMapping(ui->pushButton_ok, BTN_OK);
+        connect(ui->pushButton_esc, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
+        connect(ui->pushButton_left, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
+        connect(ui->pushButton_right, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
+        connect(ui->pushButton_ok, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
+        connect(btnReleaseSignalMapper, SIGNAL(mapped(const int &)), this, SLOT(on_ControlButtonRelease(const int &)));
 
     connect(ui->updateButton,SIGNAL(clicked()),this,  SLOT(on_LCD_update()));
     connect(&updateTimer,SIGNAL(timeout()),this,SLOT(on_LCD_update()));
     connect(&secondsTimer,SIGNAL(timeout()),this,SLOT(on_secondsTimer()));
 
     connect(ui->PixelDisplay1, SIGNAL(touchMove()), this, SLOT(on_touchMove()) );
-    connect(ui->PixelDisplay1, SIGNAL(touchPress()), this, SLOT(on_touchPress()) );
-    connect(ui->PixelDisplay1, SIGNAL(touchRelease()), this, SLOT(on_touchRelease()) );
+    connect(ui->PixelDisplay2, SIGNAL(touchMove()), this, SLOT(on_touchMove()) );
+    //connect(ui->PixelDisplay1, SIGNAL(touchPress()), this, SLOT(on_touchPress()) );
+    //connect(ui->PixelDisplay1, SIGNAL(touchRelease()), this, SLOT(on_touchRelease()) );
 
 
     qApp->installEventFilter( this );
@@ -131,9 +140,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::addLogMessage(int type, char *string)
 {
-    QString msg;
     if (ui->checkBox_logEnable->checkState())
     {
+        QString msg;
         switch(type)
         {
             case LOG_FROM_TOP:
@@ -171,10 +180,14 @@ void MainWindow::addLogWrapper(int type, char *string)
 }
 
 // Callback function for LCD update
-void MainWindow::updateDisplayWrapper(uint16_t *buffer)
+void MainWindow::updateDisplayWrapper(int display, void *buffer)
 {
-    pt2Myself->ui->PixelDisplay1->updateDisplay(buffer);
+    if (display == 0)
+        pt2Myself->ui->PixelDisplay1->updateDisplay(buffer);
+    else
+        pt2Myself->ui->PixelDisplay2->updateDisplay(buffer);
 }
+
 
 
 void MainWindow::on_LCD_update()
@@ -185,6 +198,7 @@ void MainWindow::on_LCD_update()
 void MainWindow::on_viewScale_changed(const int scale)
 {
     ui->PixelDisplay1->setScale(scale);
+    ui->PixelDisplay2->setScale(scale);
     QTimer::singleShot(5, this, SLOT(shrink()));
 }
 
@@ -204,10 +218,18 @@ void MainWindow::on_updateCheckBox_clicked()
 void MainWindow::updateStatusBar(void)
 {
     QString touchPressStatus = (ui->PixelDisplay1->touchState.isPressed) ? "Pressed" : "Released";
-    QString touchStatus = QString("Touch panel x = %1; y = %2; state = %3")
+    QString touchStatus = QString("LCD0 x = %1; y = %2; state = %3      ")
         .arg(ui->PixelDisplay1->touchState.x).arg(ui->PixelDisplay1->touchState.y).arg(touchPressStatus);
-    ui->statusBar->showMessage(touchStatus);
+    //ui->statusBar->showMessage(touchStatus);
+    StatusLabel_LCD0->setText(touchStatus);
+
+    touchPressStatus = (ui->PixelDisplay2->touchState.isPressed) ? "Pressed" : "Released";
+    touchStatus = QString("LCD1 x = %1; y = %2; state = %3")
+        .arg(ui->PixelDisplay2->touchState.x).arg(ui->PixelDisplay2->touchState.y).arg(touchPressStatus);
+    //ui->statusBar->showMessage(touchStatus);
+    StatusLabel_LCD1->setText(touchStatus);
 }
+
 
 
 //-----------------------------------//
@@ -216,29 +238,8 @@ void MainWindow::updateStatusBar(void)
 void MainWindow::on_touchMove(void)
 {
     updateStatusBar();
-    if (ui->PixelDisplay1->touchState.isPressed)
-    {
-        guiTouchMoved(ui->PixelDisplay1->touchState.x, ui->PixelDisplay1->touchState.y);
-        if (ui->checkBox_updMode->checkState())
-            on_LCD_update();
-    }
 }
 
-void MainWindow::on_touchPress(void)
-{
-    updateStatusBar();
-    guiTouchPressed(ui->PixelDisplay1->touchState.x, ui->PixelDisplay1->touchState.y);
-    if (ui->checkBox_updMode->checkState())
-        on_LCD_update();
-}
-
-void MainWindow::on_touchRelease(void)
-{
-    updateStatusBar();
-    guiTouchReleased(ui->PixelDisplay1->touchState.x, ui->PixelDisplay1->touchState.y);
-    if (ui->checkBox_updMode->checkState())
-        on_LCD_update();
-}
 
 
 
@@ -250,16 +251,16 @@ void MainWindow::on_ControlButtonPress(int btn)
     switch(btn)
     {
         case BTN_ESC:
-            guiButtonPressed(GUI_KEY_ESC);
+            guiButtonClicked((1<<8));
             break;
         case BTN_LEFT:
-            guiButtonPressed(GUI_KEY_LEFT);
+            guiButtonClicked((1<<9));
             break;
         case BTN_RIGHT:
-            guiButtonPressed(GUI_KEY_RIGHT);
+            guiButtonClicked((1<<10));
             break;
         case BTN_OK:
-            guiButtonPressed(GUI_KEY_OK);
+            guiButtonClicked((1<<11));
             break;
     }
     if (ui->checkBox_updMode->checkState())
@@ -268,23 +269,7 @@ void MainWindow::on_ControlButtonPress(int btn)
 
 void MainWindow::on_ControlButtonRelease(int btn)
 {
-    switch(btn)
-    {
-        case BTN_ESC:
-            guiButtonReleased(GUI_KEY_ESC);
-            break;
-        case BTN_LEFT:
-            guiButtonReleased(GUI_KEY_LEFT);
-            break;
-        case BTN_RIGHT:
-            guiButtonReleased(GUI_KEY_RIGHT);
-            break;
-        case BTN_OK:
-            guiButtonReleased(GUI_KEY_OK);
-            break;
-    }
-    if (ui->checkBox_updMode->checkState())
-        on_LCD_update();
+
 }
 
 
@@ -344,25 +329,9 @@ bool MainWindow::on_keyPress(QKeyEvent *event)
 bool MainWindow::on_keyRelease(QKeyEvent *event)
 {
     bool eventIsHandled = true;
-    switch(event->key())
-    {
-        case Qt::Key_Escape:
-        case Qt::Key_Backspace:
-            on_ControlButtonRelease(BTN_ESC);
-            break;
-        case Qt::Key_Left:
-            on_ControlButtonRelease(BTN_LEFT);
-            break;
-        case Qt::Key_Right:
-            on_ControlButtonRelease(BTN_RIGHT);
-            break;
-        case Qt::Key_Return:
-        case Qt::Key_Space:
-            on_ControlButtonRelease(BTN_OK);
-            break;
-        default:
-            eventIsHandled = false;
-    }
+    // ....
+
+    eventIsHandled = false;
     return eventIsHandled;
 }
 
@@ -375,7 +344,6 @@ void MainWindow::on_wheelEvent(QWheelEvent * event)
 }
 
 
-
 void MainWindow::on_secondsTimer(void)
 {
     t.start();
@@ -383,3 +351,8 @@ void MainWindow::on_secondsTimer(void)
     if (ui->checkBox_updMode->checkState())
         on_LCD_update();
 }
+
+
+
+
+
