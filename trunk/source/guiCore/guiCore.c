@@ -17,7 +17,9 @@
 // Predefined constant events - saves stack a bit
 const guiEvent_t guiEvent_INIT = {GUI_EVENT_INIT, 0, 0, 0};
 const guiEvent_t guiEvent_DRAW = {GUI_EVENT_DRAW, 0, 0, 0};
+#ifdef CFG_USE_UPDATE
 const guiEvent_t guiEvent_UPDATE = {GUI_EVENT_UPDATE, 0, 0, 0};
+#endif
 const guiEvent_t guiEvent_HIDE = {GUI_EVENT_HIDE, 0, 0, 0};
 const guiEvent_t guiEvent_SHOW = {GUI_EVENT_SHOW, 0, 0, 0};
 const guiEvent_t guiEvent_UNFOCUS = {GUI_EVENT_UNFOCUS, 0, 0, 0};
@@ -104,6 +106,8 @@ void guiCore_ProcessMessageQueue(void)
     {
         while(1)
         {
+            if (target == 0)
+                break;
             processResult = target->processEvent(target, targetEvent);
             if (processResult == GUI_EVENT_ACCEPTED)
                 break;
@@ -257,16 +261,21 @@ void guiCore_Init(guiGenericWidget_t *guiRootWidget)
     guiMsgQueue.head = 0;
     guiMsgQueue.tail = 0;
 
+#ifdef GUI_CFG_USE_TIMERS
     // Disable all timers
     for (i=0; i<GUI_TIMER_COUNT; i++)
     {
         guiTimers[i].isEnabled = 0;
     }
+#endif
 
     // Set root and focused widget and send initialize event
+    // Root widget must set focus in itself or other widget
+    // depending on design. If focus is not set, no keyboard
+    // and encoder events will get processed.
     rootWidget = guiRootWidget;
-    focusedWidget = rootWidget;
-    guiCore_PostEventToFocused(guiEvent_INIT);
+    focusedWidget = 0;
+    guiCore_AddMessageToQueue(rootWidget, &guiEvent_INIT);
     guiCore_ProcessMessageQueue();
 }
 
@@ -443,17 +452,6 @@ void guiCore_ProcessTimers(void)
     guiCore_ProcessMessageQueue();
 }
 
-//-------------------------------------------------------//
-//  Top function for GUI elements update
-//
-//-------------------------------------------------------//
-void guiCore_UpdateAll(void)
-{
-    guiCore_BroadcastEvent(guiEvent_UPDATE, guiCore_UpdateValidator);
-    guiCore_ProcessMessageQueue();
-}
-
-
 
 
 //-------------------------------------------------------//
@@ -523,6 +521,17 @@ void guiCore_BroadcastEvent(guiEvent_t event, uint8_t(*validator)(guiGenericWidg
     }
 }
 
+#ifdef CFG_USE_UPDATE
+//-------------------------------------------------------//
+//  Top function for GUI elements update
+//
+//-------------------------------------------------------//
+void guiCore_UpdateAll(void)
+{
+    guiCore_BroadcastEvent(guiEvent_UPDATE, guiCore_UpdateValidator);
+    guiCore_ProcessMessageQueue();
+}
+
 
 //-------------------------------------------------------//
 //  Returns true if widget requires update
@@ -535,7 +544,7 @@ uint8_t guiCore_UpdateValidator(guiGenericWidget_t *widget)
     else
         return 1;
 }
-
+#endif
 
 
 
@@ -629,12 +638,12 @@ uint8_t guiCore_CheckWidgetOvelap(guiGenericWidget_t *widget, rect16_t *rect)
 
 //-------------------------------------------------------//
 //  Converts relative (x,y) for a specified widget to
-//    absolute values (absolute means relative to root's (x,y))
+//    absolute values (absolute means relative to screen's (0,0))
 //
 //-------------------------------------------------------//
 void guiCore_ConvertToAbsoluteXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y)
 {
-    while(widget->parent != 0)
+    while(widget != 0)
     {
         // Convert XY into parent's coordinates
         *x += widget->x;
@@ -647,12 +656,12 @@ void guiCore_ConvertToAbsoluteXY(guiGenericWidget_t *widget, int16_t *x, int16_t
 
 //-------------------------------------------------------//
 //  Converts absolute (x,y) to relative for a specified widget
-//     values (absolute means relative to root's (x,y))
+//     values (absolute means relative to screen's (0,0))
 //
 //-------------------------------------------------------//
 void guiCore_ConvertToRelativeXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y)
 {
-    while(widget->parent != 0)
+    while(widget != 0)
     {
         // Convert XY into parent's coordinates
         *x -= widget->x;
@@ -742,17 +751,20 @@ void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
 void guiCore_AcceptFocus(guiGenericWidget_t *widget)
 {
     uint8_t index;
-    // First tell currently focused widget to loose focus
-    if (focusedWidget != 0)
+    if ((widget != 0) && (widget != focusedWidget))     // CHECKME
     {
-        guiCore_AddMessageToQueue(focusedWidget, &guiEvent_UNFOCUS);
-    }
-    focusedWidget = widget;
-    if ((guiGenericContainer_t *)widget->parent != 0)
-    {
-        // Store index for container
-        index = guiCore_GetWidgetIndex(focusedWidget);
-        ((guiGenericContainer_t *)widget->parent)->widgets.focusedIndex = index;
+        // First tell currently focused widget to loose focus
+        if (focusedWidget != 0)
+        {
+            guiCore_AddMessageToQueue(focusedWidget, &guiEvent_UNFOCUS);
+        }
+        focusedWidget = widget;
+        if ((guiGenericContainer_t *)widget->parent != 0)
+        {
+            // Store index for container
+            index = guiCore_GetWidgetIndex(focusedWidget);
+            ((guiGenericContainer_t *)widget->parent)->widgets.focusedIndex = index;
+        }
     }
 }
 
@@ -884,6 +896,8 @@ uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget)
 
 //-------------------------------------------------------//
 //  Shows or hides a widget.
+//  This function should be called by widget as response for
+//      received SHOW or HIDE message
 //
 // This function does not perform any widget state checks
 //      except visible state.
@@ -921,6 +935,8 @@ uint8_t guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState)
 
 //-------------------------------------------------------//
 //  Sets or clears focus on widget.
+//  This function should be called by widget as response for
+//      received FOCUS or UNFOCUS message
 //
 // This function does not perform any widget state checks
 //      except focused state.

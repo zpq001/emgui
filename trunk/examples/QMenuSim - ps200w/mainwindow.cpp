@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QTime>
 
+#include "guiCore.h"    // key codes
 #include "pixeldisplay.h"
 
 #include "guiTop.h"
@@ -45,11 +46,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->PixelDisplay1->setSize(DISPLAY_XSIZE, DISPLAY_YSIZE);
     ui->PixelDisplay1->setDataEncoding(PixelDisplay::MONOCHROME_3310_8bit);
-    ui->PixelDisplay1->setScale(2.0);
+    ui->PixelDisplay1->setScale(3.0);
 
     ui->PixelDisplay2->setSize(DISPLAY_XSIZE, DISPLAY_YSIZE);
     ui->PixelDisplay2->setDataEncoding(PixelDisplay::MONOCHROME_3310_8bit);
-    ui->PixelDisplay2->setScale(2.0);
+    ui->PixelDisplay2->setScale(3.0);
 
 
     StatusLabel_LCD0 = new QLabel(this);
@@ -103,9 +104,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&secondsTimer,SIGNAL(timeout()),this,SLOT(on_secondsTimer()));
 
     connect(ui->PixelDisplay1, SIGNAL(touchMove()), this, SLOT(on_touchMove()) );
+    connect(ui->PixelDisplay1, SIGNAL(touchPress()), this, SLOT(on_touchPress()) );
+    connect(ui->PixelDisplay1, SIGNAL(touchRelease()), this, SLOT(on_touchRelease()) );
     connect(ui->PixelDisplay2, SIGNAL(touchMove()), this, SLOT(on_touchMove()) );
-    //connect(ui->PixelDisplay1, SIGNAL(touchPress()), this, SLOT(on_touchPress()) );
-    //connect(ui->PixelDisplay1, SIGNAL(touchRelease()), this, SLOT(on_touchRelease()) );
+    connect(ui->PixelDisplay2, SIGNAL(touchPress()), this, SLOT(on_touchPress()) );
+    connect(ui->PixelDisplay2, SIGNAL(touchRelease()), this, SLOT(on_touchRelease()) );
 
 
     qApp->installEventFilter( this );
@@ -240,6 +243,15 @@ void MainWindow::on_touchMove(void)
     updateStatusBar();
 }
 
+void MainWindow::on_touchPress(void)
+{
+    updateStatusBar();
+}
+
+void MainWindow::on_touchRelease(void)
+{
+    updateStatusBar();
+}
 
 
 
@@ -251,16 +263,16 @@ void MainWindow::on_ControlButtonPress(int btn)
     switch(btn)
     {
         case BTN_ESC:
-            guiButtonClicked((1<<8));
+            guiButtonPressed(GUI_KEY_ESC);
             break;
         case BTN_LEFT:
-            guiButtonClicked((1<<9));
+            guiButtonPressed(GUI_KEY_LEFT);
             break;
         case BTN_RIGHT:
-            guiButtonClicked((1<<10));
+            guiButtonPressed(GUI_KEY_RIGHT);
             break;
         case BTN_OK:
-            guiButtonClicked((1<<11));
+            guiButtonPressed(GUI_KEY_OK);
             break;
     }
     if (ui->checkBox_updMode->checkState())
@@ -269,7 +281,23 @@ void MainWindow::on_ControlButtonPress(int btn)
 
 void MainWindow::on_ControlButtonRelease(int btn)
 {
-
+    switch(btn)
+    {
+        case BTN_ESC:
+            guiButtonReleased(GUI_KEY_ESC);
+            break;
+        case BTN_LEFT:
+            guiButtonReleased(GUI_KEY_LEFT);
+            break;
+        case BTN_RIGHT:
+            guiButtonReleased(GUI_KEY_RIGHT);
+            break;
+        case BTN_OK:
+            guiButtonReleased(GUI_KEY_OK);
+            break;
+    }
+    if (ui->checkBox_updMode->checkState())
+        on_LCD_update();
 }
 
 
@@ -329,9 +357,25 @@ bool MainWindow::on_keyPress(QKeyEvent *event)
 bool MainWindow::on_keyRelease(QKeyEvent *event)
 {
     bool eventIsHandled = true;
-    // ....
-
-    eventIsHandled = false;
+    switch(event->key())
+    {
+        case Qt::Key_Escape:
+        case Qt::Key_Backspace:
+            on_ControlButtonRelease(BTN_ESC);
+            break;
+        case Qt::Key_Left:
+            on_ControlButtonRelease(BTN_LEFT);
+            break;
+        case Qt::Key_Right:
+            on_ControlButtonRelease(BTN_RIGHT);
+            break;
+        case Qt::Key_Return:
+        case Qt::Key_Space:
+            on_ControlButtonRelease(BTN_OK);
+            break;
+        default:
+            eventIsHandled = false;
+    }
     return eventIsHandled;
 }
 
@@ -344,6 +388,7 @@ void MainWindow::on_wheelEvent(QWheelEvent * event)
 }
 
 
+
 void MainWindow::on_secondsTimer(void)
 {
     t.start();
@@ -351,8 +396,3 @@ void MainWindow::on_secondsTimer(void)
     if (ui->checkBox_updMode->checkState())
         on_LCD_update();
 }
-
-
-
-
-

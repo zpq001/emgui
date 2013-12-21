@@ -33,6 +33,8 @@ private slots:
     void on_wheelEvent(QWheelEvent * event);
 
     void on_touchMove(void);
+    void on_touchPress(void);
+    void on_touchRelease(void);
     void on_secondsTimer(void);
 
 private:

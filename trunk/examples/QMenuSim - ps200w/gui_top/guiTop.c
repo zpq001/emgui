@@ -9,11 +9,9 @@
 #include "guiCore.h"
 #include "guiEvents.h"
 #include "guiWidgets.h"
-#include "guiForm.h"
 #include "guiTextLabel.h"
 
 #include "guiMainForm.h"
-#include "guiSubForm1.h"
 
 // Callback functions
 cbLogPtr addLogCallback;
@@ -29,7 +27,6 @@ uint8_t timeMinutes;
 uint8_t timeSeconds;
 
 
-guiEventArgButtons_t argButtons;
 
 
 
@@ -106,7 +103,6 @@ void guiInitialize(void)
     timeMinutes = 0;
     timeSeconds = 0;
 
-    guiSubForm1_Initialize();
     guiMainForm_Initialize();
 
     guiCore_Init((guiGenericWidget_t *)&guiMainForm);
@@ -182,34 +178,25 @@ void guiDrawAll(void)
 
 
 
-void guiButtonClicked(uint32_t buttonCode)
+// No touch support
+
+
+void guiButtonPressed(uint16_t buttonCode)
 {
-   guiEvent_t bEvent;
-    addLogCallback(LOG_FROM_TOP, "Generated button event");
-
-    bEvent.type = GUI_EVENT_BUTTONS_ENCODER;
-    bEvent.args = &argButtons;
-    argButtons.buttonCode = buttonCode;
-    argButtons.encoderDelta = 0;
-
-    //guiCore_ProcessEvent(bEvent);
-    guiCore_PostEventToFocused(bEvent);
-    guiCore_ProcessMessageQueue();
+    guiCore_ProcessKeyEvent(buttonCode, GUI_KEY_EVENT_DOWN);
 }
+
+
+void guiButtonReleased(uint16_t buttonCode)
+{
+    guiCore_ProcessKeyEvent(buttonCode, GUI_KEY_EVENT_UP);
+}
+
 
 void guiEncoderRotated(int32_t delta)
 {
-
-//    guiEvent_t bEvent;
     addLogCallback(LOG_FROM_TOP, "Generated encoder event");
-/*
-    bEvent.type = GUI_EVENT_BUTTONS_ENCODER;
-    bEvent.args = &argButtons;
-    argButtons.buttonCode = 0;
-    argButtons.encoderDelta = delta;
-
-    guiCore_ProcessEvent(bEvent);
-	*/
+    guiCore_ProcessEncoderEvent((int16_t) delta);
 }
 
 

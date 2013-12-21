@@ -17,14 +17,6 @@ extern "C" {
 
 
 
-/*
-typedef struct {
-    int16_t x;
-    int16_t y;
-    uint8_t isPressed;
-} touchPanelState_t;
-*/
-
 //-----------------------------------//
 // Callbacks
 #define LOG_FROM_TOP      10
@@ -46,7 +38,8 @@ void guiInitialize(void);
 void guiUpdateTime(uint8_t hours, uint8_t minutes, uint8_t seconds);
 void guiDrawAll(void);
 
-void guiButtonClicked(uint32_t buttonCode);
+void guiButtonPressed(uint16_t buttonCode);
+void guiButtonReleased(uint16_t buttonCode);
 void guiEncoderRotated(int32_t delta);
 
 

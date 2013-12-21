@@ -140,6 +140,7 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
           case GUI_EVENT_INIT:
             guiCore_TimerInit(TMR_TIME_UPDATE, 1, 0, (guiGenericWidget_t *)&guiMainForm, 0);
             guiCore_TimerStart(TMR_TIME_UPDATE, 1);
+            guiCore_SetFocused((guiGenericWidget_t *)&guiMainForm, 1);
             break;
           case GUI_EVENT_TIMER:
             sprintf(textLabel_time.text, "%2d:%02d:%02d", timeHours, timeMinutes, timeSeconds);

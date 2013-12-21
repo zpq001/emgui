@@ -6,7 +6,7 @@
 
 
 
-extern guiForm_t     guiMainForm;
+extern guiPanel_t     guiMainForm;
 
 void guiMainForm_Initialize(void);
 

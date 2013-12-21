@@ -8,11 +8,11 @@
 #include <stdint.h>
 #include "guiGraphHAL.h"
 #include "guiGraphPrimitives.h"
+#include "guiGraphWidgets.h"
 #include "guiFonts.h"
 #include "guiImages.h"
-#include "guiWidgets.h"
 
-#include "guiForm.h"
+#include "guiWidgets.h"
 #include "guiTextLabel.h"
 #include "guiCheckBox.h"
 
@@ -59,38 +59,43 @@ void guiGraph_OffsetBaseXY(int16_t dx, int16_t dy)
 */
 
 
-
-
 //-------------------------------------------------------//
-// Draw a form
+// Draw a panel
 //
 //
 //-------------------------------------------------------//
-void guiGraph_DrawForm(guiForm_t *form)
+void guiGraph_DrawPanel(guiPanel_t *panel)
 {
-    if (form->redrawFlags & FORM_REDRAW_FOCUS)
+
+    //-----------------------------------------//
+    // Draw background
+    if (panel->redrawForced)
+    {
+        // Erase rectangle
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        LCD_FillRect(wx+1,wy+1,panel->width-2,panel->height-2,FILL_WITH_WHITE);
+    }
+
+
+    //-----------------------------------------//
+    // Draw focus / frame
+    if (((panel->redrawForced) || (panel->redrawFocus))  &&
+        (panel->showFocus))
     {
         LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-        if (form->isFocused)
+        if (panel->isFocused)
         {
             LCD_SetLineStyle(LINE_STYLE_DOTTED);
-            LCD_DrawRect(wx,wy,form->width,form->height,1);
+            LCD_DrawRect(wx,wy,panel->width,panel->height,1);
         }
         else
         {
             LCD_SetLineStyle(LINE_STYLE_SOLID);
-            if (form->hasFrame)
-                LCD_DrawRect(wx,wy,form->width,form->height,1);
+            if (panel->frame)
+                LCD_DrawRect(wx,wy,panel->width,panel->height,1);
             else
-                LCD_DrawRect(wx,wy,form->width,form->height,0);
+                LCD_DrawRect(wx,wy,panel->width,panel->height,0);
         }
-    }
-
-    if (form->redrawFlags & FORM_REDRAW_BACKGROUND)
-    {
-        // Erase rectangle
-        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-        LCD_FillRect(wx+1,wy+1,form->width-2,form->height-2,FILL_WITH_WHITE);
     }
 }
 
@@ -105,7 +110,31 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
 {
     rect_t rect;
 
-    if (textLabel->redrawFlags & TEXT_LABEL_REDRAW_FOCUS)
+    //-----------------------------------------//
+    // Draw background and text
+    if ((textLabel->redrawForced) || (textLabel->redrawText))
+    {
+        // Erase rectangle
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        LCD_FillRect(wx,wy,textLabel->width-1,textLabel->height-1,FILL_WITH_WHITE);
+
+        // Draw string
+        if (textLabel->text)
+        {
+            LCD_SetPixelOutputMode(PIXEL_MODE_OR);
+            LCD_SetFont(textLabel->font);
+            rect.x1 = wx + 0 + TEXT_LABEL_TEXT_MARGIN;
+            rect.y1 = wy + 0;
+            rect.x2 = wx + textLabel->width - 1 - TEXT_LABEL_TEXT_MARGIN;
+            rect.y2 = wy + textLabel->height - 1;
+            LCD_PrintStringAligned(textLabel->text, &rect, textLabel->textAlignment, IMAGE_MODE_NORMAL);
+        }
+    }
+
+    //-----------------------------------------//
+    // Draw focus
+    if (((textLabel->redrawForced) || (textLabel->redrawFocus)) &&
+        (textLabel->showFocus))
     {
         LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
         if (textLabel->isFocused)
@@ -122,26 +151,6 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
                 LCD_DrawRect(wx,wy,textLabel->width,textLabel->height,0);
         }
     }
-
-
-    if (textLabel->redrawFlags & TEXT_LABEL_REDRAW_TEXT)
-    {
-        // Erase rectangle
-        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-        LCD_FillRect(wx+1,wy+1,textLabel->width-2,textLabel->height-2,FILL_WITH_WHITE);
-
-        // Draw string
-        if (textLabel->text)
-        {
-            LCD_SetPixelOutputMode(PIXEL_MODE_OR);
-            LCD_SetFont(textLabel->font);
-            rect.x1 = wx + 1 + TEXT_LABEL_TEXT_MARGIN;
-            rect.y1 = wy + 1;
-            rect.x2 = wx + textLabel->width - 2 - TEXT_LABEL_TEXT_MARGIN;
-            rect.y2 = wy + textLabel->height - 2;
-            LCD_PrintStringAligned(textLabel->text, &rect, textLabel->alignment, IMAGE_MODE_NORMAL);
-        }
-    }
 }
 
 
@@ -156,26 +165,9 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
     y_aligned /= 2;
     y_aligned = wy + y_aligned;
 
-    if (checkBox->redrawFlags & CHECKBOX_REDRAW_FOCUS)
-    {
-        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-        if (checkBox->isFocused)
-        {
-            LCD_SetLineStyle(LINE_STYLE_DOTTED);
-            LCD_DrawRect(wx,wy,checkBox->width,checkBox->height,1);
-        }
-        else
-        {
-            LCD_SetLineStyle(LINE_STYLE_SOLID);
-            if (checkBox->hasFrame)
-                LCD_DrawRect(wx,wy,checkBox->width,checkBox->height,1);
-            else
-                LCD_DrawRect(wx,wy,checkBox->width,checkBox->height,0);
-        }
-    }
-
-
-    if (checkBox->redrawFlags & CHECKBOX_REDRAW_BACKGROUND)
+    //-----------------------------------------//
+    // Draw background
+    if (checkBox->redrawForced)
     {
         // Erase rectangle
         LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
@@ -198,14 +190,37 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
         //LCD_DrawRect(wx + 2,y_aligned,CHECKBOX_GRAPH_XSIZE,CHECKBOX_GRAPH_YSIZE,1);
     }
 
-    LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-    if (checkBox->redrawFlags & CHECKBOX_REDRAW_STATE)
+
+    //-----------------------------------------//
+    // Draw focus / frame
+    if ((checkBox->redrawForced) || (checkBox->redrawFocus))
     {
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        if (checkBox->isFocused)
+        {
+            LCD_SetLineStyle(LINE_STYLE_DOTTED);
+            LCD_DrawRect(wx,wy,checkBox->width,checkBox->height,1);
+        }
+        else
+        {
+            LCD_SetLineStyle(LINE_STYLE_SOLID);
+            if (checkBox->hasFrame)
+                LCD_DrawRect(wx,wy,checkBox->width,checkBox->height,1);
+            else
+                LCD_DrawRect(wx,wy,checkBox->width,checkBox->height,0);
+        }
+    }
+
+
+    //-----------------------------------------//
+    // Draw focus / frame
+    if ((checkBox->redrawForced) || (checkBox->redrawCheckedState))
+    {
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
         img = (checkBox->isChecked) ? CHECKBOX_IMG_CHECKED :
                                       CHECKBOX_IMG_EMPTY;
         LCD_DrawImage(img,wx+2,y_aligned,CHECKBOX_GRAPH_XSIZE, CHECKBOX_GRAPH_YSIZE,IMAGE_MODE_NORMAL);
     }
-
 
 }
 

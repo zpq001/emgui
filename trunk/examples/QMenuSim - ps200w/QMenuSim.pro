@@ -12,47 +12,52 @@ TEMPLATE = app
 INCLUDEPATH = ./
 INCLUDEPATH += ./gui_top/
 INCLUDEPATH += ../common/
-INCLUDEPATH += ../../source/guiWidgets/
+INCLUDEPATH += ../../source/guiWidgets_monochrome/
 INCLUDEPATH += ../../source/guiCore/
-INCLUDEPATH += ../../source/guiGraphics/
+INCLUDEPATH += ../../source/guiGraphics_monochrome/
 
 SOURCES += main.cpp\
 		mainwindow.cpp \
     ../common/pixeldisplay.cpp \
-    gui_top/guiTop.c \
-    ../../source/guiGraphics/guiGraphHAL.c \
-    ../../source/guiGraphics/guiGraphPrimitives.c \
-    ../../source/guiGraphics/guiGraphWidgets.c \
-    ../../source/guiWidgets/guiTextLabel.c \
-    ../../source/guiWidgets/guiForm.c \
+	../../source/guiGraphics_monochrome/font_6x8_mono.c \
+    ../../source/guiGraphics_monochrome/font_h12.c \
+    ../../source/guiGraphics_monochrome/font_h32.c \
+    ../../source/guiGraphics_monochrome/font_h10.c \
+    ../../source/guiGraphics_monochrome/font_h10_bold.c \
+	../../source/guiGraphics_monochrome/widget_images.c \
+    ../../source/guiGraphics_monochrome/guiGraphHAL.c \
+    ../../source/guiGraphics_monochrome/guiGraphPrimitives.c \
+    ../../source/guiGraphics_monochrome/guiGraphWidgets.c \
     ../../source/guiCore/guiCore.c \
+	../../source/guiWidgets_monochrome/guiPanel.c \
+    ../../source/guiWidgets_monochrome/guiCheckBox.c \
+	../../source/guiWidgets_monochrome/guiTextLabel.c \
+	gui_top/guiTop.c \
     gui_top/guiMainForm.c \
-    gui_top/guiSubForm1.c \
-    ../../source/guiGraphics/font_6x8_mono.c \
-    ../../source/guiGraphics/font_h12.c \
-    ../../source/guiGraphics/font_h32.c \
-    ../../source/guiGraphics/font_h10.c \
-    ../../source/guiGraphics/font_h10_bold.c \
-    ../../source/guiWidgets/guiCheckBox.c \
-    ../../source/guiGraphics/widget_images.c
+    gui_top/guiSetupPanel.c \
+    gui_top/guiMasterPanel.c
 	
 
 HEADERS  += mainwindow.h \
     ../common/pixeldisplay.h \
-    gui_top/guiTop.h \
-    ../../source/guiGraphics/guiGraphHAL.h \
-    ../../source/guiGraphics/guiGraphPrimitives.h \
-    ../../source/guiGraphics/guiFonts.h \
-    ../../source/guiWidgets/guiWidgets.h \
-    ../../source/guiGraphics/guiGraphWidgets.h \
-    ../../source/guiWidgets/guiTextLabel.h \
-    ../../source/guiCore/guiEvents.h \
-    ../../source/guiWidgets/guiForm.h \
+	../../source/guiGraphics_monochrome/guiFonts.h \
+	../../source/guiGraphics_monochrome/guiImages.h \
+	../../source/guiGraphics_monochrome/guiGraphHAL.h \
+    ../../source/guiGraphics_monochrome/guiGraphPrimitives.h \
+	../../source/guiGraphics_monochrome/guiGraphWidgets.h \
+	../../source/guiCore/guiEvents.h \
     ../../source/guiCore/guiCore.h \
+	../../source/guiWidgets_monochrome/guiWidgets.h \
+	../../source/guiWidgets_monochrome/guiPanel.h \
+	../../source/guiWidgets_monochrome/guiTextLabel.h \
+	../../source/guiWidgets_monochrome/guiCheckBox.h \
+    gui_top/guiConfig.h \
+	gui_top/guiTop.h \
     gui_top/guiMainForm.h \
-    gui_top/guiSubForm1.h \
-    ../../source/guiWidgets/guiCheckBox.h \
-    ../../source/guiGraphics/guiImages.h
+    gui_top/guiSetupPanel.h \
+    gui_top/guiMasterPanel.h
+    
+    
 	
 
 
