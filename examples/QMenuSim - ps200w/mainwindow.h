@@ -15,7 +15,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     static void addLogWrapper(int type, char *string);
-    static void updateDisplayWrapper(uint16_t *buffer);
+    static void updateDisplayWrapper(int display, void *buffer);
 public slots:
 
 private slots:
@@ -33,16 +33,13 @@ private slots:
     void on_wheelEvent(QWheelEvent * event);
 
     void on_touchMove(void);
-    void on_touchPress(void);
-    void on_touchRelease(void);
-
     void on_secondsTimer(void);
 
 private:
     Ui::MainWindow *ui;
-
     void updateStatusBar(void);
     bool eventFilter(QObject *obj, QEvent *event);
+
 };
 
 #endif // MAINWINDOW_H

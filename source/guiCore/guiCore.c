@@ -14,7 +14,7 @@
 #include "guiCore.h"
 
 
-// Predefined constant events - for stack economy
+// Predefined constant events - saves stack a bit
 const guiEvent_t guiEvent_INIT = {GUI_EVENT_INIT, 0, 0, 0};
 const guiEvent_t guiEvent_DRAW = {GUI_EVENT_DRAW, 0, 0, 0};
 const guiEvent_t guiEvent_UPDATE = {GUI_EVENT_UPDATE, 0, 0, 0};
@@ -25,7 +25,6 @@ const guiEvent_t guiEvent_FOCUS = {GUI_EVENT_FOCUS, 0, 0, 0};
 
 #ifdef GUI_CFG_USE_TIMERS
 // Total count of timers should be defined in guiConfig.h
-guiEvent_t guiEvent_TIMER = {GUI_EVENT_TIMER, 0, 0, 0};
 guiTimer_t guiTimers[GUI_TIMER_COUNT];
 #endif
 
@@ -34,9 +33,14 @@ guiGenericWidget_t *rootWidget;         // Root widget must be present
 guiGenericWidget_t *focusedWidget;      // Focused widget gets events from keys/encoder/touch
 
 
-//=======================================================//
 
 
+//===================================================================//
+//===================================================================//
+//                                                                   //
+//                 GUI core message queue functions                  //
+//                                                                   //
+//===================================================================//
 
 
 //-------------------------------------------------------//
@@ -82,10 +86,13 @@ uint8_t guiCore_GetMessageFromQueue(guiGenericWidget_t **target, guiEvent_t *eve
 }
 
 
-
 //-------------------------------------------------------//
 //  GUI core function for processing message queue
 //
+// Generally, if message target widget cannot process
+// event, message is sent to it's parent and so on
+// until it is accepted or root widget is sent the message
+// If root cannot process this message, it is lost.
 //-------------------------------------------------------//
 void guiCore_ProcessMessageQueue(void)
 {
@@ -115,6 +122,28 @@ void guiCore_ProcessMessageQueue(void)
 }
 
 
+
+//-------------------------------------------------------//
+//  Adds message for focused widget to message queue
+//
+//-------------------------------------------------------//
+void guiCore_PostEventToFocused(guiEvent_t event)
+{
+    if (focusedWidget == 0)
+        return;                 // Should not normally happen ?
+    guiCore_AddMessageToQueue(focusedWidget, &event);
+}
+
+
+
+
+
+//===================================================================//
+//===================================================================//
+//                                                                   //
+//                      GUI core timers functions                    //
+//                                                                   //
+//===================================================================//
 
 
 #ifdef GUI_CFG_USE_TIMERS
@@ -179,6 +208,7 @@ void guiCore_TimerStop(uint8_t timerID, uint8_t doReset)
 //-------------------------------------------------------//
 void guiCore_TimerProcess(uint8_t timerID)
 {
+    guiEvent_t event = {GUI_EVENT_TIMER, 0, 0, 0};
     if (timerID >= GUI_TIMER_COUNT)
         return;
     if (guiTimers[timerID].isEnabled)
@@ -191,8 +221,8 @@ void guiCore_TimerProcess(uint8_t timerID)
                 guiTimers[timerID].isEnabled = 0;
             if (guiTimers[timerID].targetWidget != 0)
             {
-                guiEvent_TIMER.spec = timerID;
-                guiCore_AddMessageToQueue(guiTimers[timerID].targetWidget, &guiEvent_TIMER);
+                event.spec = timerID;
+                guiCore_AddMessageToQueue(guiTimers[timerID].targetWidget, &event);
             }
             if (guiTimers[timerID].handler != 0)
                 guiTimers[timerID].handler(timerID);
@@ -204,66 +234,13 @@ void guiCore_TimerProcess(uint8_t timerID)
 
 
 
-//-------------------------------------------------------//
-// Makes specified rectangle invalid - it must be redrawn
-// Rectangle coordinates are relative to widget's.
-// When calling this function, widget should set it's
-// redraw flags itself.
-//-------------------------------------------------------//
-void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, uint16_t x2, uint16_t y2)
-{
-    /*
-        Approach 1:
-            Add this rectangle to the list of invalidated rectangles of thew form.
-            Redrawing will be split into two stages:
-                a.  Traverse whole widget tree and find for each container if it intercepts with any of the rectangles.
-                    If there is some interseption, mark the container to fully redraw it and it's content if rectangle is
-                    not an exact widget.
-                    For each widget in the container also check interseption with the rectangles and mark those
-                    who has interception.
-                b.  Add marked widgets and containers to redraw list. Sort list by Z-index and redraw every widget.
-        Approach 2:
-            Check if the rectangle lies on the parent widget completely. If so, mark parent to be redrawn and exit.
-            If rectangle spands over the parent's borders, check the same for parent's parent and so on, until
-            root widget is reached - i.e. propagate up the tree.
 
-        If using Z-order, possibly put all form widgets into single array?
-    */
-
-
-    while (1)
-    {
-        if (widget->parent == 0)    // root widget has no parent
-            break;
-
-        // Convert rectangle into parent's coordinates
-        x1 += widget->x;
-        x2 += widget->x;
-        y1 += widget->y;
-        y2 += widget->y;
-
-        // Move up the tree
-        widget = widget->parent;
-
-        // Make parent widget redraw
-        widget->redrawRequired = 1;
-        widget->redrawForced = 1;
-
-        // Check if rectangle lies inside parent
-        if ( (x1 >= 0) &&
-             (y1 >= 0) &&
-             (x2 < widget->width) &&
-             (y2 < widget->height) )
-        {
-            break;
-        }
-    }
-
-}
-
-
-
-//=======================================================//
+//===================================================================//
+//===================================================================//
+//                                                                   //
+//                      Top GUI core functions                       //
+//                                                                   //
+//===================================================================//
 
 
 
@@ -295,7 +272,10 @@ void guiCore_Init(guiGenericWidget_t *guiRootWidget)
 
 
 
-
+//-------------------------------------------------------//
+//  Top function for GUI redrawing
+//
+//-------------------------------------------------------//
 void guiCore_RedrawAll(void)
 {
     guiGenericWidget_t *widget;
@@ -398,20 +378,93 @@ void guiCore_RedrawAll(void)
 }
 
 
+//-------------------------------------------------------//
+//  Top function for touchscreen processing
+//  x and y are absolute coordinates
+//  touchState values are defined in guiCore.h
+//-------------------------------------------------------//
+void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t touchState)
+{
+    guiEvent_t event;
+    event.type = GUI_EVENT_TOUCH;
+    event.spec = touchState;
+    event.lparam = (uint16_t)x;
+    event.hparam = (uint16_t)y;
+#ifdef ALWAYS_PASS_TOUCH_TO_FOCUSED
+    guiCore_AddMessageToQueue(focusedWidget, &event);
+#else
+    if ((focusedWidget != 0) && (focusedWidget->keepTouch))
+        guiCore_AddMessageToQueue(focusedWidget, &event);
+    else
+        guiCore_AddMessageToQueue(rootWidget, &event);
+#endif
+    guiCore_ProcessMessageQueue();
+}
+
+//-------------------------------------------------------//
+//  Top function for processing keys
+//  default keys and specificators are defined in guiCore.h
+//-------------------------------------------------------//
+void guiCore_ProcessKeyEvent(uint16_t code, uint8_t spec)
+{
+    guiEvent_t event;
+    event.type = GUI_EVENT_KEY;
+    event.spec = spec;
+    event.lparam = code;
+    guiCore_AddMessageToQueue(focusedWidget, &event);
+    guiCore_ProcessMessageQueue();
+}
+
+//-------------------------------------------------------//
+//  Top function for processing encoder
+//
+//-------------------------------------------------------//
+void guiCore_ProcessEncoderEvent(int16_t increment)
+{
+    guiEvent_t event;
+    event.type = GUI_EVENT_ENCODER;
+    event.spec = 0;
+    event.lparam = (uint16_t)increment;
+    guiCore_AddMessageToQueue(focusedWidget, &event);
+    guiCore_ProcessMessageQueue();
+}
+
+//-------------------------------------------------------//
+//  Top function for processing timers
+//
+//-------------------------------------------------------//
+void guiCore_ProcessTimers(void)
+{
+    uint8_t i;
+    for (i=0; i<GUI_TIMER_COUNT; i++)
+    {
+        guiCore_TimerProcess(i);
+    }
+    guiCore_ProcessMessageQueue();
+}
+
+//-------------------------------------------------------//
+//  Top function for GUI elements update
+//
+//-------------------------------------------------------//
 void guiCore_UpdateAll(void)
 {
     guiCore_BroadcastEvent(guiEvent_UPDATE, guiCore_UpdateValidator);
-}
-
-uint8_t guiCore_UpdateValidator(guiGenericWidget_t *widget)
-{
-    if ((widget == 0) || (widget->updateRequired == 0))
-        return 0;
-    else
-        return 1;
+    guiCore_ProcessMessageQueue();
 }
 
 
+
+
+//-------------------------------------------------------//
+//  Sends event to all GUI elements for which validator
+//  returns non-zero
+//
+//  guiCore_ProcessMessageQueue() should be called after
+//  this function.
+//  GUI message queue should be long enough - depending
+//  on particular case
+//-------------------------------------------------------//
 void guiCore_BroadcastEvent(guiEvent_t event, uint8_t(*validator)(guiGenericWidget_t *widget))
 {
     guiGenericWidget_t *widget;
@@ -471,131 +524,94 @@ void guiCore_BroadcastEvent(guiEvent_t event, uint8_t(*validator)(guiGenericWidg
 }
 
 
-void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t touchState)
+//-------------------------------------------------------//
+//  Returns true if widget requires update
+//
+//-------------------------------------------------------//
+uint8_t guiCore_UpdateValidator(guiGenericWidget_t *widget)
 {
-    guiEvent_t event;
-    event.type = GUI_EVENT_TOUCH;
-    event.spec = touchState;
-    event.lparam = (uint16_t)x;
-    event.hparam = (uint16_t)y;
-#ifdef ALWAYS_PASS_TOUCH_TO_FOCUSED
-    guiCore_AddMessageToQueue(focusedWidget, &event);
-#else
-    if ((focusedWidget != 0) && (focusedWidget->keepTouch))
-        guiCore_AddMessageToQueue(focusedWidget, &event);
+    if ((widget == 0) || (widget->updateRequired == 0))
+        return 0;
     else
-        guiCore_AddMessageToQueue(rootWidget, &event);
-#endif
-    guiCore_ProcessMessageQueue();
+        return 1;
 }
 
-/*
-void guiCore_DispathTouchEvent(int16_t x, int16_t y, uint8_t touchState)
+
+
+
+
+//===================================================================//
+//===================================================================//
+//                                                                   //
+//                    Drawing and touch support                      //
+//                       geometry functions                          //
+//                                                                   //
+//===================================================================//
+
+
+//-------------------------------------------------------//
+// Makes specified rectangle invalid - it must be redrawn
+// Rectangle coordinates are relative to widget's.
+// When calling this function, widget should set it's
+// redraw flags itself.
+//-------------------------------------------------------//
+void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, uint16_t x2, uint16_t y2)
 {
-    guiGenericWidget_t *widget;
-    guiGenericWidget_t *w;
-    guiGenericWidget_t *topMostWidget;
+    /*
+        Approach 1:
+            Add this rectangle to the list of invalidated rectangles of thew form.
+            Redrawing will be split into two stages:
+                a.  Traverse whole widget tree and find for each container if it intercepts with any of the rectangles.
+                    If there is some interseption, mark the container to fully redraw it and it's content if rectangle is
+                    not an exact widget.
+                    For each widget in the container also check interseption with the rectangles and mark those
+                    who has interception.
+                b.  Add marked widgets and containers to redraw list. Sort list by Z-index and redraw every widget.
+        Approach 2:
+            Check if the rectangle lies on the parent widget completely. If so, mark parent to be redrawn and exit.
+            If rectangle spands over the parent's borders, check the same for parent's parent and so on, until
+            root widget is reached - i.e. propagate up the tree.
 
-    int16_t x = (int16_t)event.lparam;
-    int16_t y = (int16_t)event.hparam;
-    uint8_t i;
-
-    // Start from root widget
-    widget = rootWidget;
+        If using Z-order, possibly put all form widgets into single array?
+    */
 
 
-    while(1)
+    while (1)
     {
-        if (widget->isContainer)
-        {
-            // Point is inside container or one of it's widgets. Find out which one.
-            topMostWidget = widget;
-            for (i=0; i<((guiGenericContainer_t *)widget)->widgets.count; i++)
-            {
-                w = ((guiGenericContainer_t *)widget)->widgets.elements[i];
-                if (w == 0)
-                    continue;
-                if ((w->acceptTouch) && (w->isVisible))   // TODO - add isEnabled, etc
-                {
-                    if ((x >= w->x) && (x < w->x + w->width) &&
-                        (y >= w->y) && (y < w->y + w->height))
-                    {
-                        topMostWidget = w;
-                    }
-                }
-            }
+        if (widget->parent == 0)    // root widget has no parent
+            break;
 
-            if (topMostWidget == widget)
-            {
-                // No child widget is found at (x,y)
-                // Post event to continer itself
-                break;
-            }
-            else
-            {
-                // Found topmost child widget
-                // Convert coordinates
-                x -= w->x;
-                y -= w->y;
-                // Switch to child
-                widget = w;
-            }
-        }
-        else
+        // Convert rectangle into parent's coordinates
+        x1 += widget->x;
+        x2 += widget->x;
+        y1 += widget->y;
+        y2 += widget->y;
+
+        // Move up the tree
+        widget = widget->parent;
+
+        // Make parent widget redraw
+        widget->redrawRequired = 1;
+        widget->redrawForced = 1;
+
+        // Check if rectangle lies inside parent
+        if ( (x1 >= 0) &&
+             (y1 >= 0) &&
+             (x2 < widget->width) &&
+             (y2 < widget->height) )
         {
-            // Post touch event to widget
             break;
         }
     }
-    event.lparam = (uint16_t)x;
-    event.hparam = (uint16_t)y;
-
-}
-*/
-
-void guiCore_ProcessButtonEvent(uint16_t code, uint8_t spec)
-{
-    guiEvent_t event;
-    event.type = GUI_EVENT_KEY;
-    event.spec = spec;
-    event.lparam = code;
-    guiCore_AddMessageToQueue(focusedWidget, &event);
-    guiCore_ProcessMessageQueue();
-}
-
-
-void guiCore_ProcessEncoderEvent(int16_t increment)
-{
-    guiEvent_t event;
-    event.type = GUI_EVENT_ENCODER;
-    event.spec = 0;
-    event.lparam = (uint16_t)increment;
-    guiCore_AddMessageToQueue(focusedWidget, &event);
-    guiCore_ProcessMessageQueue();
-}
-
-
-void guiCore_ProcessTimers(void)
-{
-    uint8_t i;
-    for (i=0; i<GUI_TIMER_COUNT; i++)
-    {
-        guiCore_TimerProcess(i);
-    }
-    guiCore_ProcessMessageQueue();
 }
 
 
 
-
-
-
-
-
-
-
-
-
+//-------------------------------------------------------//
+//  Verifies if widget and rectangle are overlapped
+//
+//  Returns true if interseption is not null.
+//-------------------------------------------------------//
 uint8_t guiCore_CheckWidgetOvelap(guiGenericWidget_t *widget, rect16_t *rect)
 {
     if ((rect->x2 - rect->x1 <= 0) || (rect->y2 - rect->y1 <= 0))
@@ -611,15 +627,11 @@ uint8_t guiCore_CheckWidgetOvelap(guiGenericWidget_t *widget, rect16_t *rect)
 
 
 
-// CHECKME
-void guiCore_PostEventToFocused(guiEvent_t event)
-{
-    if (focusedWidget == 0)
-        return;                 // Should not normally happen ?
-    guiCore_AddMessageToQueue(focusedWidget, &event);
-}
-
-
+//-------------------------------------------------------//
+//  Converts relative (x,y) for a specified widget to
+//    absolute values (absolute means relative to root's (x,y))
+//
+//-------------------------------------------------------//
 void guiCore_ConvertToAbsoluteXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y)
 {
     while(widget->parent != 0)
@@ -633,6 +645,11 @@ void guiCore_ConvertToAbsoluteXY(guiGenericWidget_t *widget, int16_t *x, int16_t
     }
 }
 
+//-------------------------------------------------------//
+//  Converts absolute (x,y) to relative for a specified widget
+//     values (absolute means relative to root's (x,y))
+//
+//-------------------------------------------------------//
 void guiCore_ConvertToRelativeXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y)
 {
     while(widget->parent != 0)
@@ -647,11 +664,13 @@ void guiCore_ConvertToRelativeXY(guiGenericWidget_t *widget, int16_t *x, int16_t
 }
 
 
-
-// Returns widget that has point (x;y) and can be touched - either one of child widgets or widget itself.
+//-------------------------------------------------------//
+// Returns widget that has point (x;y) and can be touched -
+//  either one of child widgets or widget itself.
 // If widget is not visible, or not enabled, it is skipped.
 // If no widget is found, 0 is returned
 // X and Y parameters must be relative to container
+//-------------------------------------------------------//
 guiGenericWidget_t *guiCore_GetTouchedWidgetAtXY(guiGenericWidget_t *widget, int16_t x, int16_t y)
 {
     guiGenericWidget_t *w;
@@ -692,21 +711,20 @@ guiGenericWidget_t *guiCore_GetTouchedWidgetAtXY(guiGenericWidget_t *widget, int
 
 
 
-// Returns index of a widget in parent's collection
-uint8_t guiCore_GetWidgetIndex(guiGenericWidget_t *widget)
-{
-    uint8_t i;
-    if ((widget == 0) || (widget->parent == 0))
-        return 0;
-    for (i = 0; i < ((guiGenericContainer_t *)widget->parent)->widgets.count; i++)
-    {
-        if (((guiGenericContainer_t *)widget->parent)->widgets.elements[i] == widget)
-            return i;
-    }
-    return 0;   // error - widget is not present in parent's collection
-}
+//===================================================================//
+//===================================================================//
+//                                                                   //
+//                   Widget collections management                   //
+//                                                                   //
+//===================================================================//
 
 
+
+
+//-------------------------------------------------------//
+// Adds to queue focus message for newFocusedWidget
+//
+//-------------------------------------------------------//
 void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
 {
     // Tell new widget to get focus
@@ -716,7 +734,11 @@ void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
     }
 }
 
-
+//-------------------------------------------------------//
+// Sets GUI core focusedWidget pointer to widget
+// This function should be called by a widget when it
+// receives FOCUS message and agrees with it.
+//-------------------------------------------------------//
 void guiCore_AcceptFocus(guiGenericWidget_t *widget)
 {
     uint8_t index;
@@ -733,52 +755,6 @@ void guiCore_AcceptFocus(guiGenericWidget_t *widget)
         ((guiGenericContainer_t *)widget->parent)->widgets.focusedIndex = index;
     }
 }
-
-
-// Checks widget's tabindex in parent's collection.
-// If current widget is the last in the collection that can be focused,
-//      TABINDEX_IS_MAX is returned.
-// If current widget is the first in the collection that can be focused,
-//      TABINDEX_IS_MIN is returned.
-// Else TABINDEX_IS_NORM is returned.
-uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget)
-{
-    // TODO - add canBeFocused() function
-    uint8_t i;
-    uint8_t currTabIndex;
-    uint8_t maxTabIndex;
-    uint8_t minTabIndex;
-    guiGenericWidget_t *w;
-    if (widget == 0) return 0;
-
-    currTabIndex = widget->tabIndex;
-    maxTabIndex = currTabIndex;
-    minTabIndex = currTabIndex;
-
-    for (i = 0; i < ((guiGenericContainer_t *)widget->parent)->widgets.count; i++)
-    {
-        w = ((guiGenericContainer_t *)widget->parent)->widgets.elements[i];
-        if (w == 0) continue;
-        if ((w->acceptFocusByTab == 0) || (w->isVisible == 0)) continue;    // TODO - add isEnabled
-        if (w->tabIndex > widget->tabIndex)
-            maxTabIndex = w->tabIndex;
-        else if (w->tabIndex < widget->tabIndex)
-            minTabIndex = w->tabIndex;
-    }
-
-    if (currTabIndex == maxTabIndex)
-        return TABINDEX_IS_MAX;
-    if (currTabIndex == minTabIndex)
-        return TABINDEX_IS_MIN;
-
-    return TABINDEX_IS_NORM;
-}
-
-
-
-
-
-
 
 
 //-------------------------------------------------------//
@@ -835,62 +811,63 @@ void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tab
 
 
 //-------------------------------------------------------//
-//  Gets next widget in collection to focus on
+// Returns index of a widget in parent's collection
 //
 //-------------------------------------------------------//
-/*
-guiGenericWidget_t *guiCore_GetNextFocusWidget(guiGenericContainer_t *container, int8_t tabDir)
+uint8_t guiCore_GetWidgetIndex(guiGenericWidget_t *widget)
 {
-    uint8_t currentTabIndex;
     uint8_t i;
-    int16_t minTabIndex = 0x200;   // maximum x2
-    int16_t tmp;
-    uint8_t minWidgetIndex = container->widgets.count;
-    guiGenericWidget_t *widget;
-
-    currentTabIndex = 0;
-
-    // Check if current widget belongs to specified container's collection
-    if (focusedWidget)
+    if ((widget == 0) || (widget->parent == 0))
+        return 0;
+    for (i = 0; i < ((guiGenericContainer_t *)widget->parent)->widgets.count; i++)
     {
-        if (focusedWidget->parent == (guiGenericWidget_t *)container)
-            currentTabIndex = focusedWidget->tabIndex;
+        if (((guiGenericContainer_t *)widget->parent)->widgets.elements[i] == widget)
+            return i;
     }
-
-
-    // Find widget with next tabIndex
-    for (i = 0; i < container->widgets.count; i++)
-    {
-        widget = (guiGenericWidget_t *)container->widgets.elements[i];
-        if (widget == 0)
-            continue;
-        if ((widget->acceptFocusByTab) && (widget->isVisible))
-        {
-            if (tabDir >= 0)
-                tmp = (widget->tabIndex <= currentTabIndex) ? widget->tabIndex + 256 : widget->tabIndex;
-            else
-                tmp = (widget->tabIndex >= currentTabIndex) ? -(widget->tabIndex - 256) : -widget->tabIndex;
-
-            if (tmp < minTabIndex)
-            {
-                minTabIndex = tmp;
-                minWidgetIndex = i;
-            }
-        }
-    }
-
-    if (minWidgetIndex < container->widgets.count)
-    {
-        widget = container->widgets.elements[minWidgetIndex];
-        //container->widgets.focusedIndex = minWidgetIndex;
-        return widget;
-    }
-    return 0;
+    return 0;   // error - widget is not present in parent's collection
 }
-*/
 
 
+//-------------------------------------------------------//
+// Checks widget's tabindex in parent's collection.
+// If current widget is the last in the collection that can be focused,
+//      TABINDEX_IS_MAX is returned.
+// If current widget is the first in the collection that can be focused,
+//      TABINDEX_IS_MIN is returned.
+// Else TABINDEX_IS_NORM is returned.
+//-------------------------------------------------------//
+uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget)
+{
+    // TODO - add canBeFocused() function
+    uint8_t i;
+    uint8_t currTabIndex;
+    uint8_t maxTabIndex;
+    uint8_t minTabIndex;
+    guiGenericWidget_t *w;
+    if (widget == 0) return 0;
 
+    currTabIndex = widget->tabIndex;
+    maxTabIndex = currTabIndex;
+    minTabIndex = currTabIndex;
+
+    for (i = 0; i < ((guiGenericContainer_t *)widget->parent)->widgets.count; i++)
+    {
+        w = ((guiGenericContainer_t *)widget->parent)->widgets.elements[i];
+        if (w == 0) continue;
+        if ((w->acceptFocusByTab == 0) || (w->isVisible == 0)) continue;    // TODO - add isEnabled
+        if (w->tabIndex > widget->tabIndex)
+            maxTabIndex = w->tabIndex;
+        else if (w->tabIndex < widget->tabIndex)
+            minTabIndex = w->tabIndex;
+    }
+
+    if (currTabIndex == maxTabIndex)
+        return TABINDEX_IS_MAX;
+    if (currTabIndex == minTabIndex)
+        return TABINDEX_IS_MIN;
+
+    return TABINDEX_IS_NORM;
+}
 
 
 
@@ -899,7 +876,7 @@ guiGenericWidget_t *guiCore_GetNextFocusWidget(guiGenericContainer_t *container,
 //===================================================================//
 //===================================================================//
 //                                                                   //
-//                   Generic widget API fucntions                    //
+//                   General widget API fucntions                    //
 //                                                                   //
 //===================================================================//
 
@@ -982,28 +959,6 @@ uint8_t guiCore_SetFocused(guiGenericWidget_t *widget, uint8_t newFocusedState)
     return 1;
 }
 
-
-//-------------------------------------------------------//
-//  Call widget's handler for an event
-//
-//  Function searches through the widget's handler table
-//  and call handlers for matching event type
-//-------------------------------------------------------//
-uint8_t guiCore_CallEventHandler(guiGenericWidget_t *widget, guiEvent_t *event)
-{
-    uint8_t i;
-    uint8_t handlerResult = GUI_EVENT_DECLINE;
-    for(i=0; i<widget->handlers.count; i++)
-    {
-        if (widget->handlers.elements[i].eventType == event->type)
-        {
-            handlerResult = widget->handlers.elements[i].handler(widget, event);
-        }
-    }
-    return handlerResult;
-}
-
-
 //-------------------------------------------------------//
 //  Shows or hides widgets in a collection
 //
@@ -1043,6 +998,28 @@ void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, 
         }
     }
 }
+
+
+//-------------------------------------------------------//
+//  Call widget's handler for an event
+//
+//  Function searches through the widget's handler table
+//  and call handlers for matching event type
+//-------------------------------------------------------//
+uint8_t guiCore_CallEventHandler(guiGenericWidget_t *widget, guiEvent_t *event)
+{
+    uint8_t i;
+    uint8_t handlerResult = GUI_EVENT_DECLINE;
+    for(i=0; i<widget->handlers.count; i++)
+    {
+        if (widget->handlers.elements[i].eventType == event->type)
+        {
+            handlerResult = widget->handlers.elements[i].handler(widget, event);
+        }
+    }
+    return handlerResult;
+}
+
 
 
 void guiCore_DecodeWidgetTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, widgetTouchState_t *decodedTouchState)
