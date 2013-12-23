@@ -1,8 +1,27 @@
 /**********************************************************
     Module guiCore
 
+Widget's event processing function calls:
 
+Direct:
+    guiCore_ProcessMessageQueue
+    guiCore_SetVisibleByTag
+    guiCore_BroadcastEvent
+    guiCore_RedrawAll
+    guiCore_UpdateAll (using guiCore_BroadcastEvent)
 
+Through message queue:
+    guiCore_PostEventToFocused
+    guiCore_TimerProcess
+    guiCore_Init
+    guiCore_ProcessTouchEvent
+    guiCore_ProcessKeyEvent
+    guiCore_ProcessEncoderEvent
+    guiCore_ProcessTimers (using guiCore_TimerProcess)
+    guiCore_RequestFocusChange
+    guiCore_AcceptFocus
+    guiCore_RequestFocusNextWidget (using guiCore_RequestFocusChange)
+    guiCore_SetFocused (using guiCore_AcceptFocus)
 
 **********************************************************/
 

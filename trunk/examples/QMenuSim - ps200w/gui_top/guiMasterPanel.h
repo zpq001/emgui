@@ -13,10 +13,14 @@ extern guiPanel_t     guiMasterPanel;
 void guiMasterPanel_Initialize(guiGenericWidget_t *parent);
 
 
-void updateVoltageIndicator(void);
-void updateCurrentIndicator(void);
-void updateTemperatureIndicator(void);
-void updatePowerIndicator(void);
+void setVoltageIndicator(uint16_t value);
+void setVoltageSetting(uint16_t value);
+
+void setCurrentIndicator(uint16_t value);
+void setPowerIndicator(uint32_t value);
+void setTemperatureIndicator(int16_t value);
+void setFeedbackChannelIndicator(uint8_t channel);
+void setCurrentLimitIndicator(uint8_t current_limit);
 
 
 #endif

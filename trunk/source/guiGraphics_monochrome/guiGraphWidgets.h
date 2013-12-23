@@ -25,10 +25,13 @@
 
 
 //---------------------------------------------//
-
-//---------------------------------------------//
 // Textlabel
 #define TEXT_LABEL_TEXT_MARGIN  0
+
+
+//---------------------------------------------//
+// SpinBox
+#define SPINBOX_STRING_LENGTH  12  // long enough to hold INT32_MAX and INT32_MIN + \0
 
 
 
@@ -43,6 +46,7 @@ void guiGraph_OffsetBaseXY(int16_t dx, int16_t dy);
 void guiGraph_DrawPanel(guiPanel_t *panel);
 void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel);
 void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox);
+void guiGraph_DrawSpinBox(guiSpinBox_t * spinBox);
 
 
 

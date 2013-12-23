@@ -20,6 +20,7 @@
 #define WT_CHECKBOX    0x03
 #define WT_RADIOBUTTON 0x04
 #define WT_TEXTLABEL   0x05
+#define WT_SPINBOX     0x06
 
 
 
@@ -332,6 +333,58 @@ typedef struct guiRadioButton_t {
 
 
 } guiRadioButton_t;
+
+
+typedef struct guiSpinBox_t {
+    //----- Inherited from generic widget -----//
+    // Widget type (starting with WT_)
+    uint8_t type;
+    // Pointer to parent widget
+    struct guiGenericWidget_t *parent;
+    // Bit properties:
+    uint8_t acceptFocusByTab : 1;
+    uint8_t acceptTouch : 1;
+    uint8_t isContainer : 1;
+    // Bit state flags:
+    uint8_t isFocused : 1;
+    uint8_t isVisible : 1;
+    uint8_t updateRequired : 1;
+    uint8_t redrawRequired : 1;
+    uint8_t redrawForced : 1;
+    uint8_t redrawFocus : 1;
+    uint8_t showFocus : 1;
+    uint8_t keepTouch : 1;
+    // Properties
+    uint8_t tag;
+    uint8_t tabIndex;
+    int16_t x;
+    int16_t y;
+    uint16_t width;
+    uint16_t height;
+    // Event processing function
+    uint8_t (*processEvent)(struct guiGenericWidget_t *pWidget, guiEvent_t event);
+    // Handler table
+    guiHandlerTable_t handlers;
+    //-----------------------------------------//
+
+    //char text[SPINBOX_STRING_LENGTH];
+    const tFont *font;
+    //uint8_t textAlignment;
+    uint8_t hasFrame : 1;
+    uint8_t redrawValue : 1;
+    uint8_t redrawDigitSelection : 1;
+    uint8_t isActive : 1;
+    uint8_t restoreValueOnEscape : 1;
+    uint8_t newValueAccepted : 1;
+    uint8_t minDigitsToDisplay;
+    uint8_t activeDigit;
+    int8_t dotPosition;
+    int32_t value;
+    int32_t savedValue;
+
+
+
+} guiSpinBox_t;
 
 
 

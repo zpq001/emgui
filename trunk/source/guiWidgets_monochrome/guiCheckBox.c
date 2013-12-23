@@ -84,7 +84,9 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
     guiCheckBox_t *checkBox = (guiCheckBox_t *)widget;
     uint8_t processResult = GUI_EVENT_ACCEPTED;
     uint8_t key;
+#ifdef USE_TOUCH_SUPPORT
     widgetTouchState_t touch;
+#endif
 
     switch (event.type)
     {
@@ -130,6 +132,7 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                 processResult |= guiCore_CallEventHandler(widget, &event);
             }
             break;
+#ifdef USE_TOUCH_SUPPORT
         case GUI_EVENT_TOUCH:
             if (CHECKBOX_ACCEPTS_TOUCH_EVENT(checkBox))
             {
@@ -170,6 +173,7 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                 processResult = GUI_EVENT_DECLINE;      // Cannot process touch event
             }
             break;
+#endif
         default:
             // Widget cannot process incoming event. Try to find a handler.
             processResult = guiCore_CallEventHandler(widget, &event);

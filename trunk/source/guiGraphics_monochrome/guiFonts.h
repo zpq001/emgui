@@ -61,7 +61,7 @@ typedef struct
 } tFont;
 
 
-extern const tFont font_h12;
+extern const tFont font_h11;
 extern const tFont font_h32;
 extern const tFont font_h10;
 extern const tFont font_h10_bold;

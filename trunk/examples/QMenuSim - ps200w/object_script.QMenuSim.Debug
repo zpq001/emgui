@@ -3,7 +3,6 @@ INPUT(
 ./debug\mainwindow.o
 ./debug\pixeldisplay.o
 ./debug\font_6x8_mono.o
-./debug\font_h12.o
 ./debug\font_h32.o
 ./debug\font_h10.o
 ./debug\font_h10_bold.o
@@ -19,6 +18,9 @@ INPUT(
 ./debug\guiMainForm.o
 ./debug\guiSetupPanel.o
 ./debug\guiMasterPanel.o
+./debug\font_h11.o
+./debug\guiSpinBox.o
+./debug\utils.o
 ./debug\moc_mainwindow.o
 ./debug\moc_pixeldisplay.o
 );
