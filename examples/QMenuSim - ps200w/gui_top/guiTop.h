@@ -49,6 +49,40 @@ void guiLogEvent(char *string);
 
 
 
+//=================================================================//
+//=================================================================//
+//                      Hardware emulation interface               //
+//=================================================================//
+
+// SelectedChannel
+#define	CHANNEL_5V			0x1
+#define	CHANNEL_12V			0x0
+// CurrentLimit
+#define	CURRENT_LIM_HIGH	0x1
+#define	CURRENT_LIM_LOW	 	0x0
+
+
+
+void guiUpdateVoltageIndicator(void);
+void guiUpdateVoltageSetting(void);
+void applyGuiVoltageSetting(uint16_t new_set_voltage);
+
+void guiUpdateCurrentIndicator(void);
+void guiUpdateCurrentSetting(void);
+void applyGuiCurrentSetting(uint16_t new_set_current);
+
+void guiUpdateChannelSetting(void);
+void applyGuiChannelSetting(uint8_t new_channel);
+
+void guiUpdateCurrentLimit(void);
+void applyGuiCurrentLimit(uint8_t new_current_limit);
+
+void guiUpdatePowerIndicator(void);
+void guiUpdateTemperatureIndicator(void);
+
+
+
+
 #ifdef __cplusplus
 }
 #endif

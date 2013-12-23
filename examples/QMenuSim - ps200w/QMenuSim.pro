@@ -14,13 +14,13 @@ INCLUDEPATH += ./gui_top/
 INCLUDEPATH += ../common/
 INCLUDEPATH += ../../source/guiWidgets_monochrome/
 INCLUDEPATH += ../../source/guiCore/
+INCLUDEPATH += ../../source/utils/
 INCLUDEPATH += ../../source/guiGraphics_monochrome/
 
 SOURCES += main.cpp\
 		mainwindow.cpp \
     ../common/pixeldisplay.cpp \
 	../../source/guiGraphics_monochrome/font_6x8_mono.c \
-    ../../source/guiGraphics_monochrome/font_h12.c \
     ../../source/guiGraphics_monochrome/font_h32.c \
     ../../source/guiGraphics_monochrome/font_h10.c \
     ../../source/guiGraphics_monochrome/font_h10_bold.c \
@@ -35,7 +35,10 @@ SOURCES += main.cpp\
 	gui_top/guiTop.c \
     gui_top/guiMainForm.c \
     gui_top/guiSetupPanel.c \
-    gui_top/guiMasterPanel.c
+    gui_top/guiMasterPanel.c \
+    ../../source/guiGraphics_monochrome/font_h11.c \
+    ../../source/guiWidgets_monochrome/guiSpinBox.c \
+    ../../source/utils/utils.c
 	
 
 HEADERS  += mainwindow.h \
@@ -55,7 +58,9 @@ HEADERS  += mainwindow.h \
 	gui_top/guiTop.h \
     gui_top/guiMainForm.h \
     gui_top/guiSetupPanel.h \
-    gui_top/guiMasterPanel.h
+    gui_top/guiMasterPanel.h \
+    ../../source/guiWidgets_monochrome/guiSpinBox.h \
+    ../../source/utils/utils.h
     
     
 	

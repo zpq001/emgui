@@ -12,6 +12,7 @@
 #include "guiTextLabel.h"
 
 #include "guiMainForm.h"
+#include "guiMasterPanel.h"
 
 // Callback functions
 cbLogPtr addLogCallback;
@@ -27,8 +28,20 @@ uint8_t timeMinutes;
 uint8_t timeSeconds;
 
 
+//=================================================================//
+//=================================================================//
+//                      Hardware emulation interface               //
+//=================================================================//
+uint16_t voltage_adc;		// [mV]
+uint16_t set_voltage;
+uint16_t current_adc;		// [mA]
+uint16_t set_current;
+uint32_t power_adc;			// [mW]
+int16_t converter_temp_celsius;
 
-
+uint8_t channel;            // feedback channel
+uint8_t current_limit;      // converter max current (20A/40A)
+//=================================================================//
 
 
 //-----------------------------------//
@@ -43,6 +56,7 @@ void registerLcdUpdateCallback(cbLcdUpdatePtr fptr)
     updateLcdCallback = fptr;
 }
 
+//-----------------------------------//
 // Callbacks GUI->top
 void guiLogEvent(char *string)
 {
@@ -103,79 +117,39 @@ void guiInitialize(void)
     timeMinutes = 0;
     timeSeconds = 0;
 
-    guiMainForm_Initialize();
 
+    set_voltage = 10000;        // mV
+    voltage_adc = set_voltage;
+    set_current = 2000;         // mA
+    current_adc =  set_current;
+    power_adc =       0;        // mW
+    converter_temp_celsius = 25;        // Celsius
+    current_limit = CURRENT_LIM_LOW;
+    channel = CHANNEL_12V;
+
+    guiMainForm_Initialize();
     guiCore_Init((guiGenericWidget_t *)&guiMainForm);
+
+
+    guiUpdateVoltageSetting();
+
+    guiUpdateVoltageIndicator();
+    guiUpdateCurrentIndicator();
+    guiUpdatePowerIndicator();
+    guiUpdateTemperatureIndicator();
+    guiUpdateChannelSetting();
+    guiUpdateCurrentLimit();
 }
 
 
 
 void guiDrawAll(void)
 {
-     addLogCallback(LOG_FROM_TOP, "Redrawing GUI");
-   
-     // GUI function call
-     //guiCore_RedrawAll();
-
-/*
-     LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-     LCD_FillRect(50,0,69,128,FILL_WITH_BLACK);
-
-     LCD_currentFont = &font_h12;
-
-     LCD_PrintString("rewrite, normal", 10, 5, IMAGE_MODE_NORMAL);
-     LCD_PrintString("rewrite, inverse", 10, 20, IMAGE_MODE_INVERSE);
-
-     LCD_SetPixelOutputMode(PIXEL_MODE_AND);
-     LCD_PrintString("mode AND, normal", 10, 35, IMAGE_MODE_NORMAL);
-     LCD_PrintString("mode AND, inverse", 10, 50, IMAGE_MODE_INVERSE);
-
-     LCD_SetPixelOutputMode(PIXEL_MODE_OR);
-     LCD_PrintString("mode OR, normal", 10, 65, IMAGE_MODE_NORMAL);
-     LCD_PrintString("mode OR, inverse", 10, 80, IMAGE_MODE_INVERSE);
-
-     LCD_SetPixelOutputMode(PIXEL_MODE_XOR);
-     LCD_PrintString("mode XOR, normal", 10, 95, IMAGE_MODE_NORMAL);
-     LCD_PrintString("mode XOR, inverse", 10, 110, IMAGE_MODE_INVERSE);
-*/
-/*
-     LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-     LCD_lineStyle = LCD_LINE_DOTTED;
-     LCD_DrawHorLine(20,50,105,1);
-     LCD_DrawVertLine(10,50,60,1);
-
-     LCD_lineStyle = LCD_LINE_DASHED;
-     LCD_DrawHorLine(20,52,105,1);
-     LCD_DrawVertLine(12,50,60,1);
-
-     LCD_lineStyle = LCD_LINE_DOTTED;
-     LCD_DrawRect(128 + 5, 5, 120, 120, 1);
-     LCD_lineStyle = LCD_LINE_DASHED;
-     LCD_DrawRect(128 + 10, 10, 110, 110, 1);
-*/
-/*
-    guiTextLabel_Initialize(&label1,0);
-    label1.text = "12345";
-    label1.x = 50;
-    label1.y = 50;
-    label1.width = 22;
-    label1.height = 22;
-    //label1.alignment = ALIGN_TOP_LEFT;
-    //label1.alignment = ALIGN_TOP_RIGHT;
-    //label1.alignment = ALIGN_TOP;
-    //label1.alignment = ALIGN_BOTTOM_LEFT;
-    //label1.alignment = ALIGN_BOTTOM_RIGHT;
-    //label1.alignment = ALIGN_BOTTOM;
-    label1.alignment = ALIGN_CENTER;
-
-    guiGraph_DrawTextLabel(&label1);
-*/
-
+    //addLogCallback(LOG_FROM_TOP, "Redrawing GUI");
     guiCore_RedrawAll();
     // Update display(s)
     guiDrawIsComplete();
 }
-
 
 
 // No touch support
@@ -201,4 +175,122 @@ void guiEncoderRotated(int32_t delta)
 
 
 
+
+
+//=================================================================//
+//=================================================================//
+//                      Hardware emulation interface               //
+//=================================================================//
+
+
+//-----------------------------------//
+// Voltage
+
+// Read ADC voltage and update LCD indicator
+void guiUpdateVoltageIndicator(void)
+{
+    guiLogEvent("Reading voltage ADC");
+    setVoltageIndicator(voltage_adc);
+}
+
+// Read voltage setting and update LCD indicator
+void guiUpdateVoltageSetting(void)
+{
+    guiLogEvent("Reading voltage setting");
+    setVoltageSetting(set_voltage);
+}
+
+// Apply voltage setting from GUI
+void applyGuiVoltageSetting(uint16_t new_set_voltage)
+{
+    guiLogEvent("Writing voltage setting");
+    set_voltage = new_set_voltage;
+    voltage_adc = set_voltage;
+}
+
+
+//-----------------------------------//
+// Current
+
+// Read ADC current and update LCD indicator
+void guiUpdateCurrentIndicator(void)
+{
+    guiLogEvent("Reading current ADC");
+    setCurrentIndicator(current_adc);
+}
+
+// Read current setting and update LCD indicator
+void guiUpdateCurrentSetting(void)
+{
+    guiLogEvent("Reading current setting");
+    // TODO
+}
+
+// Apply current setting from GUI
+void applyGuiCurrentSetting(uint16_t new_set_current)
+{
+    guiLogEvent("Writing current setting");
+    set_current = new_set_current;
+    current_adc = set_current;
+}
+
+
+//-----------------------------------//
+// Feedback channel
+
+// Read selected feedback channel and update LCD
+void guiUpdateChannelSetting(void)
+{
+    guiLogEvent("Reading selected feedback channel");
+    setFeedbackChannelIndicator(channel);
+}
+
+// Apply new selected feedback channel
+void applyGuiChannelSetting(uint8_t new_channel)
+{
+    guiLogEvent("Writing selected feedback channel");
+    channel = new_channel;
+}
+
+
+//-----------------------------------//
+// Current limit
+
+// Read current limit and update LCD
+void guiUpdateCurrentLimit(void)
+{
+    guiLogEvent("Reading current limit");
+    setCurrentLimitIndicator(current_limit);
+}
+
+// Apply new selected feedback channel
+void applyGuiCurrentLimit(uint8_t new_current_limit)
+{
+    guiLogEvent("Writing current limit");
+    current_limit = new_current_limit;
+}
+
+
+//-----------------------------------//
+// Power
+
+// Read computed power and update LCD indicator
+void guiUpdatePowerIndicator(void)
+{
+    guiLogEvent("Reading power ADC");
+    setPowerIndicator(power_adc);
+}
+
+
+//-----------------------------------//
+// Temperature
+
+// Read normalized temperature and update LCD indicator
+void guiUpdateTemperatureIndicator(void)
+{
+    guiLogEvent("Reading temperature ADC");
+    setTemperatureIndicator(converter_temp_celsius);
+}
+
+//=================================================================//
 

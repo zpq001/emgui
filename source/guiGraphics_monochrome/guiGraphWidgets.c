@@ -16,6 +16,8 @@
 #include "guiTextLabel.h"
 #include "guiCheckBox.h"
 
+#include "utils.h"
+
 
 int16_t wx;
 int16_t wy;
@@ -224,5 +226,83 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
 
 }
 
+
+
+
+void guiGraph_DrawSpinBox(guiSpinBox_t * spinBox)
+{
+    rect_t rect;
+    uint8_t frameStyle;
+    uint8_t framePixelValue;
+    char str[SPINBOX_STRING_LENGTH];
+    uint8_t digitsToUse;
+    uint8_t currentDigit;
+    uint8_t charIndex;
+    uint8_t charWidth;
+    uint16_t charOffset;
+    int8_t i;
+    int16_t x,y;
+    char c;
+
+    LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+
+    //-----------------------------------------//
+    // Draw background
+    if ((spinBox->redrawForced) || (spinBox->redrawValue))
+    {
+        // Erase rectangle
+        LCD_FillRect(wx+1,wy+1,spinBox->width-2,spinBox->height-2,FILL_WITH_WHITE);
+    }
+
+
+    //-----------------------------------------//
+    // Draw text value
+    if ((spinBox->redrawForced) || (spinBox->redrawValue) || (spinBox->redrawDigitSelection))
+    {
+        x = wx + spinBox->width - 1;
+        y = wy; // FIXME
+
+        digitsToUse = i32toa_align_right(spinBox->value, str, SPINBOX_STRING_LENGTH | NO_TERMINATING_ZERO,
+                                         spinBox->minDigitsToDisplay);
+
+        if (spinBox->activeDigit >= digitsToUse)
+            spinBox->activeDigit = digitsToUse - 1;
+
+        i = 0;
+        charIndex = 0;
+
+        while(charIndex <= digitsToUse) // one extra digit for minus sign
+        {
+            c = (i == spinBox->dotPosition) ? '.' : str[SPINBOX_STRING_LENGTH - 1 - charIndex++];
+            if (LCD_GetFontItem(spinBox->font, c, &charWidth, &charOffset) == 0)
+                continue;
+            x -= charWidth;
+
+            if ((charIndex == spinBox->activeDigit+1) && (i != spinBox->dotPosition) && (spinBox->isActive))
+                LCD_DrawImage(&spinBox->font->data[charOffset],x,y,charWidth,spinBox->font->height,IMAGE_MODE_INVERSE);
+            else
+                LCD_DrawImage(&spinBox->font->data[charOffset],x,y,charWidth,spinBox->font->height,IMAGE_MODE_NORMAL);
+            i++;
+        }
+    }
+
+    //-----------------------------------------//
+    // Draw focus / frame
+    if ((spinBox->redrawForced) || (spinBox->redrawFocus))
+    {
+        if ((spinBox->hasFrame) || (spinBox->showFocus))
+        {
+            LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+            frameStyle = ((spinBox->showFocus) && (spinBox->isFocused)) ? LINE_STYLE_DOTTED : LINE_STYLE_SOLID;
+            framePixelValue = ((spinBox->showFocus) && (spinBox->isFocused)) ? 1 : 0;
+            framePixelValue |= (spinBox->hasFrame) ? 1 : 0;
+            LCD_SetLineStyle(frameStyle);
+            if (!((spinBox->redrawForced) && (framePixelValue == 0)))
+                LCD_DrawRect(wx,wy,spinBox->width,spinBox->height,framePixelValue);
+        }
+    }
+
+
+}
 
 

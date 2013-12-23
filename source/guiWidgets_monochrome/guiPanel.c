@@ -8,6 +8,7 @@
 
 #include <stdint.h>         // using integer types
 #include <string.h>         // using memset
+#include "guiConfig.h"
 #include "guiEvents.h"
 #include "guiCore.h"
 #include "guiWidgets.h"
@@ -78,12 +79,14 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
     uint8_t processResult = GUI_EVENT_ACCEPTED;
     guiPanel_t *panel = (guiPanel_t *)widget;
     uint8_t key;
+#ifdef USE_TOUCH_SUPPORT
     containerTouchState_t touch;
+#endif
 
     // Process GUI messages - focus, draw, etc
     switch(event.type)
     {
-          case GUI_EVENT_DRAW:
+        case GUI_EVENT_DRAW:
             guiGraph_DrawPanel(panel);
             // Call handler
             guiCore_CallEventHandler((guiGenericWidget_t *)panel, &event);
@@ -151,7 +154,8 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                 processResult |= guiCore_CallEventHandler(widget, &event);
             }
             break;
-         case GUI_EVENT_TOUCH:
+#ifdef USE_TOUCH_SUPPORT
+        case GUI_EVENT_TOUCH:
             if (PANEL_ACCEPTS_TOUCH_EVENT(panel))
             {
                 // Convert touch event
@@ -195,6 +199,10 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                 processResult = GUI_EVENT_DECLINE;      // Cannot process touch event
             }
             break;
+#endif
+        default:
+            // Widget cannot process incoming event. Try to find a handler.
+            processResult = guiCore_CallEventHandler(widget, &event);
     }
     return processResult;
 }

@@ -14,6 +14,7 @@
 
 //#define ALWAYS_PASS_TOUCH_TO_FOCUSED
 
+//#define USE_TOUCH_SUPPORT
 
 
 

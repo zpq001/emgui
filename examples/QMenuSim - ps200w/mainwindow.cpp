@@ -123,7 +123,7 @@ MainWindow::MainWindow(QWidget *parent) :
     guiInitialize();
 
     // Start seconds timer
-    secondsTimer.start(1000);
+    //secondsTimer.start(1000);
 
     // Start update timer
     if (ui->updateCheckBox->checkState())

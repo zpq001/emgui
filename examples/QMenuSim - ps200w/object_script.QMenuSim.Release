@@ -3,7 +3,6 @@ INPUT(
 ./release\mainwindow.o
 ./release\pixeldisplay.o
 ./release\font_6x8_mono.o
-./release\font_h12.o
 ./release\font_h32.o
 ./release\font_h10.o
 ./release\font_h10_bold.o
@@ -19,6 +18,9 @@ INPUT(
 ./release\guiMainForm.o
 ./release\guiSetupPanel.o
 ./release\guiMasterPanel.o
+./release\font_h11.o
+./release\guiSpinBox.o
+./release\utils.o
 ./release\moc_mainwindow.o
 ./release\moc_pixeldisplay.o
 );
