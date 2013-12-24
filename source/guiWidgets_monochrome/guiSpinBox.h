@@ -16,7 +16,11 @@
 
 
 // Widget-specific events
-#define SPINBOX_ACTIVE_CHANGED  (0xC0 + 0x00)
+#define SPINBOX_EVENT_ACTIVATE  (0x40 + 0x00)
+
+#define SPINBOX_ACTIVE_CHANGED          (0xC0 + 0x00)
+#define SPINBOX_VALUE_CHANGED           (0xC0 + 0x01)
+#define SPINBOX_ACTIVE_DIGIT_CHANGED    (0xC0 + 0x03)
 
 
 // Widget-specific state checks
@@ -25,7 +29,6 @@
                                                   (spinBox->isVisible) )         // TODO - add isEnabled
 #define SPINBOX_ACCEPTS_ENCODER_EVENT(spinBox) ( (spinBox->isFocused) && \
                                                (spinBox->isVisible) )            // TODO - add isEnabled
-
 
 uint8_t guiSpinBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event);
 

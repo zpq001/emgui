@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>452</width>
-    <height>459</height>
+    <width>583</width>
+    <height>462</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -205,7 +205,7 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>55</height>
+        <height>80</height>
        </size>
       </property>
       <property name="title">
@@ -275,7 +275,7 @@
       <widget class="QCheckBox" name="checkBox_logEnable">
        <property name="geometry">
         <rect>
-         <x>380</x>
+         <x>510</x>
          <y>20</y>
          <width>41</width>
          <height>17</height>
@@ -283,6 +283,19 @@
        </property>
        <property name="text">
         <string>log</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_EncPush">
+       <property name="geometry">
+        <rect>
+         <x>370</x>
+         <y>20</y>
+         <width>75</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>push enoder</string>
        </property>
       </widget>
      </widget>
@@ -325,7 +338,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>452</width>
+     <width>583</width>
      <height>20</height>
     </rect>
    </property>

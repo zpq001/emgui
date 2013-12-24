@@ -31,7 +31,8 @@
 
 //---------------------------------------------//
 // SpinBox
-#define SPINBOX_STRING_LENGTH  12  // long enough to hold INT32_MAX and INT32_MIN + \0
+#define SPINBOX_ACTIVE_UNDERLINE_MARGIN 1
+#define SPINBOX_ACTIVE_UNDERLINE_WIDTH 2
 
 
 

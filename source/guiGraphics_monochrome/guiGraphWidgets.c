@@ -16,7 +16,7 @@
 #include "guiTextLabel.h"
 #include "guiCheckBox.h"
 
-#include "utils.h"
+
 
 
 int16_t wx;
@@ -231,24 +231,21 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
 
 void guiGraph_DrawSpinBox(guiSpinBox_t * spinBox)
 {
-    rect_t rect;
     uint8_t frameStyle;
     uint8_t framePixelValue;
-    char str[SPINBOX_STRING_LENGTH];
-    uint8_t digitsToUse;
-    uint8_t currentDigit;
     uint8_t charIndex;
     uint8_t charWidth;
     uint16_t charOffset;
     int8_t i;
-    int16_t x,y;
+    int16_t x,y, y_underline;
+    uint8_t numDigits;
     char c;
 
     LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
 
     //-----------------------------------------//
     // Draw background
-    if ((spinBox->redrawForced) || (spinBox->redrawValue))
+    if ((spinBox->redrawForced) || (spinBox->redrawValue) || (spinBox->redrawDigitSelection))
     {
         // Erase rectangle
         LCD_FillRect(wx+1,wy+1,spinBox->width-2,spinBox->height-2,FILL_WITH_WHITE);
@@ -259,29 +256,35 @@ void guiGraph_DrawSpinBox(guiSpinBox_t * spinBox)
     // Draw text value
     if ((spinBox->redrawForced) || (spinBox->redrawValue) || (spinBox->redrawDigitSelection))
     {
-        x = wx + spinBox->width - 1;
-        y = wy; // FIXME
-
-        digitsToUse = i32toa_align_right(spinBox->value, str, SPINBOX_STRING_LENGTH | NO_TERMINATING_ZERO,
-                                         spinBox->minDigitsToDisplay);
-
-        if (spinBox->activeDigit >= digitsToUse)
-            spinBox->activeDigit = digitsToUse - 1;
+        x = wx + spinBox->width - 1 + spinBox->textRightOffset;
+        y = wy + spinBox->textTopOffset;
 
         i = 0;
         charIndex = 0;
+        // Add one extra digit for minus sign
+        numDigits = (spinBox->value >= 0) ? spinBox->digitsToDisplay : spinBox->digitsToDisplay + 1;
 
-        while(charIndex <= digitsToUse) // one extra digit for minus sign
+        while(charIndex < numDigits)
         {
-            c = (i == spinBox->dotPosition) ? '.' : str[SPINBOX_STRING_LENGTH - 1 - charIndex++];
+            c = (i == spinBox->dotPosition) ? '.' : spinBox->text[SPINBOX_STRING_LENGTH - 1 - charIndex++];
             if (LCD_GetFontItem(spinBox->font, c, &charWidth, &charOffset) == 0)
                 continue;
             x -= charWidth;
 
+            LCD_DrawImage(&spinBox->font->data[charOffset],x,y,charWidth,spinBox->font->height,IMAGE_MODE_NORMAL);
             if ((charIndex == spinBox->activeDigit+1) && (i != spinBox->dotPosition) && (spinBox->isActive))
+            {
+                LCD_SetLineStyle(LINE_STYLE_SOLID);
+                for (y_underline = y + spinBox->font->height + SPINBOX_ACTIVE_UNDERLINE_MARGIN;
+                     y_underline < y + spinBox->font->height + SPINBOX_ACTIVE_UNDERLINE_MARGIN + SPINBOX_ACTIVE_UNDERLINE_WIDTH;
+                     y_underline++)
+                    LCD_DrawHorLine(x,y_underline,charWidth,1);
+            }
+          /*  if ((charIndex == spinBox->activeDigit+1) && (i != spinBox->dotPosition) && (spinBox->isActive))
                 LCD_DrawImage(&spinBox->font->data[charOffset],x,y,charWidth,spinBox->font->height,IMAGE_MODE_INVERSE);
             else
                 LCD_DrawImage(&spinBox->font->data[charOffset],x,y,charWidth,spinBox->font->height,IMAGE_MODE_NORMAL);
+                */
             i++;
         }
     }

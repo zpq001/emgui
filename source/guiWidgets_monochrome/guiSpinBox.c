@@ -14,7 +14,7 @@
 #include "guiGraphWidgets.h"
 #include "guiSpinBox.h"
 
-
+#include "utils.h"
 
 
 
@@ -57,25 +57,66 @@ uint8_t guiSpinBox_SetActive(guiSpinBox_t *spinBox, uint8_t newActiveState, uint
 }
 
 
+
 void guiSpinBox_SetActiveDigit(guiSpinBox_t *spinBox, int8_t num)
 {
-    // TODO
-    spinBox->activeDigit = num;
-    spinBox->redrawDigitSelection = 1;
-    spinBox->redrawRequired = 1;
+    uint8_t newActiveDigit;
+    guiEvent_t event;
+    if (spinBox != 0)
+    {
+        newActiveDigit = (num >= spinBox->digitsToDisplay) ? spinBox->digitsToDisplay - 1 :
+                                                             ((num < 0) ? 0 : num);
+        if (newActiveDigit != spinBox->activeDigit)
+        {
+            spinBox->activeDigit = newActiveDigit;
+            spinBox->redrawDigitSelection = 1;
+            spinBox->redrawRequired = 1;
+            // Call handler
+            event.type = SPINBOX_ACTIVE_DIGIT_CHANGED;
+            guiCore_CallEventHandler((guiGenericWidget_t *)spinBox, &event);
+        }
+    }
+}
+
+
+void guiSpinBox_SetValue(guiSpinBox_t *spinBox, int32_t value)
+{
+    int32_t newValue;
+    guiEvent_t event;
+    if (spinBox != 0)
+    {
+        newValue = (value < spinBox->minValue) ? spinBox->minValue :
+                   ((value > spinBox->maxValue) ? spinBox->maxValue : value);
+
+        if (newValue != spinBox->value)
+        {
+            spinBox->value = newValue;
+            spinBox->redrawValue = 1;
+            spinBox->redrawRequired = 1;
+            spinBox->digitsToDisplay = i32toa_align_right(spinBox->value, spinBox->text,
+                                       SPINBOX_STRING_LENGTH | NO_TERMINATING_ZERO, spinBox->minDigitsToDisplay);
+            // Call handler
+            event.type = SPINBOX_VALUE_CHANGED;
+            guiCore_CallEventHandler((guiGenericWidget_t *)spinBox, &event);
+            // Check active digit position
+            guiSpinBox_SetActiveDigit(spinBox, spinBox->activeDigit);
+        }
+    }
 }
 
 void guiSpinBox_IncrementValue(guiSpinBox_t *spinBox, int32_t delta)
 {
     int32_t mul_c = 1;
     uint8_t i;
-    for (i=0;i<spinBox->activeDigit;i++)
+    if ((spinBox != 0) && (delta != 0))
     {
-        mul_c *= 10;
+        for (i=0;i<spinBox->activeDigit;i++)
+        {
+            mul_c *= 10;
+        }
+        delta *= mul_c;
+        guiSpinBox_SetValue(spinBox, spinBox->value + delta);
     }
-
-    delta *= mul_c;
-    guiSpinBox_SetValue(spinBox, spinBox->value + delta);
 }
 
 
@@ -161,6 +202,8 @@ uint8_t guiSpinBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             guiCore_CallEventHandler(widget, &event);
             // Reset flags - redrawForced will be reset by core
             spinBox->redrawFocus = 0;
+            spinBox->redrawDigitSelection = 0;
+            spinBox->redrawValue = 0;
             spinBox->redrawRequired = 0;
             break;
         case GUI_EVENT_FOCUS:
@@ -171,7 +214,15 @@ uint8_t guiSpinBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             break;
         case GUI_EVENT_UNFOCUS:
             guiCore_SetFocused((guiGenericWidget_t *)spinBox,0);
-            spinBox->keepTouch = 0;
+            guiSpinBox_SetActive(spinBox, 0, 0);        // Do not restore
+            //spinBox->keepTouch = 0;
+            break;
+        case SPINBOX_EVENT_ACTIVATE:
+            if (spinBox->isFocused)
+            {
+                guiSpinBox_SetActive(spinBox, 1, 0);
+            }
+            // Accept event anyway
             break;
         case GUI_EVENT_SHOW:
             guiCore_SetVisible((guiGenericWidget_t *)spinBox, 1);
@@ -244,12 +295,8 @@ void guiSpinBox_Initialize(guiSpinBox_t *spinBox, guiGenericWidget_t *parent)
     spinBox->showFocus = 1;
     spinBox->processEvent = guiSpinBox_ProcessEvent;
     spinBox->minDigitsToDisplay = 1;
+    spinBox->maxValue = INT32_MAX;
+    spinBox->minValue = INT32_MIN;
 }
 
 
-void guiSpinBox_SetValue(guiSpinBox_t *spinBox, int32_t value)
-{
-    spinBox->value = value;
-    spinBox->redrawValue = 1;
-    spinBox->redrawRequired = 1;
-}

@@ -2,7 +2,26 @@
     Module guiMainForm
 
 
+    - instant setting of Voltage/Current
+    - presetting Voltage/Current            <- separate panel
+    - setting Voltage/Current limits        <- separate panel
 
+    Keys and encoder operation WAY #1:
+    Short press:
+        Press encoder shortly to switch between Voltage/Current. Selecting by encoder push activates control.
+        When Voltage/Current control is activated, press "<-", "->" buttons shortly to select digit you want to edit.
+        When Voltage/Current control is NOT activated, use "<-", "->" buttons to switch between Voltage/Current/Current_Limit.
+    Long press:
+        Press encoder long to set software limits for regulation parameter
+        Press "<-" long to preset voltage, "->" long to preset current
+
+
+    Keys and encoder operation WAY #2:
+    Short press:
+        "<-" activates voltage setting, "->" activates current setting.
+        Encoder push cycles edited digit.
+    Long press:
+        "<-" activates voltage preset menu, "->" activates current preset menu.
 
 **********************************************************/
 

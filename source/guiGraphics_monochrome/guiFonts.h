@@ -66,6 +66,7 @@ extern const tFont font_h32;
 extern const tFont font_h10;
 extern const tFont font_h10_bold;
 extern const tFont font_6x8_mono;
+extern const tFont font_h16;
 
 
 #endif
