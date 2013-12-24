@@ -334,7 +334,7 @@ typedef struct guiRadioButton_t {
 
 } guiRadioButton_t;
 
-
+#define SPINBOX_STRING_LENGTH  12  // long enough to hold INT32_MAX and INT32_MIN + \0
 typedef struct guiSpinBox_t {
     //----- Inherited from generic widget -----//
     // Widget type (starting with WT_)
@@ -381,6 +381,12 @@ typedef struct guiSpinBox_t {
     int8_t dotPosition;
     int32_t value;
     int32_t savedValue;
+    int32_t maxValue;
+    int32_t minValue;
+    char text[SPINBOX_STRING_LENGTH];
+    uint8_t digitsToDisplay;
+    int8_t textRightOffset;
+    int8_t textTopOffset;
 
 
 

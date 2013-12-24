@@ -62,7 +62,7 @@ typedef struct {
 #define GUI_KEY_RIGHT   0x04
 #define GUI_KEY_UP      0x05
 #define GUI_KEY_DOWN    0x06
-
+#define GUI_KEY_ENCODER 0x07
 
 
 //-----------------------------------//

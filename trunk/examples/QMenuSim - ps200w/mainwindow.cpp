@@ -22,7 +22,8 @@ enum buttons {
     BTN_RIGHT,
     BTN_UP,
     BTN_DOWN,
-    BTN_OK
+    BTN_OK,
+    BTN_ENCODER
 };
 
 
@@ -81,10 +82,12 @@ MainWindow::MainWindow(QWidget *parent) :
         btnPressSignalMapper->setMapping(ui->pushButton_left, BTN_LEFT);
         btnPressSignalMapper->setMapping(ui->pushButton_right, BTN_RIGHT);
         btnPressSignalMapper->setMapping(ui->pushButton_ok, BTN_OK);
+        btnPressSignalMapper->setMapping(ui->pushButton_EncPush, BTN_ENCODER);
         connect(ui->pushButton_esc, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
         connect(ui->pushButton_left, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
         connect(ui->pushButton_right, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
         connect(ui->pushButton_ok, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
+        connect(ui->pushButton_EncPush, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
         connect(btnPressSignalMapper, SIGNAL(mapped(const int &)), this, SLOT(on_ControlButtonPress(const int &)));
 
         // Control buttons release
@@ -93,10 +96,12 @@ MainWindow::MainWindow(QWidget *parent) :
         btnReleaseSignalMapper->setMapping(ui->pushButton_left, BTN_LEFT);
         btnReleaseSignalMapper->setMapping(ui->pushButton_right, BTN_RIGHT);
         btnReleaseSignalMapper->setMapping(ui->pushButton_ok, BTN_OK);
-        connect(ui->pushButton_esc, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
-        connect(ui->pushButton_left, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
-        connect(ui->pushButton_right, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
-        connect(ui->pushButton_ok, SIGNAL(pressed()), btnReleaseSignalMapper, SLOT(map()));
+        btnPressSignalMapper->setMapping(ui->pushButton_EncPush, BTN_ENCODER);
+        connect(ui->pushButton_esc, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
+        connect(ui->pushButton_left, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
+        connect(ui->pushButton_right, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
+        connect(ui->pushButton_ok, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
+        connect(ui->pushButton_EncPush, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
         connect(btnReleaseSignalMapper, SIGNAL(mapped(const int &)), this, SLOT(on_ControlButtonRelease(const int &)));
 
     connect(ui->updateButton,SIGNAL(clicked()),this,  SLOT(on_LCD_update()));
@@ -274,6 +279,9 @@ void MainWindow::on_ControlButtonPress(int btn)
         case BTN_OK:
             guiButtonPressed(GUI_KEY_OK);
             break;
+        case BTN_ENCODER:
+            guiButtonPressed(GUI_KEY_ENCODER);
+            break;
     }
     if (ui->checkBox_updMode->checkState())
         on_LCD_update();
@@ -294,6 +302,9 @@ void MainWindow::on_ControlButtonRelease(int btn)
             break;
         case BTN_OK:
             guiButtonReleased(GUI_KEY_OK);
+            break;
+        case BTN_ENCODER:
+            guiButtonReleased(GUI_KEY_ENCODER);
             break;
     }
     if (ui->checkBox_updMode->checkState())

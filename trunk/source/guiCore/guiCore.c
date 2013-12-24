@@ -980,11 +980,11 @@ uint8_t guiCore_SetFocused(guiGenericWidget_t *widget, uint8_t newFocusedState)
         widget->isFocused = 0;
     }
     // Focused state changed - call handler
-    if (widget->showFocus)
-    {
+    //if (widget->showFocus)        // CHECKME
+    //{
         widget->redrawFocus = 1;
         widget->redrawRequired = 1;
-    }
+    //}
     // Focus state changed - call handler
     if (widget->handlers.count != 0)
     {

@@ -21,6 +21,7 @@ INPUT(
 ./release\font_h11.o
 ./release\guiSpinBox.o
 ./release\utils.o
+./release\font_h16.o
 ./release\moc_mainwindow.o
 ./release\moc_pixeldisplay.o
 );

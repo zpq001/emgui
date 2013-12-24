@@ -21,6 +21,7 @@ INPUT(
 ./debug\font_h11.o
 ./debug\guiSpinBox.o
 ./debug\utils.o
+./debug\font_h16.o
 ./debug\moc_mainwindow.o
 ./debug\moc_pixeldisplay.o
 );

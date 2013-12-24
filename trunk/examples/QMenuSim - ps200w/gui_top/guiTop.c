@@ -132,6 +132,7 @@ void guiInitialize(void)
 
 
     guiUpdateVoltageSetting();
+    guiUpdateCurrentSetting();
 
     guiUpdateVoltageIndicator();
     guiUpdateCurrentIndicator();
@@ -206,6 +207,9 @@ void applyGuiVoltageSetting(uint16_t new_set_voltage)
     guiLogEvent("Writing voltage setting");
     set_voltage = new_set_voltage;
     voltage_adc = set_voltage;
+
+    //------ simulation of actual conveter work ------//
+    guiUpdateVoltageIndicator();
 }
 
 
@@ -223,7 +227,7 @@ void guiUpdateCurrentIndicator(void)
 void guiUpdateCurrentSetting(void)
 {
     guiLogEvent("Reading current setting");
-    // TODO
+    setCurrentSetting(set_current);
 }
 
 // Apply current setting from GUI
@@ -232,6 +236,9 @@ void applyGuiCurrentSetting(uint16_t new_set_current)
     guiLogEvent("Writing current setting");
     set_current = new_set_current;
     current_adc = set_current;
+
+    //------ simulation of actual conveter work ------//
+    guiUpdateCurrentIndicator();
 }
 
 
@@ -246,11 +253,14 @@ void guiUpdateChannelSetting(void)
 }
 
 // Apply new selected feedback channel
-void applyGuiChannelSetting(uint8_t new_channel)
+/*void applyGuiChannelSetting(uint8_t new_channel)
 {
     guiLogEvent("Writing selected feedback channel");
     channel = new_channel;
-}
+
+    // simulation of actual conveter work
+    guiUpdateChannelSetting();
+}*/
 
 
 //-----------------------------------//
@@ -268,6 +278,9 @@ void applyGuiCurrentLimit(uint8_t new_current_limit)
 {
     guiLogEvent("Writing current limit");
     current_limit = new_current_limit;
+
+    //------ simulation of actual conveter work ------//
+    guiUpdateCurrentLimit();
 }
 
 

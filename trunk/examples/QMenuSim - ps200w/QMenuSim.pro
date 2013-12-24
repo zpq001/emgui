@@ -38,7 +38,8 @@ SOURCES += main.cpp\
     gui_top/guiMasterPanel.c \
     ../../source/guiGraphics_monochrome/font_h11.c \
     ../../source/guiWidgets_monochrome/guiSpinBox.c \
-    ../../source/utils/utils.c
+    ../../source/utils/utils.c \
+    ../../source/guiGraphics_monochrome/font_h16.c
 	
 
 HEADERS  += mainwindow.h \
