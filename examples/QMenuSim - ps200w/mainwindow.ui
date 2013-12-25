@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>583</width>
-    <height>462</height>
+    <width>482</width>
+    <height>497</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -192,6 +192,19 @@
         <bool>true</bool>
        </property>
       </widget>
+      <widget class="QCheckBox" name="checkBox_logEnable">
+       <property name="geometry">
+        <rect>
+         <x>410</x>
+         <y>20</y>
+         <width>41</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>log</string>
+       </property>
+      </widget>
      </widget>
     </item>
     <item>
@@ -205,7 +218,7 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>80</height>
+        <height>85</height>
        </size>
       </property>
       <property name="title">
@@ -272,20 +285,7 @@
         <string>OK</string>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_logEnable">
-       <property name="geometry">
-        <rect>
-         <x>510</x>
-         <y>20</y>
-         <width>41</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>log</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton_EncPush">
+      <widget class="QPushButton" name="pushButton_encoder">
        <property name="geometry">
         <rect>
          <x>370</x>
@@ -295,7 +295,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>push enoder</string>
+        <string>Encoder</string>
        </property>
       </widget>
      </widget>
@@ -314,7 +314,7 @@
       <property name="minimumSize">
        <size>
         <width>100</width>
-        <height>100</height>
+        <height>80</height>
        </size>
       </property>
       <property name="maximumSize">
@@ -338,7 +338,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>583</width>
+     <width>482</width>
      <height>20</height>
     </rect>
    </property>

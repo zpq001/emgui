@@ -55,11 +55,11 @@ void guiLogEvent(char *string);
 //=================================================================//
 
 // SelectedChannel
-#define	CHANNEL_5V			0x1
-#define	CHANNEL_12V			0x0
+#define	GUI_CHANNEL_5V			0x1
+#define	GUI_CHANNEL_12V			0x0
 // CurrentLimit
-#define	CURRENT_LIM_HIGH	0x1
-#define	CURRENT_LIM_LOW	 	0x0
+#define	GUI_CURRENT_LIM_HIGH	0x1
+#define	GUI_CURRENT_LIM_LOW	 	0x0
 
 
 

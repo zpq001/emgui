@@ -9,6 +9,7 @@
 
 #include "guiCore.h"    // key codes
 #include "pixeldisplay.h"
+#include "keydriver.h"
 
 #include "guiTop.h"
 
@@ -17,7 +18,7 @@
 
 // Internal button codes
 enum buttons {
-    BTN_ESC,
+    BTN_ESC = 1,
     BTN_LEFT,
     BTN_RIGHT,
     BTN_UP,
@@ -39,6 +40,9 @@ QLabel *StatusLabel_LCD0;
 QLabel *StatusLabel_LCD1;
 QTime t;
 
+keyDriver *keyDriver1;
+
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -59,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->statusBar->addWidget(StatusLabel_LCD0);
     ui->statusBar->addWidget(StatusLabel_LCD1);
 
+    keyDriver1 = new keyDriver(this, 10);       // size of enum buttons ?
 
     // Signals and slots mapping
 
@@ -82,13 +87,13 @@ MainWindow::MainWindow(QWidget *parent) :
         btnPressSignalMapper->setMapping(ui->pushButton_left, BTN_LEFT);
         btnPressSignalMapper->setMapping(ui->pushButton_right, BTN_RIGHT);
         btnPressSignalMapper->setMapping(ui->pushButton_ok, BTN_OK);
-        btnPressSignalMapper->setMapping(ui->pushButton_EncPush, BTN_ENCODER);
+        btnPressSignalMapper->setMapping(ui->pushButton_encoder, BTN_ENCODER);
         connect(ui->pushButton_esc, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
         connect(ui->pushButton_left, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
         connect(ui->pushButton_right, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
         connect(ui->pushButton_ok, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
-        connect(ui->pushButton_EncPush, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
-        connect(btnPressSignalMapper, SIGNAL(mapped(const int &)), this, SLOT(on_ControlButtonPress(const int &)));
+        connect(ui->pushButton_encoder, SIGNAL(pressed()), btnPressSignalMapper, SLOT(map()));
+        connect(btnPressSignalMapper, SIGNAL(mapped(const int &)), keyDriver1, SLOT(keyPress(const int &)));
 
         // Control buttons release
         btnReleaseSignalMapper = new QSignalMapper(this);
@@ -96,13 +101,15 @@ MainWindow::MainWindow(QWidget *parent) :
         btnReleaseSignalMapper->setMapping(ui->pushButton_left, BTN_LEFT);
         btnReleaseSignalMapper->setMapping(ui->pushButton_right, BTN_RIGHT);
         btnReleaseSignalMapper->setMapping(ui->pushButton_ok, BTN_OK);
-        btnPressSignalMapper->setMapping(ui->pushButton_EncPush, BTN_ENCODER);
+        btnReleaseSignalMapper->setMapping(ui->pushButton_encoder, BTN_ENCODER);
         connect(ui->pushButton_esc, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
         connect(ui->pushButton_left, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
         connect(ui->pushButton_right, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
         connect(ui->pushButton_ok, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
-        connect(ui->pushButton_EncPush, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
-        connect(btnReleaseSignalMapper, SIGNAL(mapped(const int &)), this, SLOT(on_ControlButtonRelease(const int &)));
+        connect(ui->pushButton_encoder, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
+        connect(btnReleaseSignalMapper, SIGNAL(mapped(const int &)),  keyDriver1, SLOT(keyRelease(const int &)));
+
+        connect(keyDriver1, SIGNAL(onActionDown(int)), this, SLOT(onKeyActionDown(int)));
 
     connect(ui->updateButton,SIGNAL(clicked()),this,  SLOT(on_LCD_update()));
     connect(&updateTimer,SIGNAL(timeout()),this,SLOT(on_LCD_update()));
@@ -262,54 +269,62 @@ void MainWindow::on_touchRelease(void)
 
 //-----------------------------------//
 // Button and encoder events
+//
+//  action_down
+//  action_up
+//  action_up_short
+//  action_up_long
+//  action_hold
 
-void MainWindow::on_ControlButtonPress(int btn)
+
+
+
+
+
+
+int MainWindow::encodeGuiKey(int id)
 {
-    switch(btn)
+    int guiKey;
+    switch (id)
     {
         case BTN_ESC:
-            guiButtonPressed(GUI_KEY_ESC);
+            guiKey = GUI_KEY_ESC;
             break;
         case BTN_LEFT:
-            guiButtonPressed(GUI_KEY_LEFT);
+            guiKey = GUI_KEY_LEFT;
             break;
         case BTN_RIGHT:
-            guiButtonPressed(GUI_KEY_RIGHT);
+            guiKey = GUI_KEY_RIGHT;
             break;
         case BTN_OK:
-            guiButtonPressed(GUI_KEY_OK);
+            guiKey = GUI_KEY_OK;
             break;
         case BTN_ENCODER:
-            guiButtonPressed(GUI_KEY_ENCODER);
+            guiKey = GUI_KEY_ENCODER;
             break;
+        default:
+            guiKey = 0;
     }
-    if (ui->checkBox_updMode->checkState())
-        on_LCD_update();
+    return guiKey;
 }
 
-void MainWindow::on_ControlButtonRelease(int btn)
+
+
+
+void MainWindow::onKeyActionDown(int id)
 {
-    switch(btn)
+    int guiKeyId = encodeGuiKey(id);
+    if (guiKeyId)
     {
-        case BTN_ESC:
-            guiButtonReleased(GUI_KEY_ESC);
-            break;
-        case BTN_LEFT:
-            guiButtonReleased(GUI_KEY_LEFT);
-            break;
-        case BTN_RIGHT:
-            guiButtonReleased(GUI_KEY_RIGHT);
-            break;
-        case BTN_OK:
-            guiButtonReleased(GUI_KEY_OK);
-            break;
-        case BTN_ENCODER:
-            guiButtonReleased(GUI_KEY_ENCODER);
-            break;
+        guiButtonPressed(guiKeyId);
+        if (ui->checkBox_updMode->checkState())
+            on_LCD_update();
     }
-    if (ui->checkBox_updMode->checkState())
-        on_LCD_update();
 }
+
+
+
+
 
 
 
@@ -343,24 +358,27 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 bool MainWindow::on_keyPress(QKeyEvent *event)
 {
     bool eventIsHandled = true;
-    switch(event->key())
+    if (event->isAutoRepeat() == false)
     {
-        case Qt::Key_Escape:
-        case Qt::Key_Backspace:
-            on_ControlButtonPress(BTN_ESC);
-            break;
-        case Qt::Key_Left:
-            on_ControlButtonPress(BTN_LEFT);
-            break;
-        case Qt::Key_Right:
-            on_ControlButtonPress(BTN_RIGHT);
-            break;
-        case Qt::Key_Return:
-        case Qt::Key_Space:
-            on_ControlButtonPress(BTN_OK);
-            break;
-        default:
-            eventIsHandled = false;
+        switch(event->key())
+        {
+            case Qt::Key_Escape:
+            case Qt::Key_Backspace:
+                keyDriver1->keyPress(BTN_ESC);
+                break;
+            case Qt::Key_Left:
+                keyDriver1->keyPress(BTN_LEFT);
+                break;
+            case Qt::Key_Right:
+                keyDriver1->keyPress(BTN_RIGHT);
+                break;
+            case Qt::Key_Return:
+            case Qt::Key_Space:
+                keyDriver1->keyPress(BTN_OK);
+                break;
+            default:
+                eventIsHandled = false;
+        }
     }
     return eventIsHandled;
 }
@@ -368,24 +386,27 @@ bool MainWindow::on_keyPress(QKeyEvent *event)
 bool MainWindow::on_keyRelease(QKeyEvent *event)
 {
     bool eventIsHandled = true;
-    switch(event->key())
+    if (event->isAutoRepeat() == false)
     {
-        case Qt::Key_Escape:
-        case Qt::Key_Backspace:
-            on_ControlButtonRelease(BTN_ESC);
-            break;
-        case Qt::Key_Left:
-            on_ControlButtonRelease(BTN_LEFT);
-            break;
-        case Qt::Key_Right:
-            on_ControlButtonRelease(BTN_RIGHT);
-            break;
-        case Qt::Key_Return:
-        case Qt::Key_Space:
-            on_ControlButtonRelease(BTN_OK);
-            break;
-        default:
-            eventIsHandled = false;
+        switch(event->key())
+        {
+            case Qt::Key_Escape:
+            case Qt::Key_Backspace:
+                keyDriver1->keyRelease(BTN_ESC);
+                break;
+            case Qt::Key_Left:
+                keyDriver1->keyRelease(BTN_LEFT);
+                break;
+            case Qt::Key_Right:
+                keyDriver1->keyRelease(BTN_RIGHT);
+                break;
+            case Qt::Key_Return:
+            case Qt::Key_Space:
+                keyDriver1->keyRelease(BTN_OK);
+                break;
+            default:
+                eventIsHandled = false;
+        }
     }
     return eventIsHandled;
 }
