@@ -6,6 +6,7 @@ mkdir %OUTFOLDER%
 mkdir %OUTFOLDER%\guiCore
 mkdir %OUTFOLDER%\guiWidgets
 mkdir %OUTFOLDER%\guiGraphics
+mkdir %OUTFOLDER%\utils
 
 copy "%EXAMPLEFOLDER%\gui_top\guiConfig.h" %OUTFOLDER%
 copy "%EXAMPLEFOLDER%\gui_top\guiMainForm.c" %OUTFOLDER%
@@ -42,5 +43,6 @@ copy "%SOURCEFOLDER%\guiGraphics_monochrome\guiGraphPrimitives.h" %OUTFOLDER%\gu
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\guiGraphPrimitives.c" %OUTFOLDER%\guiGraphics
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\guiGraphWidgets.h" %OUTFOLDER%\guiGraphics
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\guiGraphWidgets.c" %OUTFOLDER%\guiGraphics
-
+copy "%SOURCEFOLDER%\utils\utils.h" %OUTFOLDER%\utils
+copy "%SOURCEFOLDER%\utils\utils.c" %OUTFOLDER%\utils
 
