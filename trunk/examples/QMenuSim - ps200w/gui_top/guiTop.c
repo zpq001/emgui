@@ -82,15 +82,17 @@ static void guiDrawIsComplete(void)
 
     // Split whole GUI buffer into two separate buffers per LCD
     lcd_buf_index = 0;
+    gui_buf_index = 0;
     for (j=0; j<num_pages; j++)
     {
         for (i=0; i<DISPLAY_XSIZE; i++)
         {
-            gui_buf_index = j * (DISPLAY_XSIZE*2) + i;
             lcd0_buffer[lcd_buf_index] = (uint8_t)lcdBuffer[gui_buf_index];
             lcd1_buffer[lcd_buf_index] = (uint8_t)lcdBuffer[gui_buf_index + DISPLAY_XSIZE];
             lcd_buf_index++;
+            gui_buf_index++;
         }
+        gui_buf_index += DISPLAY_XSIZE;
     }
 
     updateLcdCallback(0,lcd0_buffer);
@@ -124,8 +126,8 @@ void guiInitialize(void)
     current_adc =  set_current;
     power_adc =       0;        // mW
     converter_temp_celsius = 25;        // Celsius
-    current_limit = CURRENT_LIM_LOW;
-    channel = CHANNEL_12V;
+    current_limit = GUI_CURRENT_LIM_LOW;
+    channel = GUI_CHANNEL_12V;
 
     guiMainForm_Initialize();
     guiCore_Init((guiGenericWidget_t *)&guiMainForm);

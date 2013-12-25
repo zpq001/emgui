@@ -22,6 +22,8 @@ INPUT(
 ./debug\guiSpinBox.o
 ./debug\utils.o
 ./debug\font_h16.o
+./debug\keydriver.o
 ./debug\moc_mainwindow.o
 ./debug\moc_pixeldisplay.o
+./debug\moc_keydriver.o
 );

@@ -25,9 +25,6 @@ private slots:
     void addLogMessage(int type, char *string);
     void on_updateCheckBox_clicked();
 
-    void on_ControlButtonPress(int btn);
-    void on_ControlButtonRelease(int btn);
-
     bool on_keyPress(QKeyEvent *event);
     bool on_keyRelease(QKeyEvent *event);
     void on_wheelEvent(QWheelEvent * event);
@@ -37,10 +34,13 @@ private slots:
     void on_touchRelease(void);
     void on_secondsTimer(void);
 
+    void onKeyActionDown(int id);
+
 private:
     Ui::MainWindow *ui;
     void updateStatusBar(void);
     bool eventFilter(QObject *obj, QEvent *event);
+    int encodeGuiKey(int id);
 
 };
 

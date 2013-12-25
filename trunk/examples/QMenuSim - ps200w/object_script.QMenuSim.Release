@@ -22,6 +22,8 @@ INPUT(
 ./release\guiSpinBox.o
 ./release\utils.o
 ./release\font_h16.o
+./release\keydriver.o
 ./release\moc_mainwindow.o
 ./release\moc_pixeldisplay.o
+./release\moc_keydriver.o
 );
