@@ -34,13 +34,14 @@ private slots:
     void on_touchRelease(void);
     void on_secondsTimer(void);
 
-    void onKeyActionDown(int id);
+    void onKeyDriverEvent(int id, int keyEventType);
 
 private:
     Ui::MainWindow *ui;
     void updateStatusBar(void);
     bool eventFilter(QObject *obj, QEvent *event);
     int encodeGuiKey(int id);
+    int encodeGuiEvent(int keyEventType);
 
 };
 

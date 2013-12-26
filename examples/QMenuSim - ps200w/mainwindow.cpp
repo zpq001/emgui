@@ -6,6 +6,7 @@
 #include <QWheelEvent>
 #include <QLabel>
 #include <QTime>
+#include <stdio.h>
 
 #include "guiCore.h"    // key codes
 #include "pixeldisplay.h"
@@ -63,7 +64,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->statusBar->addWidget(StatusLabel_LCD0);
     ui->statusBar->addWidget(StatusLabel_LCD1);
 
-    keyDriver1 = new keyDriver(this, 10);       // size of enum buttons ?
+    keyDriver1 = new keyDriver(this, 10, 300, 50);       // size of enum buttons ?
 
     // Signals and slots mapping
 
@@ -109,7 +110,7 @@ MainWindow::MainWindow(QWidget *parent) :
         connect(ui->pushButton_encoder, SIGNAL(released()), btnReleaseSignalMapper, SLOT(map()));
         connect(btnReleaseSignalMapper, SIGNAL(mapped(const int &)),  keyDriver1, SLOT(keyRelease(const int &)));
 
-        connect(keyDriver1, SIGNAL(onActionDown(int)), this, SLOT(onKeyActionDown(int)));
+        connect(keyDriver1, SIGNAL(onKeyEvent(int,int)), this, SLOT(onKeyDriverEvent(int, int)));
 
     connect(ui->updateButton,SIGNAL(clicked()),this,  SLOT(on_LCD_update()));
     connect(&updateTimer,SIGNAL(timeout()),this,SLOT(on_LCD_update()));
@@ -266,6 +267,18 @@ void MainWindow::on_touchRelease(void)
 }
 
 
+//-----------------------------------//
+// Time panel events
+
+void MainWindow::on_secondsTimer(void)
+{
+    t.start();
+    guiUpdateTime(t.hour(),t.minute(),t.second());
+    if (ui->checkBox_updMode->checkState())
+        on_LCD_update();
+}
+
+
 
 //-----------------------------------//
 // Button and encoder events
@@ -277,11 +290,7 @@ void MainWindow::on_touchRelease(void)
 //  action_hold
 
 
-
-
-
-
-
+// Encodes simulator key codes into GUI key codes
 int MainWindow::encodeGuiKey(int id)
 {
     int guiKey;
@@ -308,26 +317,67 @@ int MainWindow::encodeGuiKey(int id)
     return guiKey;
 }
 
-
-
-
-void MainWindow::onKeyActionDown(int id)
+// Encodes simulator key events into GUI key events
+int MainWindow::encodeGuiEvent(int keyEventType)
 {
-    int guiKeyId = encodeGuiKey(id);
-    if (guiKeyId)
+    int keyEvent;
+    switch (keyEventType)
     {
-        guiButtonPressed(guiKeyId);
+        case keyDriver::KEY_DOWN:
+            keyEvent = GUI_KEY_EVENT_DOWN;
+            break;
+        case keyDriver::KEY_UP:
+            keyEvent = GUI_KEY_EVENT_UP;
+            break;
+        case keyDriver::KEY_HOLD:
+            keyEvent = GUI_KEY_EVENT_HOLD;
+            break;
+        default:
+            keyEvent = 0;
+    }
+    return keyEvent;
+}
+
+// Key driver to GUI
+void MainWindow::onKeyDriverEvent(int id, int keyEventType)
+{
+/*    char *typeStr;
+    char str[50];
+    switch (keyEventType)
+    {
+        case keyDriver::KEY_DOWN:
+            typeStr = "key DOWN";
+            break;
+        case keyDriver::KEY_UP:
+            typeStr = "key UP";
+            break;
+        case keyDriver::KEY_UP_SHORT:
+            typeStr = "key UP SHORT";
+            break;
+        case keyDriver::KEY_UP_LONG:
+            typeStr = "key UP LONG";
+            break;
+        case keyDriver::KEY_HOLD:
+            typeStr = "key HOLD";
+            break;
+        case keyDriver::KEY_REPEAT:
+            typeStr = "key REPEAT";
+            break;
+        default:
+        typeStr = "key unknown";
+    }
+    sprintf(str, "%s %d",typeStr, id);
+    addLogMessage(LOG_FROM_TOP, str); */
+
+    int guiKeyCode = encodeGuiKey(id);
+    int guiKeyEvent = encodeGuiEvent(keyEventType);
+    if ((guiKeyCode != 0) && (guiKeyEvent != 0))
+    {
+        guiButtonEvent(guiKeyCode, guiKeyEvent);
         if (ui->checkBox_updMode->checkState())
             on_LCD_update();
     }
 }
-
-
-
-
-
-
-
 
 
 // Filter should be set on qApp
@@ -354,7 +404,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
     return QMainWindow::eventFilter( obj, event );
 }
 
-
+// Global key hook
 bool MainWindow::on_keyPress(QKeyEvent *event)
 {
     bool eventIsHandled = true;
@@ -383,6 +433,7 @@ bool MainWindow::on_keyPress(QKeyEvent *event)
     return eventIsHandled;
 }
 
+// Global key hook
 bool MainWindow::on_keyRelease(QKeyEvent *event)
 {
     bool eventIsHandled = true;
@@ -411,7 +462,7 @@ bool MainWindow::on_keyRelease(QKeyEvent *event)
     return eventIsHandled;
 }
 
-
+// Global mouse wheel hook
 void MainWindow::on_wheelEvent(QWheelEvent * event)
 {
     guiEncoderRotated(event->delta()/120 );
@@ -420,11 +471,3 @@ void MainWindow::on_wheelEvent(QWheelEvent * event)
 }
 
 
-
-void MainWindow::on_secondsTimer(void)
-{
-    t.start();
-    guiUpdateTime(t.hour(),t.minute(),t.second());
-    if (ui->checkBox_updMode->checkState())
-        on_LCD_update();
-}

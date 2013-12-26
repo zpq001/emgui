@@ -38,8 +38,9 @@ void guiInitialize(void);
 void guiUpdateTime(uint8_t hours, uint8_t minutes, uint8_t seconds);
 void guiDrawAll(void);
 
-void guiButtonPressed(uint16_t buttonCode);
-void guiButtonReleased(uint16_t buttonCode);
+void guiButtonEvent(uint16_t buttonCode, uint8_t eventType);
+//void guiButtonPressed(uint16_t buttonCode);
+//void guiButtonReleased(uint16_t buttonCode);
 void guiEncoderRotated(int32_t delta);
 
 
@@ -81,6 +82,18 @@ void guiUpdatePowerIndicator(void);
 void guiUpdateTemperatureIndicator(void);
 
 
+//=================================================================//
+//                          UART parser test                       //
+//=================================================================//
+typedef struct {
+    char *keyword;
+    void *nextTable;
+    void (*funcPtr)(char *nextArg, int32_t n);
+    int32_t funcArg;
+} parser_table_record_t;
+//=================================================================//
+//                         \ UART parser test                      //
+//=================================================================//
 
 
 #ifdef __cplusplus
