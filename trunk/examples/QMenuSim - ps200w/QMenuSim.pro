@@ -40,7 +40,7 @@ SOURCES += main.cpp\
     ../../source/guiWidgets_monochrome/guiSpinBox.c \
     ../../source/utils/utils.c \
     ../../source/guiGraphics_monochrome/font_h16.c \
-    keydriver.cpp
+    ../common/keydriver.cpp
 	
 
 HEADERS  += mainwindow.h \
@@ -63,7 +63,7 @@ HEADERS  += mainwindow.h \
     gui_top/guiMasterPanel.h \
     ../../source/guiWidgets_monochrome/guiSpinBox.h \
     ../../source/utils/utils.h \
-    keydriver.h
+    ../common/keydriver.h
     
     
 	
