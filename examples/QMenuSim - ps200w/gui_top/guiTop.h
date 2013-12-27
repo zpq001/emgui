@@ -82,19 +82,6 @@ void guiUpdatePowerIndicator(void);
 void guiUpdateTemperatureIndicator(void);
 
 
-//=================================================================//
-//                          UART parser test                       //
-//=================================================================//
-typedef struct {
-    char *keyword;
-    void *nextTable;
-    void (*funcPtr)(char *nextArg, int32_t n);
-    int32_t funcArg;
-} parser_table_record_t;
-//=================================================================//
-//                         \ UART parser test                      //
-//=================================================================//
-
 
 #ifdef __cplusplus
 }

@@ -23,6 +23,8 @@ INPUT(
 ./debug\utils.o
 ./debug\font_h16.o
 ./debug\keydriver.o
+./debug\uartParser.o
+./debug\other_images.o
 ./debug\moc_mainwindow.o
 ./debug\moc_pixeldisplay.o
 ./debug\moc_keydriver.o
