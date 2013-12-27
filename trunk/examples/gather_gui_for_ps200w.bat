@@ -36,6 +36,7 @@ copy "%SOURCEFOLDER%\guiGraphics_monochrome\font_h16.c" %OUTFOLDER%\guiGraphics
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\font_h32.c" %OUTFOLDER%\guiGraphics
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\guiFonts.h" %OUTFOLDER%\guiGraphics
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\widget_images.c" %OUTFOLDER%\guiGraphics
+copy "%SOURCEFOLDER%\guiGraphics_monochrome\other_images.c" %OUTFOLDER%\guiGraphics
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\guiImages.h" %OUTFOLDER%\guiGraphics
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\guiGraphHAL.h" %OUTFOLDER%\guiGraphics
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\guiGraphHAL.c" %OUTFOLDER%\guiGraphics
