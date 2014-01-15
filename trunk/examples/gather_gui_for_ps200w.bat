@@ -28,6 +28,8 @@ copy "%SOURCEFOLDER%\guiWidgets_monochrome\guiSpinBox.h" %OUTFOLDER%\guiWidgets
 copy "%SOURCEFOLDER%\guiWidgets_monochrome\guiSpinBox.c" %OUTFOLDER%\guiWidgets
 copy "%SOURCEFOLDER%\guiWidgets_monochrome\guiTextLabel.h" %OUTFOLDER%\guiWidgets
 copy "%SOURCEFOLDER%\guiWidgets_monochrome\guiTextLabel.c" %OUTFOLDER%\guiWidgets
+copy "%SOURCEFOLDER%\guiWidgets_monochrome\guiStringList.h" %OUTFOLDER%\guiWidgets
+copy "%SOURCEFOLDER%\guiWidgets_monochrome\guiStringList.c" %OUTFOLDER%\guiWidgets
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\font_6x8_mono.c" %OUTFOLDER%\guiGraphics
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\font_h10.c" %OUTFOLDER%\guiGraphics
 copy "%SOURCEFOLDER%\guiGraphics_monochrome\font_h10_bold.c" %OUTFOLDER%\guiGraphics

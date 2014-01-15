@@ -22,6 +22,7 @@
 #include "guiPanel.h"
 #include "guiTextLabel.h"
 #include "guiSpinBox.h"
+#include "guiStringList.h"
 
 // Other forms and panels - in order to switch between them
 #include "guiMasterPanel.h"
@@ -35,10 +36,12 @@ static uint8_t guiSetupPanel_ProcessEvents(struct guiGenericWidget_t *widget, gu
 
 
 //--------- Form elements ---------//
+guiStringList_t setupList;
+#define SETUP_LIST_ELEMENTS_COUNT 6
+char *setupListElements[SETUP_LIST_ELEMENTS_COUNT];
 
 
-
-//--------- Master panel  ---------//
+//--------- Setup panel  ----------//
 #define SETUP_PANEL_ELEMENTS_COUNT 8
 guiPanel_t     guiSetupPanel;
 static void *guiSetupPanelElements[SETUP_PANEL_ELEMENTS_COUNT];
@@ -56,7 +59,7 @@ void guiSetupPanel_Initialize(guiGenericWidget_t *parent)
     guiSetupPanel.processEvent = guiSetupPanel_ProcessEvents;     // redefine standard panel message processing funtion
     guiSetupPanel.widgets.count = SETUP_PANEL_ELEMENTS_COUNT;
     guiSetupPanel.widgets.elements = guiSetupPanelElements;
-    guiSetupPanel.widgets.elements[0] = 0;
+    guiSetupPanel.widgets.elements[0] = &setupList;
     guiSetupPanel.widgets.elements[1] = 0;
     guiSetupPanel.widgets.elements[2] = 0;
     guiSetupPanel.widgets.elements[3] = 0;
@@ -70,6 +73,23 @@ void guiSetupPanel_Initialize(guiGenericWidget_t *parent)
     guiSetupPanel.height = 68;
     guiSetupPanel.showFocus = 0;
     guiSetupPanel.focusFallsThrough = 0;
+
+    guiStringList_Initialize(&setupList, (guiGenericWidget_t *)&guiSetupPanel );
+    setupList.font = &font_h10;
+    setupList.textAlignment = ALIGN_CENTER;
+    setupList.hasFrame = 1;
+    setupList.x = 2;
+    setupList.y = 12;
+    setupList.width = 96 - 4;
+    setupList.height = 68 - 14;
+    setupList.stringCount = SETUP_LIST_ELEMENTS_COUNT;
+    setupList.strings = setupListElements;
+    setupList.strings[0] = "0000";
+    setupList.strings[1] = "1111";
+    setupList.strings[2] = "2222";
+    setupList.strings[3] = "3333";
+    setupList.strings[4] = "4444";
+    setupList.strings[5] = "5555";
 }
 
 
@@ -87,9 +107,9 @@ static uint8_t guiSetupPanel_ProcessEvents(struct guiGenericWidget_t *widget, gu
                 // Draw static elements
                 LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
                 LCD_SetFont(&font_h10_bold);
-                LCD_PrintString("Settings", 20, 0, IMAGE_MODE_NORMAL);
-                LCD_SetFont(&font_h11);
-                LCD_PrintString("TODO!", 20, 30, IMAGE_MODE_NORMAL);
+                LCD_PrintString("Settings", 22, 0, IMAGE_MODE_NORMAL);
+                //LCD_SetFont(&font_h11);
+                //LCD_PrintString("TODO!", 20, 30, IMAGE_MODE_NORMAL);
             }
             // Reset flags - redrawForced will be reset by core
             guiSetupPanel.redrawFocus = 0;

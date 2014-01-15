@@ -25,6 +25,7 @@ INPUT(
 ./debug\keydriver.o
 ./debug\uartParser.o
 ./debug\other_images.o
+./debug\guiStringList.o
 ./debug\moc_mainwindow.o
 ./debug\moc_pixeldisplay.o
 ./debug\moc_keydriver.o
