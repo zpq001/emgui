@@ -42,7 +42,8 @@ SOURCES += main.cpp\
     ../../source/guiGraphics_monochrome/font_h16.c \
     ../common/keydriver.cpp \
     gui_top/uartParser.c \
-    ../../source/guiGraphics_monochrome/other_images.c
+    ../../source/guiGraphics_monochrome/other_images.c \
+    ../../source/guiWidgets_monochrome/guiStringList.c
 	
 
 HEADERS  += mainwindow.h \
@@ -66,7 +67,8 @@ HEADERS  += mainwindow.h \
     ../../source/guiWidgets_monochrome/guiSpinBox.h \
     ../../source/utils/utils.h \
     ../common/keydriver.h \
-    gui_top/uartParser.h
+    gui_top/uartParser.h \
+    ../../source/guiWidgets_monochrome/guiStringList.h
     
     
 	

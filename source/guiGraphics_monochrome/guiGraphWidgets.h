@@ -34,7 +34,9 @@
 #define SPINBOX_ACTIVE_UNDERLINE_MARGIN 1
 #define SPINBOX_ACTIVE_UNDERLINE_WIDTH 2
 
-
+//---------------------------------------------//
+// StringList
+#define STRINGLIST_INTERVAL 2
 
 
 extern int16_t wx;
@@ -48,7 +50,7 @@ void guiGraph_DrawPanel(guiPanel_t *panel);
 void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel);
 void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox);
 void guiGraph_DrawSpinBox(guiSpinBox_t * spinBox);
-
+void guiGraph_DrawStringList(guiStringList_t * list);
 
 
 #endif
