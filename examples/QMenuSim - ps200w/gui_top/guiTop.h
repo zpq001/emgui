@@ -67,6 +67,7 @@ void guiLogEvent(char *string);
 void guiUpdateVoltageIndicator(void);
 void guiUpdateVoltageSetting(void);
 void applyGuiVoltageSetting(uint16_t new_set_voltage);
+void applyGuiVoltageSoftwareLimit(uint8_t type, uint8_t enable, uint16_t value);
 
 void guiUpdateCurrentIndicator(void);
 void guiUpdateCurrentSetting(void);

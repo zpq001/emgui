@@ -42,46 +42,52 @@ void guiStringList_SelectItem(guiStringList_t* list, uint8_t index)
     }
 }
 
-/*
+
 static uint8_t guiStringList_SelectNextItem(guiStringList_t* list, int8_t dir)
 {
     uint8_t visibleHead = list->firstIndexToDisplay;
-    uint8_t visibleTail = wrapIndex(list->firstIndexToDisplay, list->stringCount - 1, list->visibleItemsCount - 1);
-    uint8_t prevSelectedIndex = list->items.selectedIndex;
+    uint8_t visibleItemsCount = guiGraph_GetStringListVisibleItemCount(list);
+    uint8_t visibleTail = wrapIndex(list->firstIndexToDisplay, list->stringCount - 1, visibleItemsCount - 1);
+    uint8_t prevSelectedIndex = list->selectedIndex;
+    guiEvent_t event;
 
-    if ((list->items.selectedIndex == visibleHead) && (dir < 0))
+    if ((list->selectedIndex == visibleHead) && (dir < 0))
     {
-        if ((list->properties & LISTBOX_CAN_WRAP) || (list->items.selectedIndex != 0))
+        if ((list->canWrap) || (list->selectedIndex != 0))
         {
-            list->items.firstIndexToDisplay = wrapIndex(list->items.firstIndexToDisplay, list->items.count - 1, dir);
-            list->items.selectedIndex = wrapIndex(list->items.selectedIndex, list->items.count - 1, dir);
+            list->firstIndexToDisplay = wrapIndex(list->firstIndexToDisplay, list->stringCount - 1, dir);
+            list->selectedIndex = wrapIndex(list->selectedIndex, list->stringCount - 1, dir);
         }
     }
-    else if ((list->items.selectedIndex == visibleTail) && (dir > 0))
+    else if ((list->selectedIndex == visibleTail) && (dir > 0))
     {
-        if ((list->properties & LISTBOX_CAN_WRAP) || (list->items.selectedIndex != list->items.count - 1))
+        if ((list->canWrap) || (list->selectedIndex != list->stringCount - 1))
         {
-            list->items.firstIndexToDisplay = wrapIndex(list->items.firstIndexToDisplay, list->items.count - 1, dir);
-            list->items.selectedIndex = wrapIndex(list->items.selectedIndex, list->items.count - 1, dir);
+            list->firstIndexToDisplay = wrapIndex(list->firstIndexToDisplay, list->stringCount - 1, dir);
+            list->selectedIndex = wrapIndex(list->selectedIndex, list->stringCount - 1, dir);
         }
     }
     else
     {
-        list->items.selectedIndex = wrapIndex(list->items.selectedIndex, list->items.count - 1, dir);
+        list->selectedIndex = wrapIndex(list->selectedIndex, list->stringCount - 1, dir);
     }
 
-    if (prevSelectedIndex != list->items.selectedIndex)
+    if (prevSelectedIndex != list->selectedIndex)
     {
-        guiCore_CallEventHandler((guiGenericWidget_t *)list,WEVENT_SELECTED_INDEX_CHANGED);
-        list->redrawFlags |= WF_REDRAW_CONTENT;
+        event.type = STRINGLIST_INDEX_CHANGED;
+        guiCore_CallEventHandler((guiGenericWidget_t *)list, &event );
+        list->redrawRequired = 1;
+        list->redrawForced = 1;
         return 1;
     }
     else
+    {
         return 0;
+    }
 }
-*/
 
-uint8_t guiStringList_SetActive(guiStringList_t *list, uint8_t newActiveState)
+
+uint8_t guiStringList_SetActive(guiStringList_t *list, uint8_t newActiveState, uint8_t restoreValue)
 {
     guiEvent_t event;
     if (list == 0) return 0;
@@ -91,17 +97,26 @@ uint8_t guiStringList_SetActive(guiStringList_t *list, uint8_t newActiveState)
         // Activate
         if (list->isActive) return 0;
         list->isActive = 1;
+        list->savedIndex = list->selectedIndex;
     }
     else
     {
         // Deactivate
         if (list->isActive == 0) return 0;
         list->isActive = 0;
-
+        if ((list->restoreIndexOnEscape) && (restoreValue))
+        {
+            guiStringList_SelectItem(list, list->savedIndex);
+            list->newIndexAccepted = 0;
+        }
+        else
+        {
+            list->newIndexAccepted = 1;
+        }
     }
     // Active state changed - call handler
-    list->redrawFocus = 1;
     list->redrawRequired = 1;
+    list->redrawForced = 1;
     if (list->handlers.count != 0)
     {
         event.type = STRINGLIST_ACTIVE_CHANGED;
@@ -121,42 +136,32 @@ uint8_t guiStringList_ProcessKey(guiStringList_t *list, uint8_t key)
 {
     if (list->isActive)
     {
-       /* if (key == SPINBOX_KEY_SELECT)
+        if (key == STRINGLIST_KEY_SELECT)
         {
-            guiSpinBox_SetActive(spinBox, 0, 0);
+            guiStringList_SetActive(list, 0, 0);
         }
-        else*/ if (key == STRINGLIST_KEY_EXIT)
+        else if (key == STRINGLIST_KEY_EXIT)
         {
-            guiStringList_SetActive(list, 0);
+            guiStringList_SetActive(list, 0, 1);
         }
-        else if (key == STRINGLIST_KEY_LEFT)
+        else if (key == STRINGLIST_KEY_UP)
         {
-            guiStringList_SelectItem(list,wrapIndex(list->selectedIndex, list->stringCount-1, -1));
+            guiStringList_SelectNextItem(list, -1);
         }
-        else if (key == STRINGLIST_KEY_RIGHT)
+        else if (key == STRINGLIST_KEY_DOWN)
         {
-            guiStringList_SelectItem(list,wrapIndex(list->selectedIndex, list->stringCount-1, 1));
-        }/*
-        else if (key == SPINBOX_KEY_UP)
-        {
-            // increase value
-            guiSpinBox_IncrementValue(spinBox, 1);
-        }
-        else if (key == SPINBOX_KEY_DOWN)
-        {
-            //decrease value
-            guiSpinBox_IncrementValue(spinBox, -1);
+            guiStringList_SelectNextItem(list, 1);
         }
         else
         {
             return GUI_EVENT_DECLINE;
-        } */
+        }
     }
     else
     {
         if (key == STRINGLIST_KEY_SELECT)
         {
-            guiStringList_SetActive(list, 1);
+            guiStringList_SetActive(list, 1, 0);
         }
         else
         {
@@ -199,12 +204,12 @@ uint8_t guiStringList_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             break;
         case GUI_EVENT_UNFOCUS:
             guiCore_SetFocused((guiGenericWidget_t *)list,0);
-            guiStringList_SetActive(list, 0);
+            guiStringList_SetActive(list, 0, 0);
             break;
         case STRINGLIST_EVENT_ACTIVATE:
             if (list->isFocused)
             {
-                guiStringList_SetActive(list, 1);
+                guiStringList_SetActive(list, 1, 0);
             }
             // Accept event anyway
             break;
@@ -220,11 +225,10 @@ uint8_t guiStringList_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             {
                 if (list->isActive)
                 {
-                    //guilist_IncrementValue(list, (int16_t)event.lparam);
                     if ((int16_t)event.lparam < 0)
-                        guiStringList_ProcessKey(list, STRINGLIST_KEY_LEFT);
+                        guiStringList_ProcessKey(list, STRINGLIST_KEY_UP);
                     else
-                        guiStringList_ProcessKey(list, STRINGLIST_KEY_RIGHT);
+                        guiStringList_ProcessKey(list, STRINGLIST_KEY_DOWN);
                     processResult = GUI_EVENT_ACCEPTED;
                 }
                 processResult |= guiCore_CallEventHandler(widget, &event);
@@ -241,12 +245,8 @@ uint8_t guiStringList_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                     else if (event.lparam == GUI_KEY_ESC)
                         key = STRINGLIST_KEY_EXIT;
                     else if (event.lparam == GUI_KEY_LEFT)
-                        key = STRINGLIST_KEY_LEFT;
-                    else if (event.lparam == GUI_KEY_RIGHT)
-                        key = STRINGLIST_KEY_RIGHT;
-                    else if (event.lparam == GUI_KEY_UP)
                         key = STRINGLIST_KEY_UP;
-                    else if (event.lparam == GUI_KEY_DOWN)
+                    else if (event.lparam == GUI_KEY_RIGHT)
                         key = STRINGLIST_KEY_DOWN;
                     else
                         key = 0;

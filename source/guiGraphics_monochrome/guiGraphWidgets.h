@@ -36,7 +36,9 @@
 
 //---------------------------------------------//
 // StringList
-#define STRINGLIST_INTERVAL 2
+#define STRINGLIST_INTERVAL 3
+#define STRINGLIST_H_FRAME_MARGIN 2
+#define STRINGLIST_V_FRAME_MARGIN 2
 
 
 extern int16_t wx;
@@ -51,6 +53,7 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel);
 void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox);
 void guiGraph_DrawSpinBox(guiSpinBox_t * spinBox);
 void guiGraph_DrawStringList(guiStringList_t * list);
+uint8_t guiGraph_GetStringListVisibleItemCount(guiStringList_t * list);
 
 
 #endif

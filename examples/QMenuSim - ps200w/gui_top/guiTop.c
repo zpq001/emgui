@@ -13,6 +13,7 @@
 
 #include "guiMainForm.h"
 #include "guiMasterPanel.h"
+#include "guiSetupPanel.h"
 
 
 // UART parser test
@@ -245,6 +246,20 @@ void applyGuiVoltageSetting(uint16_t new_set_voltage)
     guiUpdateVoltageIndicator();
 }
 
+// Apply voltage limit setting from GUI
+void applyGuiVoltageSoftwareLimit(uint8_t type, uint8_t enable, uint16_t value)
+{
+    if (type == 0)
+    {
+        guiLogEvent("Writing LOW voltage limit ");
+        setLowVoltageLimitSetting(enable, value);
+    }
+    else
+    {
+        guiLogEvent("Writing HIGH voltage limit ");
+        setHighVoltageLimitSetting(enable, value);
+    }
+}
 
 //-----------------------------------//
 // Current
