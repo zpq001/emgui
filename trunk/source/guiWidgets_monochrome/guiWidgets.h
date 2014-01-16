@@ -428,6 +428,10 @@ typedef struct guiStringList_t {
 
     uint8_t hasFrame : 1;
     uint8_t isActive : 1;
+    uint8_t canWrap : 1;
+    uint8_t showStringFocus : 1;
+    uint8_t restoreIndexOnEscape : 1;
+    uint8_t newIndexAccepted : 1;
 
     uint8_t stringCount;
     uint8_t selectedIndex;

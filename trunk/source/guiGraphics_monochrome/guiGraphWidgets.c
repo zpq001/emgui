@@ -315,6 +315,13 @@ void guiGraph_DrawSpinBox(guiSpinBox_t * spinBox)
 }
 
 
+uint8_t guiGraph_GetStringListVisibleItemCount(guiStringList_t * list)
+{
+    uint8_t count;
+    count = (list->height - STRINGLIST_V_FRAME_MARGIN * 1) / (list->font->height + STRINGLIST_INTERVAL);
+    return count;
+}
+
 
 //-------------------------------------------------------//
 // Draw stringList
@@ -328,6 +335,7 @@ void guiGraph_DrawStringList(guiStringList_t * list)
     uint8_t elementHeight;
     rect_t rect;
     uint8_t index;
+    uint8_t itemsToDisplay;
 
     LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
 
@@ -348,13 +356,14 @@ void guiGraph_DrawStringList(guiStringList_t * list)
         LCD_SetFont(list->font);
 
         index = list->firstIndexToDisplay;
+        itemsToDisplay = guiGraph_GetStringListVisibleItemCount(list);
 
-        rect.x1 = wx + 1;
-        rect.y1 = wy + 1;
-        rect.x2 = wx + list->width - 2;
+        rect.x1 = wx + STRINGLIST_H_FRAME_MARGIN;
+        rect.y1 = wy + STRINGLIST_V_FRAME_MARGIN;
+        rect.x2 = wx + list->width - STRINGLIST_H_FRAME_MARGIN - 1;
         rect.y2 = wy + elementHeight;
 
-        while ((rect.y2 < wy + list->height) && (index < list->stringCount))
+        while (itemsToDisplay--)
         {
             LCD_PrintStringAligned(list->strings[index], &rect, list->textAlignment, IMAGE_MODE_NORMAL);
             if (index == list->selectedIndex)
@@ -363,13 +372,16 @@ void guiGraph_DrawStringList(guiStringList_t * list)
                 LCD_SetPixelOutputMode(PIXEL_MODE_XOR);
                 LCD_FillRect(rect.x1, rect.y1, rect.x2 - rect.x1 + 1, rect.y2 - rect.y1 + 1,FILL_WITH_BLACK);
                 LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+                if (list->isActive && list->showStringFocus)
+                {
+                    LCD_SetLineStyle(LINE_STYLE_DOTTED);
+                    LCD_DrawRect(rect.x1, rect.y1, rect.x2 - rect.x1 + 1, rect.y2 - rect.y1 + 1, 1);
+                }
             }
-            index++;
+            index = (index >= list->stringCount - 1) ? 0 : index + 1;
             rect.y1 += elementHeight;
             rect.y2 += elementHeight;
         }
-
-
     }
 
 
@@ -381,8 +393,8 @@ void guiGraph_DrawStringList(guiStringList_t * list)
         if ((list->hasFrame) || (list->showFocus))
         {
             LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
-            frameStyle = ((list->showFocus) && (list->isFocused)) ? LINE_STYLE_DOTTED : LINE_STYLE_SOLID;
-            framePixelValue = ((list->showFocus) && (list->isFocused)) ? 1 : 0;
+            frameStyle = ((list->showFocus) && (list->isFocused) && (list->isActive == 0)) ? LINE_STYLE_DOTTED : LINE_STYLE_SOLID;
+            framePixelValue = ((list->showFocus) && (list->isFocused) && (list->isActive == 0)) ? 1 : 0;
             framePixelValue |= (list->hasFrame) ? 1 : 0;
             LCD_SetLineStyle(frameStyle);
             if (!((list->redrawForced) && (framePixelValue == 0)))
