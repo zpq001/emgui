@@ -244,6 +244,18 @@ void applyGuiVoltageSetting(uint16_t new_set_voltage)
 
     //------ simulation of actual conveter work ------//
     guiUpdateVoltageIndicator();
+
+/*
+    conveter_message_t msg;
+    const conveter_message_t converter_tick_message = 	{25};
+    msg.type = 1;
+    msg.data.a = 12;
+    msg.data.b = 14;
+
+
+    msg.voltage_limit_setting.limit = 0;
+    msg.voltage_limit_setting.enable = 1;
+    msg.voltage_limit_setting.value = 20000; */
 }
 
 // Apply voltage limit setting from GUI
