@@ -55,6 +55,25 @@ void guiLogEvent(char *string);
 //                      Hardware emulation interface               //
 //=================================================================//
 
+typedef struct {
+    uint32_t type;
+    union {
+        struct {
+            uint32_t a;
+            uint32_t b;
+        } data;
+        struct {
+            uint8_t limit;
+            uint8_t enable;
+            uint32_t value;
+        } voltage_limit_setting;
+    };
+    //	uint32_t data_a;
+    //	uint32_t data_b;
+} conveter_message_t;
+
+
+
 // SelectedChannel
 #define	GUI_CHANNEL_5V			0x1
 #define	GUI_CHANNEL_12V			0x0
