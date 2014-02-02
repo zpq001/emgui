@@ -78,25 +78,25 @@ typedef struct {
 #define	GUI_CHANNEL_5V			0x1
 #define	GUI_CHANNEL_12V			0x0
 // CurrentLimit
-#define	GUI_CURRENT_LIM_HIGH	0x1
-#define	GUI_CURRENT_LIM_LOW	 	0x0
+#define	GUI_CURRENT_RANGE_HIGH	0x1
+#define	GUI_CURRENT_RANGE_LOW	 	0x0
 
 
 
 void guiUpdateVoltageIndicator(void);
 void guiUpdateVoltageSetting(void);
-void applyGuiVoltageSetting(uint16_t new_set_voltage);
-void applyGuiVoltageSoftwareLimit(uint8_t type, uint8_t enable, uint16_t value);
+void applyGuiVoltageSetting(int16_t new_set_voltage);
+void applyGuiVoltageLimit(uint8_t type, uint8_t enable, int16_t value);
 
 void guiUpdateCurrentIndicator(void);
 void guiUpdateCurrentSetting(void);
-void applyGuiCurrentSetting(uint16_t new_set_current);
+void applyGuiCurrentSetting(int16_t new_set_current);
 
 void guiUpdateChannelSetting(void);
 void applyGuiChannelSetting(uint8_t new_channel);
 
-void guiUpdateCurrentLimit(void);
-void applyGuiCurrentLimit(uint8_t new_current_limit);
+void guiUpdateCurrentRange(void);
+void applyGuiCurrentRange(uint8_t new_current_range);
 
 void guiUpdatePowerIndicator(void);
 void guiUpdateTemperatureIndicator(void);

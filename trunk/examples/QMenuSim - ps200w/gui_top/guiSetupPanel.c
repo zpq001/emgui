@@ -168,8 +168,8 @@ void guiSetupPanel_Initialize(guiGenericWidget_t *parent)
     spinBox_LowVoltageLimit.activeDigit = 2;
     spinBox_LowVoltageLimit.minDigitsToDisplay = 3;
     spinBox_LowVoltageLimit.restoreValueOnEscape = 1;
-    spinBox_LowVoltageLimit.maxValue = 4100;
-    spinBox_LowVoltageLimit.minValue = 0;
+    spinBox_LowVoltageLimit.maxValue = 2100;
+    spinBox_LowVoltageLimit.minValue = -1;
     spinBox_LowVoltageLimit.showFocus = 1;
     spinBox_LowVoltageLimit.value = 1;
     guiSpinBox_SetValue(&spinBox_LowVoltageLimit, 0, 0);
@@ -192,8 +192,8 @@ void guiSetupPanel_Initialize(guiGenericWidget_t *parent)
     spinBox_HighVoltageLimit.activeDigit = 2;
     spinBox_HighVoltageLimit.minDigitsToDisplay = 3;
     spinBox_HighVoltageLimit.restoreValueOnEscape = 1;
-    spinBox_HighVoltageLimit.maxValue = 4100;
-    spinBox_HighVoltageLimit.minValue = 0;
+    spinBox_HighVoltageLimit.maxValue = 2100;
+    spinBox_HighVoltageLimit.minValue = -1;
     spinBox_HighVoltageLimit.showFocus = 1;
     spinBox_HighVoltageLimit.value = 1;
     guiSpinBox_SetValue(&spinBox_HighVoltageLimit, 0, 0);
@@ -293,14 +293,14 @@ static uint8_t onLowVoltageLimitChanged(void *widget, guiEvent_t *event)
     uint8_t limEnabled = 0;
     if (checkBox_ApplyLowVoltageLimit.isChecked)
         limEnabled = 1;
-    applyGuiVoltageSoftwareLimit(0, limEnabled, spinBox_LowVoltageLimit.value);
+    applyGuiVoltageLimit(0, limEnabled, spinBox_LowVoltageLimit.value * 10);
     return 0;
 }
 
-void setLowVoltageLimitSetting(uint8_t isEnabled, uint16_t value)
+void setLowVoltageLimitSetting(uint8_t isEnabled, int16_t value)
 {
     guiCheckbox_SetChecked(&checkBox_ApplyLowVoltageLimit, isEnabled);
-    guiSpinBox_SetValue(&spinBox_LowVoltageLimit, value, 0);
+    guiSpinBox_SetValue(&spinBox_LowVoltageLimit, value / 10, 0);
 }
 
 static uint8_t onHighVoltageLimitChanged(void *widget, guiEvent_t *event)
@@ -308,14 +308,14 @@ static uint8_t onHighVoltageLimitChanged(void *widget, guiEvent_t *event)
     uint8_t limEnabled = 0;
     if (checkBox_ApplyHighVoltageLimit.isChecked)
         limEnabled = 1;
-    applyGuiVoltageSoftwareLimit(1, limEnabled, spinBox_HighVoltageLimit.value);
+    applyGuiVoltageLimit(1, limEnabled, spinBox_HighVoltageLimit.value * 10);
     return 0;
 }
 
-void setHighVoltageLimitSetting(uint8_t isEnabled, uint16_t value)
+void setHighVoltageLimitSetting(uint8_t isEnabled, int16_t value)
 {
     guiCheckbox_SetChecked(&checkBox_ApplyHighVoltageLimit, isEnabled);
-    guiSpinBox_SetValue(&spinBox_HighVoltageLimit, value, 0);
+    guiSpinBox_SetValue(&spinBox_HighVoltageLimit, value / 10, 0);
 }
 
 

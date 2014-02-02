@@ -49,7 +49,7 @@ uint32_t power_adc;			// [mW]
 int16_t converter_temp_celsius;
 
 uint8_t channel;            // feedback channel
-uint8_t current_limit;      // converter max current (20A/40A)
+uint8_t current_range;      // converter max current (20A/40A)
 //=================================================================//
 
 
@@ -138,7 +138,7 @@ void guiInitialize(void)
     current_adc =  set_current;
     power_adc =       0;        // mW
     converter_temp_celsius = 25;        // Celsius
-    current_limit = GUI_CURRENT_LIM_LOW;
+    current_range = GUI_CURRENT_RANGE_LOW;
     channel = GUI_CHANNEL_12V;
 
     guiMainForm_Initialize();
@@ -159,15 +159,15 @@ void guiInitialize(void)
     guiUpdatePowerIndicator();
     guiUpdateTemperatureIndicator();
     guiUpdateChannelSetting();
-    guiUpdateCurrentLimit();
+    guiUpdateCurrentRange();
 
 
     // Parser test
-    char *parse_strings[] = {
-        "key",
-        "down",
-        "btn_esc"
-    };
+    //char *parse_strings[] = {
+    //    "key",
+    //    "down",
+    //    "btn_esc"
+    //};
     //uart_parse(parse_strings, 3);
 
 }
@@ -236,7 +236,7 @@ void guiUpdateVoltageSetting(void)
 }
 
 // Apply voltage setting from GUI
-void applyGuiVoltageSetting(uint16_t new_set_voltage)
+void applyGuiVoltageSetting(int16_t new_set_voltage)
 {
     guiLogEvent("Writing voltage setting");
     set_voltage = new_set_voltage;
@@ -259,7 +259,7 @@ void applyGuiVoltageSetting(uint16_t new_set_voltage)
 }
 
 // Apply voltage limit setting from GUI
-void applyGuiVoltageSoftwareLimit(uint8_t type, uint8_t enable, uint16_t value)
+void applyGuiVoltageLimit(uint8_t type, uint8_t enable, int16_t value)
 {
     if (type == 0)
     {
@@ -291,7 +291,7 @@ void guiUpdateCurrentSetting(void)
 }
 
 // Apply current setting from GUI
-void applyGuiCurrentSetting(uint16_t new_set_current)
+void applyGuiCurrentSetting(int16_t new_set_current)
 {
     guiLogEvent("Writing current setting");
     set_current = new_set_current;
@@ -324,23 +324,23 @@ void guiUpdateChannelSetting(void)
 
 
 //-----------------------------------//
-// Current limit
+// Current range (20A / 40A)
 
 // Read current limit and update LCD
-void guiUpdateCurrentLimit(void)
+void guiUpdateCurrentRange(void)
 {
-    guiLogEvent("Reading current limit");
-    setCurrentLimitIndicator(current_limit);
+    guiLogEvent("Reading current range");
+    setCurrentRangeIndicator(current_range);
 }
 
 // Apply new selected feedback channel
-void applyGuiCurrentLimit(uint8_t new_current_limit)
+void applyGuiCurrentRange(uint8_t new_current_range)
 {
-    guiLogEvent("Writing current limit");
-    current_limit = new_current_limit;
+    guiLogEvent("Writing current range");
+    current_range = new_current_range;
 
     //------ simulation of actual conveter work ------//
-    guiUpdateCurrentLimit();
+    guiUpdateCurrentRange();
 }
 
 
