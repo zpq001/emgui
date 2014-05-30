@@ -8,7 +8,7 @@
 
 extern guiPanel_t     guiPanel2;
 
-void guiPanel2_Initialize(guiGenericWidget_t *parent);
+void guiPanel2_Initialize(void);
 
 
 

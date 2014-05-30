@@ -10,10 +10,18 @@
 #define BUTTON_CLICKED            (0xC0 + 0x01)
 
 
-
 // Widget-specific virtual keys
-#define BUTTON_KEY_PRESS     0x01
-#define BUTTON_KEY_RELEASE   0x02
+enum guiButtonVirtualKeys {
+    BUTTON_KEY_PRESS = 0x01,
+    BUTTON_KEY_RELEASE
+};
+
+// Translated key event struct
+typedef struct {
+    uint8_t key;
+} guiButtonTranslatedKey_t;
+
+
 
 
 

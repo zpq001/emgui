@@ -36,10 +36,10 @@ static void *guiPanel2Elements[PANEL2_ELEMENTS_COUNT];
 static guiWidgetHandler_t panel2_handlers[1];
 
 
-void guiPanel2_Initialize(guiGenericWidget_t *parent)
+void guiPanel2_Initialize()
 {
     // Initialize form
-    guiPanel_Initialize(&guiPanel2, parent);
+    guiPanel_Initialize(&guiPanel2, 0);
     guiPanel2.widgets.count = PANEL2_ELEMENTS_COUNT;
     guiPanel2.widgets.elements = guiPanel2Elements;
     guiPanel2.widgets.elements[0] = &button1;
