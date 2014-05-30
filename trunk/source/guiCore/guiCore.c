@@ -26,6 +26,7 @@ Through message queue:
 **********************************************************/
 
 #include <stdint.h>
+#include <string.h>     // using memset
 #include "guiConfig.h"
 #include "guiGraphWidgets.h"
 #include "guiEvents.h"
@@ -44,14 +45,142 @@ const guiEvent_t guiEvent_SHOW = {GUI_EVENT_SHOW, 0, 0, 0};
 const guiEvent_t guiEvent_UNFOCUS = {GUI_EVENT_UNFOCUS, 0, 0, 0};
 const guiEvent_t guiEvent_FOCUS = {GUI_EVENT_FOCUS, 0, 0, 0};
 
-#ifdef GUI_CFG_USE_TIMERS
+#ifdef emGUI_USE_TIMERS
 // Total count of timers should be defined in guiConfig.h
-guiTimer_t guiTimers[GUI_TIMER_COUNT];
+guiTimer_t guiTimers[emGUI_TIMERS_COUNT];
 #endif
 
 guiMsgQueue_t guiMsgQueue;
 guiGenericWidget_t *rootWidget;         // Root widget must be present
 guiGenericWidget_t *focusedWidget;      // Focused widget gets events from keys/encoder/touch
+
+
+//===================================================================//
+//===================================================================//
+//                                                                   //
+//               GUI core memory management functions                //
+//                                                                   //
+//===================================================================//
+
+// Inspired by freeRTOS heap1
+
+
+#define emGUI_BYTE_ALIGNMENT_MASK ( emGUI_BYTE_ALIGNMENT - 1 )
+// A few bytes might be lost to byte aligning the heap start address
+#define emGUI_ADJUSTED_HEAP_SIZE	( emGUI_HEAP_SIZE - emGUI_BYTE_ALIGNMENT )
+
+static unsigned char gui_heap[emGUI_HEAP_SIZE];
+static size_t allocated_bytes_count = (size_t) 0;
+
+
+void *guiCore_malloc(size_t wantedSize)
+{
+    static unsigned char *p_heap = 0;
+    void *result = 0;
+
+    // Make sure blocks are aligned
+    #if emGUI_BYTE_ALIGNMENT != 1
+        if (wantedSize & emGUI_BYTE_ALIGNMENT_MASK)
+        {
+            // Adjust allocated block size
+            wantedSize += (emGUI_BYTE_ALIGNMENT - (wantedSize & emGUI_BYTE_ALIGNMENT_MASK));
+        }
+    #endif
+
+    if (p_heap == 0)
+    {
+        p_heap = (unsigned char *)(((emGUI_POINTER_SIZE_TYPE)&gui_heap[emGUI_BYTE_ALIGNMENT_MASK]) & ((emGUI_POINTER_SIZE_TYPE) ~emGUI_BYTE_ALIGNMENT_MASK));
+    }
+
+    // Check if there is enough space
+    if( ( ( allocated_bytes_count + wantedSize ) < emGUI_ADJUSTED_HEAP_SIZE ) &&
+        ( ( allocated_bytes_count + wantedSize ) > allocated_bytes_count )	)   // Check for overflow
+    {
+        // Return the next free byte then increment the index past this block
+        result = p_heap + allocated_bytes_count;
+        allocated_bytes_count += wantedSize;
+    }
+
+    if (result == 0)
+    {
+        // Trace error
+        guiCore_Error(emGUI_ERROR_OUT_OF_HEAP);
+    }
+    return result;
+}
+
+
+void *guiCore_calloc(size_t wantedSize)
+{
+    void *result = guiCore_malloc(wantedSize);
+    if (result)
+    {
+        memset(result, 0, wantedSize);
+    }
+    return result;
+}
+
+
+size_t guiCore_GetFreeHeapSize( void )
+{
+    return ( emGUI_ADJUSTED_HEAP_SIZE - allocated_bytes_count );
+}
+
+
+void guiCore_AllocateWidgetCollection(guiGenericContainer_t *container, uint16_t count)
+{
+    if (container != 0)
+    {
+        container->widgets.count = count;
+        container->widgets.elements = guiCore_calloc(count * sizeof(void *));
+    }
+    else
+    {
+        guiCore_Error(emGUI_ERROR_NULL_REF);
+    }
+}
+
+void guiCore_AllocateHandlers(void *widget, uint16_t count)
+{
+    guiGenericWidget_t *w = (guiGenericWidget_t *)widget;
+    if (w != 0)
+    {
+        w->handlers.count = count;
+        w->handlers.elements = guiCore_calloc(count * sizeof(guiWidgetHandler_t));
+    }
+    else
+    {
+        guiCore_Error(emGUI_ERROR_NULL_REF);
+    }
+}
+
+
+//-------------------------------------------------------//
+// Adds a handler to widget's handlers
+//
+// Not used items in a collection must be zero
+// If success, function returns non-zero
+//-------------------------------------------------------//
+uint8_t guiCore_AddHandler(void *widget, uint8_t eventType, eventHandler_t handler)
+{
+    uint8_t i;
+    guiGenericWidget_t *w = (guiGenericWidget_t *)widget;
+    if ((w == 0) || (handler == 0))
+        return 0;
+    for (i = 0; i < w->handlers.count; i++)
+    {
+        if (w->handlers.elements[i].handler == 0)
+        {
+            // Found free item slot
+            w->handlers.elements[i].eventType = eventType;
+            w->handlers.elements[i].handler = handler;
+            return 1;
+        }
+    }
+    // No free space
+    guiCore_Error(emGUI_ERROR_OUT_OF_PREALLOCATED_MEMORY);
+    return 0;
+}
 
 
 
@@ -72,13 +201,13 @@ guiGenericWidget_t *focusedWidget;      // Focused widget gets events from keys/
 //-------------------------------------------------------//
 uint8_t guiCore_AddMessageToQueue(const guiGenericWidget_t *target, const guiEvent_t *event)
 {
-    if (guiMsgQueue.count < GUI_CORE_QUEUE_SIZE)
+    if (guiMsgQueue.count < emGUI_CORE_QUEUE_SIZE)
     {
         guiMsgQueue.queue[guiMsgQueue.tail].event = *event;
         guiMsgQueue.queue[guiMsgQueue.tail].target = (guiGenericWidget_t *)target;
         guiMsgQueue.count++;
         guiMsgQueue.tail++;
-        if (guiMsgQueue.tail == GUI_CORE_QUEUE_SIZE)
+        if (guiMsgQueue.tail == emGUI_CORE_QUEUE_SIZE)
             guiMsgQueue.tail = 0;
         return 1;
      }
@@ -99,7 +228,7 @@ uint8_t guiCore_GetMessageFromQueue(guiGenericWidget_t **target, guiEvent_t *eve
         *event = guiMsgQueue.queue[guiMsgQueue.head].event;
         guiMsgQueue.count--;
         guiMsgQueue.head++;
-        if (guiMsgQueue.head == GUI_CORE_QUEUE_SIZE)
+        if (guiMsgQueue.head == emGUI_CORE_QUEUE_SIZE)
             guiMsgQueue.head = 0;
         return 1;
     }
@@ -169,7 +298,7 @@ void guiCore_PostEventToFocused(guiEvent_t event)
 //===================================================================//
 
 
-#ifdef GUI_CFG_USE_TIMERS
+#ifdef emGUI_USE_TIMERS
 //-------------------------------------------------------//
 //  Initializes GUI core timer
 //  Timer is identified by timerID which is simply index
@@ -178,7 +307,7 @@ void guiCore_PostEventToFocused(guiEvent_t event)
 //-------------------------------------------------------//
 void guiCore_TimerInit(uint8_t timerID, uint16_t period, uint8_t runOnce, guiGenericWidget_t *target, void (*handler)(uint8_t))
 {
-    if (timerID >= GUI_TIMER_COUNT)
+    if (timerID >= emGUI_TIMERS_COUNT)
         return;
     guiTimers[timerID].top = period;
     guiTimers[timerID].counter = 0;
@@ -197,7 +326,7 @@ void guiCore_TimerInit(uint8_t timerID, uint16_t period, uint8_t runOnce, guiGen
 //-------------------------------------------------------//
 void guiCore_TimerStart(uint8_t timerID, uint8_t doReset)
 {
-    if (timerID >= GUI_TIMER_COUNT)
+    if (timerID >= emGUI_TIMERS_COUNT)
         return;
     if (doReset)
         guiTimers[timerID].counter = 0;
@@ -213,7 +342,7 @@ void guiCore_TimerStart(uint8_t timerID, uint8_t doReset)
 //-------------------------------------------------------//
 void guiCore_TimerStop(uint8_t timerID, uint8_t doReset)
 {
-    if (timerID >= GUI_TIMER_COUNT)
+    if (timerID >= emGUI_TIMERS_COUNT)
         return;
     if (doReset)
         guiTimers[timerID].counter = 0;
@@ -232,7 +361,7 @@ void guiCore_TimerStop(uint8_t timerID, uint8_t doReset)
 void guiCore_TimerProcess(uint8_t timerID)
 {
     guiEvent_t event = {GUI_EVENT_TIMER, 0, 0, 0};
-    if (timerID >= GUI_TIMER_COUNT)
+    if (timerID >= emGUI_TIMERS_COUNT)
         return;
     if (guiTimers[timerID].isEnabled)
     {
@@ -280,9 +409,9 @@ void guiCore_Init(guiGenericWidget_t *guiRootWidget)
     guiMsgQueue.head = 0;
     guiMsgQueue.tail = 0;
 
-#ifdef GUI_CFG_USE_TIMERS
+#ifdef emGUI_USE_TIMERS
     // Disable all timers
-    for (i=0; i<GUI_TIMER_COUNT; i++)
+    for (i=0; i<emGUI_TIMERS_COUNT; i++)
     {
         guiTimers[i].isEnabled = 0;
     }
@@ -291,7 +420,7 @@ void guiCore_Init(guiGenericWidget_t *guiRootWidget)
     // Set root and focused widget and send initialize event
     // Root widget must set focus in itself or other widget
     // depending on design. If focus is not set, no keyboard
-    // and encoder events will get processed.
+    // and encoder events will get processed. ~~~
     rootWidget = guiRootWidget;
     focusedWidget = 0;
     guiCore_AddMessageToQueue(rootWidget, &guiEvent_INIT);
@@ -299,7 +428,7 @@ void guiCore_Init(guiGenericWidget_t *guiRootWidget)
 }
 
 
-
+/*
 //-------------------------------------------------------//
 //  Top function for GUI redrawing
 //
@@ -405,7 +534,187 @@ void guiCore_RedrawAll(void)
     }
     // Process messages
     guiCore_ProcessMessageQueue();
+} */
+
+//-------------------------------------------------------//
+//  Top function for GUI redrawing
+//
+//-------------------------------------------------------//
+void guiCore_RedrawAll(void)
+{
+    guiGenericWidget_t *widget;
+    guiGenericWidget_t *nextWidget;
+    guiGenericWidget_t *processedWidget;
+    uint8_t index;
+    uint8_t containerRequiredRedraw;
+    uint8_t trectEmpty;
+    guiGenericWidget_t *w;
+    uint8_t i;
+    rect16_t wrect;
+
+    // Start widget tree traverse from root widget
+    widget = rootWidget;
+    guiGraph_SetBaseXY(widget->x, widget->y);
+
+    while(1)
+    {
+        // Process widget
+        containerRequiredRedraw = widget->redrawRequired;
+        if (widget->redrawRequired)
+        {
+            // The redrawRequired flag is reset by widget after processing DRAW event
+            widget->processEvent(widget, guiEvent_DRAW);
+        }
+        // Check if widget has children (is a container)
+        if (widget->isContainer)
+        {
+            if (((guiGenericContainer_t *)widget)->widgets.traverseIndex == 0)
+            {
+                // The first time visit
+                // TODO - set graph clipping
+                if (containerRequiredRedraw)
+                {
+                    // If container needed to be redawn itself, set trect to it's size
+                    ((guiGenericContainer_t *)widget)->trect.x1 = 0;
+                    ((guiGenericContainer_t *)widget)->trect.y1 = 0;
+                    ((guiGenericContainer_t *)widget)->trect.x2 = widget->width - 1;
+                    ((guiGenericContainer_t *)widget)->trect.y2 = widget->height - 1;
+                }
+                else
+                {
+                    // Set trect to be empty - it may be expanded by child widgets
+                    ((guiGenericContainer_t *)widget)->trect.x1 = 0;
+                    ((guiGenericContainer_t *)widget)->trect.y1 = 0;
+                    ((guiGenericContainer_t *)widget)->trect.x2 = -1;
+                    ((guiGenericContainer_t *)widget)->trect.y2 = -1;
+                }
+            }
+
+            // If container has unprocessed children
+            if ( ((guiGenericContainer_t *)widget)->widgets.traverseIndex <
+                 ((guiGenericContainer_t *)widget)->widgets.count )
+            {
+                // switch to next one if possible
+                index = ((guiGenericContainer_t *)widget)->widgets.traverseIndex++;
+                nextWidget = ((guiGenericContainer_t *)widget)->widgets.elements[index];
+                // check if widget actually exists and is visible
+                if ((nextWidget) && (nextWidget->isVisible))
+                {
+                    // Check if widget must be redrawn forcibly
+                    // <------------ analyze if nextWidget and parent's trect overlap
+                    if (widget->redrawForced)
+                    {
+                        nextWidget->redrawForced = 1;
+                        nextWidget->redrawRequired = 1;
+                    }
+                    // Switch to next widget if required
+                    if ((nextWidget->redrawRequired) || (nextWidget->isContainer))
+                    {
+                        widget = nextWidget;
+                        guiGraph_OffsetBaseXY(widget->x, widget->y);
+                    }
+                }
+                // Either skip current widget which does not require redraw,
+                // or redraw new widget that was selected
+                continue;
+            }
+            else
+            {
+                // All container child items are processed. Reset counter of processed items.
+                ((guiGenericContainer_t *)widget)->widgets.traverseIndex = 0;
+                widget->redrawForced = 0;
+                if (widget->parent == 0)    // root widget has no parent
+                    break;                  // done
+            }
+        }
+        else
+        {
+            // Widget is not a container
+            widget->redrawForced = 0;
+        }
+
+        //-------------------------//
+        // A widget has been processed.
+        // Move up the tree
+        guiGraph_OffsetBaseXY(-widget->x, -widget->y);
+        processedWidget = widget;
+        widget = widget->parent;
+
+
+        // Invalidate widget's rectangle for it's neighbours with higher Z
+        // We get here if widget was not container but required redraw,
+        // or widget was a container (possibly not required redraw).
+
+        // trect has coordinates of it's container.
+
+        if (processedWidget->isContainer)
+        {
+            wrect.x1 = ((guiGenericContainer_t *)processedWidget)->trect.x1;
+            wrect.y1 = ((guiGenericContainer_t *)processedWidget)->trect.y1;
+            wrect.x2 = ((guiGenericContainer_t *)processedWidget)->trect.x2;
+            wrect.y2 = ((guiGenericContainer_t *)processedWidget)->trect.y2;
+
+            // Offset to parent's coordinates
+            wrect.x1 += processedWidget->x;
+            wrect.y1 += processedWidget->y;
+            wrect.x2 += processedWidget->x;
+            wrect.y2 += processedWidget->y;
+        }
+        else
+        {
+            wrect.x1 = processedWidget->x;
+            wrect.y1 = processedWidget->y;
+            wrect.x2 = processedWidget->x + processedWidget->width - 1;
+            wrect.y2 = processedWidget->y + processedWidget->height - 1;
+        }
+
+        // Expand parent's invalidating rectangle
+        trectEmpty = ( ((guiGenericContainer_t *)widget)->trect.x1 > ((guiGenericContainer_t *)widget)->trect.x2 ) ? 1 : 0;
+        if (wrect.x1 < wrect.x2)
+        {
+            if ((trectEmpty) || (wrect.x1 < ((guiGenericContainer_t *)widget)->trect.x1))
+                ((guiGenericContainer_t *)widget)->trect.x1 = wrect.x1;
+            if ((trectEmpty) || (wrect.y1 < ((guiGenericContainer_t *)widget)->trect.y1))
+                ((guiGenericContainer_t *)widget)->trect.y1 = wrect.y1;
+            if ((trectEmpty) || (wrect.x2  > ((guiGenericContainer_t *)widget)->trect.x2))
+                ((guiGenericContainer_t *)widget)->trect.x2 = wrect.x2;
+            if ((trectEmpty) || (wrect.y2  > ((guiGenericContainer_t *)widget)->trect.y2))
+                ((guiGenericContainer_t *)widget)->trect.y2 = wrect.y2;
+        }
+
+        /////////////////////////
+#ifdef USE_Z_ORDER_REDRAW
+        // Analyze parent's flag
+        if (widget->redrawForced == 0)
+        {
+            // Widget has been redrawn - make overlapping widgets in the same container
+            //  with higher Z index redraw too
+            for (i = ((guiGenericContainer_t *)widget)->widgets.traverseIndex;
+                 i < ((guiGenericContainer_t *)widget)->widgets.count; i++)
+            {
+                w = ((guiGenericContainer_t *)widget)->widgets.elements[i];
+                if ((w != 0) && (w->isVisible))
+                {
+                    if (guiCore_CheckWidgetOvelap(w, &wrect))
+                    {
+                        w->redrawForced = 1;
+                        w->redrawRequired = 1;
+                    }
+                }
+            }
+        }
+#endif
+        /////////////////////////
+
+
+    }
+    // Process messages
+    guiCore_ProcessMessageQueue();
 }
+
+
+
+
 
 
 //-------------------------------------------------------//
@@ -447,13 +756,13 @@ void guiCore_ProcessKeyEvent(uint16_t code, uint8_t spec)
 
 //-------------------------------------------------------//
 //  Top function for processing encoder
-//
+//  Obsolete
 //-------------------------------------------------------//
 void guiCore_ProcessEncoderEvent(int16_t increment)
 {
     guiEvent_t event;
-    event.type = GUI_EVENT_ENCODER;
-    event.spec = 0;
+    event.type = GUI_EVENT_KEY;
+    event.spec = GUI_ENCODER_EVENT;
     event.lparam = (uint16_t)increment;
     guiCore_AddMessageToQueue(focusedWidget, &event);
     guiCore_ProcessMessageQueue();
@@ -466,7 +775,7 @@ void guiCore_ProcessEncoderEvent(int16_t increment)
 void guiCore_ProcessTimers(void)
 {
     uint8_t i;
-    for (i=0; i<GUI_TIMER_COUNT; i++)
+    for (i=0; i<emGUI_TIMERS_COUNT; i++)
     {
         guiCore_TimerProcess(i);
     }
@@ -714,6 +1023,10 @@ guiGenericWidget_t *guiCore_GetTouchedWidgetAtXY(guiGenericWidget_t *widget, int
 
     if (widget->isContainer)
     {
+        if ( (((guiGenericContainer_t *)widget)->widgets.count == 0) ||
+             (((guiGenericContainer_t *)widget)->widgets.elements == 0) )
+            return widget;
+
         // Point is inside container or one of it's widgets. Find out which one.
         i = ((guiGenericContainer_t *)widget)->widgets.count - 1;
         do
@@ -736,7 +1049,25 @@ guiGenericWidget_t *guiCore_GetTouchedWidgetAtXY(guiGenericWidget_t *widget, int
 }
 
 
-
+//-------------------------------------------------------//
+//  Checks if widget is visible
+//  Returns non-zero if widget is visible itself and
+//      all his parents are visible too.
+//  Note - function does not check if widget is covered by other widget or panel
+//-------------------------------------------------------//
+uint8_t guiCore_IsWidgetVisible(guiGenericWidget_t *widget)
+{
+    // Root widget has no parent
+    while(widget != 0)
+    {
+        // Check visibility
+        if (widget->isVisible == 0)
+            return 0;
+        // Move up the tree
+        widget = widget->parent;
+    }
+    return 1;
+}
 
 
 
@@ -749,6 +1080,36 @@ guiGenericWidget_t *guiCore_GetTouchedWidgetAtXY(guiGenericWidget_t *widget, int
 //===================================================================//
 
 
+//-------------------------------------------------------//
+// Adds a widget to collection
+// The widget being added gets specified container widget as parent
+// Not used items in a collection must be zero
+// If success, function returns non-zero
+//-------------------------------------------------------//
+uint8_t guiCore_AddWidgetToCollection(guiGenericWidget_t *widget, guiGenericContainer_t *container)
+{
+    uint8_t i;
+    if ((widget != 0) && (container != 0))
+    {
+        for (i = 0; i < container->widgets.count; i++)
+        {
+            if (container->widgets.elements[i] == 0)
+            {
+                // Found free item slot
+                container->widgets.elements[i] = widget;
+                widget->parent = (guiGenericWidget_t *)container;
+                return 1;
+            }
+        }
+    }
+    else
+    {
+        guiCore_Error(emGUI_ERROR_NULL_REF);
+        return 0;
+    }
+    guiCore_Error(emGUI_ERROR_OUT_OF_PREALLOCATED_MEMORY);
+    return 0;
+}
 
 
 //-------------------------------------------------------//
@@ -1084,6 +1445,13 @@ void guiCore_DecodeContainerTouchEvent(guiGenericWidget_t *widget, guiEvent_t *t
 }
 
 
+
+
+void guiCore_Error(uint8_t errCode)
+{
+    // One may trace call stack and thus find source of the error
+    while(1);
+}
 
 
 

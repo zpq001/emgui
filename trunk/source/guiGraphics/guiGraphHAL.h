@@ -5,8 +5,8 @@
 
 
 // Size definitions in points
-#define LCD_XSIZE 300
-#define LCD_YSIZE 200
+#define LCD_XSIZE 320
+#define LCD_YSIZE 240
 
 
 typedef uint32_t color_t;

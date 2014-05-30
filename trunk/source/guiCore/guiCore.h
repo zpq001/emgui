@@ -16,7 +16,7 @@ typedef struct {
     uint8_t head;
     uint8_t tail;
     uint8_t count;
-    guiMsg_t queue[GUI_CORE_QUEUE_SIZE];
+    guiMsg_t queue[emGUI_CORE_QUEUE_SIZE];
 } guiMsgQueue_t;
 
 
@@ -62,6 +62,7 @@ typedef struct {
 #define GUI_KEY_EVENT_UP_LONG   0x04
 #define GUI_KEY_EVENT_HOLD      0x05
 #define GUI_KEY_EVENT_REPEAT    0x06
+#define GUI_ENCODER_EVENT       0x07        // Encoder rotated
 
 // Button codes
 #define GUI_KEY_ESC     0x01
@@ -112,10 +113,35 @@ typedef struct {
     void (*handler)(uint8_t id);
 } guiTimer_t;
 
+// Timer init arguments
+#define TMR_RUN_CONSTANTLY  0
+#define TMR_RUN_ONCE        1
+#define TMR_TARGET_VOID     0
+#define TMR_HANDLER_VOID    0
+
+// Timer start arguments
+#define TMR_DO_RESET        1
+#define TMR_NO_RESET        0
+
+
+//-----------------------------------//
+// GUI errors
+#define emGUI_ERROR_OUT_OF_HEAP                 0x01
+#define emGUI_ERROR_OUT_OF_PREALLOCATED_MEMORY  0x02
+#define emGUI_ERROR_NULL_REF                    0x03
 
 // Modifying these pointers should be done with care!
 extern guiGenericWidget_t *rootWidget;         // Root widget must be present
 extern guiGenericWidget_t *focusedWidget;      // Focused widget gets events from keys/encoder/touch
+
+void *guiCore_malloc(size_t wantedSize);
+void *guiCore_calloc(size_t wantedSize);
+void guiCore_AllocateWidgetCollection(guiGenericContainer_t *container, uint16_t count);
+void guiCore_AllocateHandlers(void *widget, uint16_t count);
+uint8_t guiCore_AddHandler(void *widget, uint8_t eventType, eventHandler_t handler);
+
+// Common error handler
+void guiCore_Error(uint8_t errCode);
 
 //===================================================================//
 //                 GUI core message queue functions
@@ -156,10 +182,12 @@ uint8_t guiCore_CheckWidgetOvelap(guiGenericWidget_t *widget, rect16_t *rect);
 void guiCore_ConvertToAbsoluteXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y);
 void guiCore_ConvertToRelativeXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y);
 guiGenericWidget_t *guiCore_GetTouchedWidgetAtXY(guiGenericWidget_t *widget, int16_t x, int16_t y);
+uint8_t guiCore_IsWidgetVisible(guiGenericWidget_t *widget);
 
 //===================================================================//
 //                   Widget collections management                   //
 //===================================================================//
+uint8_t guiCore_AddWidgetToCollection(guiGenericWidget_t *widget, guiGenericContainer_t *container);
 void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget);
 void guiCore_AcceptFocus(guiGenericWidget_t *widget);
 void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tabDir);

@@ -24,7 +24,9 @@
 #include "guiPanel.h"
 
 
-static uint8_t panel1_onDraw(void *sender, guiEvent_t *event);
+
+//----------- GUI Form  -----------//
+guiPanel_t guiPanel1;
 
 
 //-------- Panel elements ---------//
@@ -37,30 +39,17 @@ static guiRadioButton_t radioButton2;
 static guiRadioButton_t radioButton3;
 static guiRadioButton_t radioButton4;
 
-//----------- GUI Form  -----------//
-#define PANEL1_ELEMENTS_COUNT 8
-guiPanel_t guiPanel1;
-static void *guiPanel1Elements[PANEL1_ELEMENTS_COUNT];
-static guiWidgetHandler_t panel1_handlers[1];
+
+//---------- Prototypes -----------//
+static uint8_t panel1_onDraw(void *sender, guiEvent_t *event);
 
 
-void guiPanel1_Initialize(guiGenericWidget_t *parent)
+
+void guiPanel1_Initialize(void)
 {
     // Initialize form
-    guiPanel_Initialize(&guiPanel1, parent);
-    guiPanel1.widgets.count = PANEL1_ELEMENTS_COUNT;
-    guiPanel1.widgets.elements = guiPanel1Elements;
-    guiPanel1.widgets.elements[0] = &button1;
-    guiPanel1.widgets.elements[1] = &button2;
-    guiPanel1.widgets.elements[2] = &checkBox1;
-    guiPanel1.widgets.elements[3] = &radioButton1;
-    guiPanel1.widgets.elements[4] = &radioButton2;
-    guiPanel1.widgets.elements[5] = &radioButton3;
-    guiPanel1.widgets.elements[6] = &radioButton4;
-    guiPanel1.widgets.elements[7] = &checkBox2;
-    guiPanel1.handlers.count = 1;
-    guiPanel1.handlers.elements = panel1_handlers;
-
+    guiPanel_Initialize(&guiPanel1, 0);
+    guiCore_AllocateWidgetCollection((guiGenericContainer_t *)&guiPanel1, 8);
     guiPanel1.isVisible = 1;
     guiPanel1.x = 10;
     guiPanel1.y = 10;
@@ -68,6 +57,8 @@ void guiPanel1_Initialize(guiGenericWidget_t *parent)
     guiPanel1.height = 150;
     guiPanel1.frame = FRAME3D_SUNKEN;
     guiPanel1.tag = 20;
+    guiCore_AllocateHandlers(&guiPanel1, 1);
+    guiCore_AddHandler(&guiPanel1, GUI_EVENT_DRAW, panel1_onDraw);
 
     // Setup button1
     guiButton_Initialize(&button1,  (guiGenericWidget_t *)&guiPanel1);
@@ -123,6 +114,7 @@ void guiPanel1_Initialize(guiGenericWidget_t *parent)
     radioButton1.tabIndex = 13;
     radioButton1.acceptFocusByTab = 1;
     radioButton1.acceptTouch = 1;
+    radioButton1.isChecked = 1;
 
     guiRadioButton_Initialize(&radioButton2, (guiGenericWidget_t *)&guiPanel1);
     radioButton2.x = 110;
@@ -157,10 +149,16 @@ void guiPanel1_Initialize(guiGenericWidget_t *parent)
     radioButton4.acceptFocusByTab = 1;
     radioButton4.acceptTouch = 1;
 
-    guiPanel1.handlers.elements[0].eventType = GUI_EVENT_DRAW;
-    guiPanel1.handlers.elements[0].handler = panel1_onDraw;
 
-    radioButton1.isChecked = 1;
+    // Add widgets (addition order will be inherited by drawing Z-order)
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&button1, (guiGenericContainer_t *)&guiPanel1);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&button2, (guiGenericContainer_t *)&guiPanel1);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&checkBox1, (guiGenericContainer_t *)&guiPanel1);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&checkBox2, (guiGenericContainer_t *)&guiPanel1);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&radioButton1, (guiGenericContainer_t *)&guiPanel1);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&radioButton2, (guiGenericContainer_t *)&guiPanel1);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&radioButton3, (guiGenericContainer_t *)&guiPanel1);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&radioButton4, (guiGenericContainer_t *)&guiPanel1);
 }
 
 

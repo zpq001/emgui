@@ -94,7 +94,7 @@ uint8_t guiButton_ProcessKey(guiButton_t *button, uint8_t key, uint8_t enableCli
         if (button->isToggle == 0)
         {
             if ((guiButton_SetPressed(button,0)) && (enableClick))
-                guiButton_Click(button);
+                guiButton_Click(button); // FIXME - param should be named callHandler
         }
     }
     else
@@ -105,12 +105,33 @@ uint8_t guiButton_ProcessKey(guiButton_t *button, uint8_t key, uint8_t enableCli
 }
 
 
+//-------------------------------------------------------//
+// Default key event translator
+//
+//-------------------------------------------------------//
+uint8_t guiButton_DefaultKeyTranslator(guiGenericWidget_t *widget, guiEvent_t *event, void *translatedKey)
+{
+    guiButtonTranslatedKey_t *tkey = (guiButtonTranslatedKey_t *)translatedKey;
+    tkey->key = 0;
+    if (event->spec == GUI_KEY_EVENT_DOWN)
+    {
+        if (event->lparam == GUI_KEY_OK)
+            tkey->key = BUTTON_KEY_PRESS;
+    }
+    else if (event->spec == GUI_KEY_EVENT_UP)
+    {
+        if (event->lparam == GUI_KEY_OK)
+            tkey->key = BUTTON_KEY_RELEASE;
+    }
+    return 0;
+}
+
 
 uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 {
     guiButton_t *button = (guiButton_t *)widget;
     uint8_t processResult = GUI_EVENT_ACCEPTED;
-    uint8_t key;
+    guiButtonTranslatedKey_t tkey;
     widgetTouchState_t touch;
 
     switch (event.type)
@@ -143,7 +164,7 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             guiCore_SetVisible((guiGenericWidget_t *)button, 0);
             break;
         case GUI_EVENT_KEY:
-            processResult = GUI_EVENT_DECLINE;
+      /*      processResult = GUI_EVENT_DECLINE;
             if (BUTTON_ACCEPTS_KEY_EVENT(button))
             {
                 if ((event.spec == GUI_KEY_EVENT_DOWN) && (event.lparam == GUI_KEY_OK))
@@ -156,6 +177,19 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                     guiButton_ProcessKey(button, key, 1);
                 // Call KEY event handler
                 processResult |= guiCore_CallEventHandler(widget, &event);
+            } */
+            processResult = GUI_EVENT_DECLINE;
+            if (BUTTON_ACCEPTS_KEY_EVENT(button))
+            {
+                if (button->keyTranslator)
+                {
+                    processResult = button->keyTranslator(widget, &event, &tkey);
+                    if (tkey.key != 0)
+                        processResult |= guiButton_ProcessKey(button, tkey.key, 1);
+                }
+                // Call KEY event handler
+                if (processResult == GUI_EVENT_DECLINE)
+                    processResult = guiCore_CallEventHandler(widget, &event);
             }
             break;
         case GUI_EVENT_TOUCH:
@@ -279,6 +313,7 @@ void guiButton_Initialize(guiButton_t *button, guiGenericWidget_t *parent)
     button->isVisible = 1;
     button->showFocus = 1;
     button->processEvent = guiButton_ProcessEvent;
+    button->keyTranslator = &guiButton_DefaultKeyTranslator;
     button->textAlignment = ALIGN_CENTER;
 }
 

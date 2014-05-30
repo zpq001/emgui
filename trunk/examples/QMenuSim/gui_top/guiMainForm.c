@@ -41,56 +41,44 @@ static uint8_t button_onPressed(void *sender, guiEvent_t *event);
 //static uint8_t textLabel_onButtonEvent(void *sender, guiEvent_t event);
 
 
+//----------- GUI Form  -----------//
+guiPanel_t     guiMainForm;
+
 //--------- Form elements ---------//
 static guiTextLabel_t textLabel_time;
-static char textLabel_time_data[50];
-
 static guiButton_t button1;
 static guiButton_t button2;
-static guiWidgetHandler_t button_handlers[1];
 
-//----------- GUI Form  -----------//
-#define MAIN_FORM_ELEMENTS_COUNT 7
-guiPanel_t     guiMainForm;
-static void *guiMainFormElements[MAIN_FORM_ELEMENTS_COUNT];
 
 
 void guiMainForm_Initialize(void)
 {
     // Initialize form
     guiPanel_Initialize(&guiMainForm, 0);   // Root has no parent
+    guiCore_AllocateWidgetCollection((guiGenericContainer_t *)&guiMainForm, 10);
     guiMainForm.processEvent = guiMainForm_ProcessEvents;
-    guiMainForm.widgets.count = MAIN_FORM_ELEMENTS_COUNT;
-    guiMainForm.widgets.elements = guiMainFormElements;
-    guiMainForm.widgets.elements[0] = &textLabel_time;
-    guiMainForm.widgets.elements[1] = &button1;
-    guiMainForm.widgets.elements[2] = &button2;
-    guiMainForm.widgets.elements[3] = &guiPanel1;
-    guiMainForm.widgets.elements[4] = &guiPanel2;
-    guiMainForm.widgets.elements[5] = 0;
-    guiMainForm.widgets.elements[6] = 0;
-
     guiMainForm.isVisible = 1;
     guiMainForm.redrawRequired = 1;
     guiMainForm.redrawForced = 1;
     guiMainForm.x = 0;
     guiMainForm.y = 0;
-    guiMainForm.width = 300;
-    guiMainForm.height = 200;
-
+    guiMainForm.width = 320;
+    guiMainForm.height = 240;
 
     // Text label for time display
-    guiTextLabel_Initialize(&textLabel_time, (guiGenericWidget_t *)&guiMainForm);
+    guiTextLabel_Initialize(&textLabel_time, 0);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&textLabel_time, (guiGenericContainer_t *)&guiMainForm);
     textLabel_time.x = guiMainForm.width - 80;
     textLabel_time.y = guiMainForm.height - 22;
     textLabel_time.width = 60;
     textLabel_time.height = 16;
-    textLabel_time.text = textLabel_time_data;
+    textLabel_time.text = guiCore_calloc(20);
     textLabel_time.font = &font_6x8_mono;
     //textLabel_time.acceptFocusByTab = 1;
 
     // Setup button1
-    guiButton_Initialize(&button1,  (guiGenericWidget_t *)&guiMainForm);
+    guiButton_Initialize(&button1, 0);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&button1, (guiGenericContainer_t *)&guiMainForm);
     button1.x = 5;
     button1.y = guiMainForm.height - 22;
     button1.width = 50;
@@ -98,11 +86,12 @@ void guiMainForm_Initialize(void)
     button1.text = "Panel 1";
     button1.font = &font_h10;
     button1.tabIndex = 15;
-    button1.handlers.elements = button_handlers;
-    button1.handlers.count = 1;
+    guiCore_AllocateHandlers((guiGenericWidget_t *)&button1, 2);
+    guiCore_AddHandler((guiGenericWidget_t *)&button1, BUTTON_PRESSED_CHANGED, button_onPressed);
 
     // Setup button2
-    guiButton_Initialize(&button2,  (guiGenericWidget_t *)&guiMainForm);
+    guiButton_Initialize(&button2, 0);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&button2, (guiGenericContainer_t *)&guiMainForm);
     button2.x = 60;
     button2.y = guiMainForm.height - 22;
     button2.width = 50;
@@ -110,8 +99,8 @@ void guiMainForm_Initialize(void)
     button2.text = "Panel 2";
     button2.font = &font_h10;
     button2.tabIndex = 16;
-    button2.handlers.elements = button_handlers;
-    button2.handlers.count = 1;
+    button2.handlers.count = button1.handlers.count;            // Handlers are shared
+    button2.handlers.elements = button1.handlers.elements;
 
     // Toggle buttons
     button1.isToggle = 1;
@@ -121,13 +110,13 @@ void guiMainForm_Initialize(void)
 
     button1.isPressed = 1;
 
-    // Setup button handlers
-    button_handlers[0].eventType = BUTTON_PRESSED_CHANGED;
-    button_handlers[0].handler = button_onPressed;
+    // Initialize other
+    guiPanel1_Initialize();
+    guiPanel2_Initialize();
 
-
-    guiPanel1_Initialize((guiGenericWidget_t *)&guiMainForm);
-    guiPanel2_Initialize((guiGenericWidget_t *)&guiMainForm);
+    // Add other widgets
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&guiPanel1, (guiGenericContainer_t *)&guiMainForm);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&guiPanel2, (guiGenericContainer_t *)&guiMainForm);
 
 }
 
@@ -169,12 +158,12 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
             guiCore_SetFocused((guiGenericWidget_t *)&guiMainForm, 0);
             guiMainForm.keepTouch = 0;
             break;
-        case GUI_EVENT_ENCODER:
+/*        case GUI_EVENT_ENCODER:
             if ((int16_t)event.lparam < 0)
                 guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,-1);
             else if ((int16_t)event.lparam > 0)
                 guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,1);
-            break;
+            break; */
         case GUI_EVENT_KEY:
             if (event.spec == GUI_KEY_EVENT_DOWN)
             {

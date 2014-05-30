@@ -31,6 +31,8 @@
 void guiRadioButton_Initialize(guiRadioButton_t *button, guiGenericWidget_t *parent);
 uint8_t guiRadioButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event);
 
+void guiRadioButton_CheckExclusive(guiRadioButton_t *button);
+
 //uint8_t guiButton_SetPressed(guiButton_t *button, uint8_t newPressedState);
 //void guiButton_Click(guiButton_t *button);
 //uint8_t guiButton_ProcessKey(guiButton_t *button, uint8_t key, uint8_t enableClick);
