@@ -5,6 +5,13 @@
 #include "guiGraphPrimitives.h"
 #include "guiWidgets.h"
 
+#include "guiButton.h"
+#include "guiPanel.h"
+#include "guiTextLabel.h"
+#include "guiCheckBox.h"
+#include "guiRadioButton.h"
+
+
 // System color palette size
 #define COLOR_PALETTE_SIZE  8
 // System palette indexes

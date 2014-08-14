@@ -1,8 +1,29 @@
 #ifndef __GUI_BUTTON_H_
 #define __GUI_BUTTON_H_
 
-#include <stdint.h>
 #include "guiWidgets.h"
+#include "guiFonts.h"
+
+// Widget type ID - must be unique!
+#define WT_BUTTON       0x02
+
+
+typedef struct guiButton_t {
+    //----- Inherited from generic widget -----//
+    GENERIC_WIDGET_PATTERN
+    //------- Widget - specific fields --------//
+    char *text;
+    const tFont *font;
+    uint8_t textAlignment;
+    uint8_t redrawPressedState : 1;
+    uint8_t isPressed : 1;
+    uint8_t isToggle : 1;
+    uint8_t isPressOnly : 1;
+} guiButton_t;
+
+
+
+
 
 
 // Widget-specific events

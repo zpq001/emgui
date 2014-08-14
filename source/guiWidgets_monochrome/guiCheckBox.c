@@ -23,7 +23,7 @@
 //      except isChecked state.
 // Returns 1 if new state was applied. Otherwise returns 0.
 //-------------------------------------------------------//
-uint8_t guiCheckbox_SetChecked(guiCheckBox_t *checkBox, uint8_t newCheckedState)
+uint8_t guiCheckbox_SetChecked(guiCheckBox_t *checkBox, uint8_t newCheckedState, uint8_t callHandler)
 {
     guiEvent_t event;
     if (checkBox == 0) return 0;
@@ -43,7 +43,7 @@ uint8_t guiCheckbox_SetChecked(guiCheckBox_t *checkBox, uint8_t newCheckedState)
     // Checked state changed - call handler
     checkBox->redrawCheckedState = 1;
     checkBox->redrawRequired = 1;
-    if (checkBox->handlers.count != 0)
+    if (callHandler)
     {
         event.type = CHECKBOX_CHECKED_CHANGED;
         guiCore_CallEventHandler((guiGenericWidget_t *)checkBox, &event);
@@ -62,7 +62,7 @@ uint8_t guiCheckbox_ProcessKey(guiCheckBox_t *checkBox, uint8_t key)
 {
     if (key == CHECKBOX_KEY_SELECT)
     {
-        guiCheckbox_SetChecked(checkBox, !checkBox->isChecked);
+        guiCheckbox_SetChecked(checkBox, !checkBox->isChecked, 1);
     }
     else
     {
@@ -71,6 +71,25 @@ uint8_t guiCheckbox_ProcessKey(guiCheckBox_t *checkBox, uint8_t key)
     return GUI_EVENT_ACCEPTED;
 }
 
+
+
+
+
+//-------------------------------------------------------//
+// Default key event translator
+//
+//-------------------------------------------------------//
+uint8_t checkBox_DefaultKeyTranslator(guiGenericWidget_t *widget, guiEvent_t *event, void *translatedKey)
+{
+    guiCheckboxTranslatedKey_t *tkey = (guiCheckboxTranslatedKey_t *)translatedKey;
+    tkey->key = 0;
+    if (event->spec == GUI_KEY_EVENT_DOWN)
+    {
+        if (event->lparam == GUI_KEY_OK)
+            tkey->key = CHECKBOX_KEY_SELECT;
+    }
+    return 0;
+}
 
 
 //-------------------------------------------------------//
@@ -83,7 +102,7 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 {
     guiCheckBox_t *checkBox = (guiCheckBox_t *)widget;
     uint8_t processResult = GUI_EVENT_ACCEPTED;
-    uint8_t key;
+    guiCheckboxTranslatedKey_t tkey;
 #ifdef USE_TOUCH_SUPPORT
     widgetTouchState_t touch;
 #endif
@@ -119,17 +138,15 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             processResult = GUI_EVENT_DECLINE;
             if (CHECKBOX_ACCEPTS_KEY_EVENT(checkBox))
             {
-                if (event.spec == GUI_KEY_EVENT_DOWN)
+                if (checkBox->keyTranslator)
                 {
-                    if (event.lparam == GUI_KEY_OK)
-                        key = CHECKBOX_KEY_SELECT;
-                    else
-                        key = 0;
-                    if (key != 0)
-                        processResult = guiCheckbox_ProcessKey(checkBox,key);
+                    processResult = checkBox->keyTranslator(widget, &event, &tkey);
+                    if (tkey.key != 0)
+                        processResult |= guiCheckbox_ProcessKey(checkBox, tkey.key);
                 }
                 // Call KEY event handler
-                processResult |= guiCore_CallEventHandler(widget, &event);
+                if (processResult == GUI_EVENT_DECLINE)
+                    processResult = guiCore_CallEventHandler(widget, &event);
             }
             break;
 #ifdef USE_TOUCH_SUPPORT
@@ -182,7 +199,16 @@ uint8_t guiCheckBox_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 }
 
 
-
+//-------------------------------------------------------//
+// Set checkbox text and flags to redraw
+//
+//-------------------------------------------------------//
+void guiCheckBox_SetText(guiCheckBox_t *checkBox, char *text)
+{
+    checkBox->text = text;
+    checkBox->redrawRequired = 1;
+    checkBox->redrawForced = 1;
+}
 
 
 //-------------------------------------------------------//
@@ -199,6 +225,7 @@ void guiCheckBox_Initialize(guiCheckBox_t *checkBox, guiGenericWidget_t *parent)
     checkBox->isVisible = 1;
     checkBox->showFocus = 1;
     checkBox->processEvent = guiCheckBox_ProcessEvent;
+    checkBox->keyTranslator = checkBox_DefaultKeyTranslator;
     checkBox->textAlignment = ALIGN_LEFT;
 }
 

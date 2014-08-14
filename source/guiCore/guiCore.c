@@ -37,7 +37,7 @@ Through message queue:
 // Predefined constant events - saves stack a bit
 const guiEvent_t guiEvent_INIT = {GUI_EVENT_INIT, 0, 0, 0};
 const guiEvent_t guiEvent_DRAW = {GUI_EVENT_DRAW, 0, 0, 0};
-#ifdef CFG_USE_UPDATE
+#ifdef emGUI_USE_UPDATE
 const guiEvent_t guiEvent_UPDATE = {GUI_EVENT_UPDATE, 0, 0, 0};
 #endif
 const guiEvent_t guiEvent_HIDE = {GUI_EVENT_HIDE, 0, 0, 0};
@@ -481,7 +481,7 @@ void guiCore_RedrawAll(void)
                     nextWidget->redrawRequired = 1;
                 }
                 ///////////////////////////
-#ifdef USE_Z_ORDER_REDRAW
+#ifdef emGUI_USE_Z_ORDER_REDRAW
                 if ((widget->redrawForced == 0) &&(nextWidget->redrawRequired))
                 {
                     // Widget will be redrawn - make overlapping widgets with higher Z index redraw too
@@ -683,7 +683,7 @@ void guiCore_RedrawAll(void)
         }
 
         /////////////////////////
-#ifdef USE_Z_ORDER_REDRAW
+#ifdef emGUI_USE_Z_ORDER_REDRAW
         // Analyze parent's flag
         if (widget->redrawForced == 0)
         {
@@ -729,7 +729,7 @@ void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t touchState)
     event.spec = touchState;
     event.lparam = (uint16_t)x;
     event.hparam = (uint16_t)y;
-#ifdef ALWAYS_PASS_TOUCH_TO_FOCUSED
+#ifdef emGUI_ALWAYS_PASS_TOUCH_TO_FOCUSED
     guiCore_AddMessageToQueue(focusedWidget, &event);
 #else
     if ((focusedWidget != 0) && (focusedWidget->keepTouch))
@@ -851,7 +851,7 @@ void guiCore_BroadcastEvent(guiEvent_t event, uint8_t(*validator)(guiGenericWidg
     }
 }
 
-#ifdef CFG_USE_UPDATE
+#ifdef emGUI_USE_UPDATE
 //-------------------------------------------------------//
 //  Top function for GUI elements update
 //

@@ -1,4 +1,5 @@
 
+#include "guiConfig.h"
 #include "guiGraphHAL.h"
 
 

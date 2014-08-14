@@ -4,11 +4,6 @@
 #include <stdint.h>
 
 
-// Size definitions in points
-#define LCD_XSIZE 320
-#define LCD_YSIZE 240
-
-
 typedef uint32_t color_t;
 
 #define colorFromRgb(red, green, blue) ((uint32_t)red | ((uint32_t)green << 8) | ((uint32_t)blue << 16))

@@ -48,7 +48,6 @@ HEADERS  += mainwindow.h \
 	../../source/guiGraphics/guiFonts.h \
 	../../source/guiGraphics/guiGraphHAL.h \
 	../../source/guiGraphics/guiImages.h \
-	../../source/guiWidgets/guiWidgets.h \
 	../../source/guiWidgets/guiTextLabel.h \
 	../../source/guiWidgets/guiCheckBox.h \
 	../../source/guiCore/guiEvents.h \
@@ -59,7 +58,8 @@ HEADERS  += mainwindow.h \
     gui_top/guiPanel1.h \
     gui_top/guiPanel2.h \
     ../../source/guiWidgets/guiRadioButton.h \
-    gui_top/guiConfig.h
+    gui_top/guiConfig.h \
+    ../../source/guiCore/guiWidgets.h
 	
 
 
