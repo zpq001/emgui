@@ -21,6 +21,16 @@ typedef struct guiRadioButton_t {
 } guiRadioButton_t;
 
 
+// Widget-specific virtual keys
+enum guiRadioButtonVirtualKeys {
+    RADIOBUTTON_KEY_SELECT = 0x01
+};
+
+// Translated key event struct
+typedef struct {
+    uint8_t key;
+} guiRadioButtonTranslatedKey_t;
+
 
 // Widget-specific events
 #define RADIOBUTTON_CHECKED_CHANGED    (0xC0 + 0x00)
@@ -44,13 +54,8 @@ typedef struct guiRadioButton_t {
 
 void guiRadioButton_Initialize(guiRadioButton_t *button, guiGenericWidget_t *parent);
 uint8_t guiRadioButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event);
+void guiRadioButton_CheckExclusive(guiRadioButton_t *button, uint8_t callHandler);
 
-void guiRadioButton_CheckExclusive(guiRadioButton_t *button);
-
-//uint8_t guiButton_SetPressed(guiButton_t *button, uint8_t newPressedState);
-//void guiButton_Click(guiButton_t *button);
-//uint8_t guiButton_ProcessKey(guiButton_t *button, uint8_t key, uint8_t enableClick);
-//uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event);
 
 
 

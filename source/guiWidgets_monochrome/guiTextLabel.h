@@ -17,7 +17,6 @@ typedef struct guiTextLabel_t {
     const tFont *font;
     uint8_t textAlignment;
     uint8_t hasFrame : 1;
-    uint8_t redrawText : 1;
 } guiTextLabel_t;
 
 // Widget-specific state checks

@@ -114,7 +114,7 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
 
     //-----------------------------------------//
     // Draw background and text
-    if ((textLabel->redrawForced) || (textLabel->redrawText))
+    if (textLabel->redrawForced)
     {
         // Erase rectangle
         LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);

@@ -6,12 +6,11 @@
 
 #include <stdint.h>         // using integer types
 #include <string.h>         // using memset
-#include "guiEvents.h"
-#include "guiCore.h"
 #include "guiWidgets.h"
-#include "guiButton.h"
+#include "guiCore.h"
+#include "guiEvents.h"
 #include "guiGraphWidgets.h"
-
+#include "guiButton.h"
 
 
 
@@ -127,12 +126,18 @@ uint8_t guiButton_DefaultKeyTranslator(guiGenericWidget_t *widget, guiEvent_t *e
 }
 
 
+//-------------------------------------------------------//
+// Default event processing function
+//
+//-------------------------------------------------------//
 uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 {
     guiButton_t *button = (guiButton_t *)widget;
     uint8_t processResult = GUI_EVENT_ACCEPTED;
     guiButtonTranslatedKey_t tkey;
+#ifdef emGUI_USE_TOUCH_SUPPORT
     widgetTouchState_t touch;
+#endif
 
     switch (event.type)
     {
@@ -153,7 +158,9 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             break;
         case GUI_EVENT_UNFOCUS:
             guiCore_SetFocused((guiGenericWidget_t *)button,0);
+#ifdef emGUI_USE_TOUCH_SUPPORT
             button->keepTouch = 0;
+#endif
             if (button->isToggle == 0)
                 guiButton_SetPressed(button,0);
             break;
@@ -164,20 +171,6 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             guiCore_SetVisible((guiGenericWidget_t *)button, 0);
             break;
         case GUI_EVENT_KEY:
-      /*      processResult = GUI_EVENT_DECLINE;
-            if (BUTTON_ACCEPTS_KEY_EVENT(button))
-            {
-                if ((event.spec == GUI_KEY_EVENT_DOWN) && (event.lparam == GUI_KEY_OK))
-                    key = BUTTON_KEY_PRESS;
-                else if ((event.spec == GUI_KEY_EVENT_UP) && (event.lparam == GUI_KEY_OK))
-                    key = BUTTON_KEY_RELEASE;
-                else
-                    key = 0;
-                if (key != 0)
-                    guiButton_ProcessKey(button, key, 1);
-                // Call KEY event handler
-                processResult |= guiCore_CallEventHandler(widget, &event);
-            } */
             processResult = GUI_EVENT_DECLINE;
             if (BUTTON_ACCEPTS_KEY_EVENT(button))
             {
@@ -192,6 +185,7 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                     processResult = guiCore_CallEventHandler(widget, &event);
             }
             break;
+#ifdef emGUI_USE_TOUCH_SUPPORT
         case GUI_EVENT_TOUCH:
             if (BUTTON_ACCEPTS_TOUCH_EVENT(button))
             {
@@ -244,6 +238,7 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                 processResult = GUI_EVENT_DECLINE;      // Cannot process touch event
             }
             break;
+#endif
         default:
             // Widget cannot process incoming event. Try to find a handler.
             processResult = guiCore_CallEventHandler(widget, &event);
@@ -254,49 +249,6 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 }
 
 
-/*
-                if ((touch.state == TOUCH_PRESS) || (touch.state == TOUCH_MOVE))
-                {
-                    if (button->keepTouch)
-                    {
-                        // Track moving in/out of button borders
-                        if ((touch.isInsideWidget == 0) && (button->isPressed))
-                            guiButton_SetPressed(button, 0);      // Moved out of widget borders
-                        else if ((touch.isInsideWidget) && (button->isPressed == 0))
-                            guiButton_SetPressed(button, 1);       // Moved into widget borders
-                    }
-                    else
-                    {
-                        // Check if widget should react
-                        if (touch.isInsideWidget)
-                        {
-                            guiCore_SetFocused((guiGenericWidget_t *)button,1);
-                            guiButton_SetPressed(button, 1);
-                            button->keepTouch = 1;
-                        }
-                        else
-                        {
-                            processResult = GUI_EVENT_DECLINE;
-                            break;
-                        }
-                    }
-                }
-                else if (touch.state == TOUCH_RELEASE)
-                {
-                    if (button->keepTouch)
-                    {
-                        guiButton_SetPressed(button, 0);
-                        if (touch.isInsideWidget)
-                            guiButton_Click(button);
-                        button->keepTouch = 0;
-                    }
-                    else
-                    {
-                        // do smth
-                    }
-                }
-
-                */
 
 
 //-------------------------------------------------------//
@@ -310,7 +262,7 @@ void guiButton_Initialize(guiButton_t *button, guiGenericWidget_t *parent)
     button->parent = parent;
     button->acceptFocusByTab = 1;
     button->acceptTouch = 1;
-    button->isVisible = 1;
+    button->isVisible = 1;  
     button->showFocus = 1;
     button->processEvent = guiButton_ProcessEvent;
     button->keyTranslator = &guiButton_DefaultKeyTranslator;

@@ -64,17 +64,17 @@ typedef struct {
                                 /* Bit state flags: */                  \
                                 uint8_t isFocused : 1;                  \
                                 uint8_t isVisible : 1;                  \
-                                uint8_t updateRequired : 1;     /* If set, widget will be sent UPDATE event.
-                                                                   Update mechanism can be used for widget's
-                                                                   internal state processing - cursor blink, etc    */  \
-                                uint8_t redrawRequired : 1;     /* If this flag is set, widget will be sent DRAW event.
-                                                                   Widget should set this flag itself. */               \
-                                uint8_t redrawForced : 1;       /* This flag is set by GUI core when widget must be redrawn
-                                                                   redrawRequired is set along with redrawForced.   */  \
-                                uint8_t redrawFocus : 1;        /* Flag is set when widget focus must be redrawn.
-                                                                   redrawRequired is set along with redrawFocus.    */  \
-                                uint8_t showFocus : 1;          /* If set, widget will display focus                */  \
-                                uint8_t keepTouch : 1;          /* Flags is set if widget requires all touch events */  \
+                                uint8_t updateRequired : 1;     /* If set, widget will be sent UPDATE event.        */          \
+                                                                /* Update mechanism can be used for widget's        */          \
+                                                                /* internal state processing - cursor blink, etc    */          \
+                                uint8_t redrawRequired : 1;     /* If this flag is set, widget will be sent DRAW event */       \
+                                                                /* Widget should set this flag itself. */                       \
+                                uint8_t redrawForced : 1;       /* This flag is set by GUI core when widget must be redrawn */  \
+                                                                /* redrawRequired is set along with redrawForced.   */          \
+                                uint8_t redrawFocus : 1;        /* Flag is set when widget focus must be redrawn.   */          \
+                                                                /* redrawRequired is set along with redrawFocus.    */          \
+                                uint8_t showFocus : 1;          /* If set, widget will display focus                */          \
+                                uint8_t keepTouch : 1;          /* Flags is set if widget requires all touch events */          \
                                 /* Properties */                        \
                                 uint8_t tag;                            \
                                 uint8_t tabIndex;                       \
@@ -91,8 +91,8 @@ typedef struct {
 
 
 // Basic container type - extends guiGenericWidget_t
-#define GENERIC_CONTAINER_PATTERN   GENERIC_WIDGET_PATTERN          \
-                                    guiWidgetCollection_t widgets;  \
+#define GENERIC_CONTAINER_PATTERN   GENERIC_WIDGET_PATTERN              \
+                                    guiWidgetCollection_t widgets;      \
                                     traverseRectangle_t trect;
 
 

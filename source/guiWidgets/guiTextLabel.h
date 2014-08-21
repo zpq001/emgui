@@ -4,6 +4,7 @@
 #include "guiWidgets.h"
 #include "guiFonts.h"
 
+
 // Widget type ID - must be unique!
 #define WT_TEXTLABEL    0x05
 
@@ -16,10 +17,7 @@ typedef struct guiTextLabel_t {
     const tFont *font;
     uint8_t textAlignment;
     uint8_t hasFrame : 1;
-    uint8_t redrawText : 1;
 } guiTextLabel_t;
-
-
 
 // Widget-specific state checks
 #define TEXTLABEL_ACCEPTS_FOCUS_EVENT(label)  ( (label->isVisible) && (1) )    // TODO - add isEnabled
@@ -27,7 +25,7 @@ typedef struct guiTextLabel_t {
 
 void guiTextLabel_Initialize(guiTextLabel_t *textLabel, guiGenericWidget_t *parent);
 uint8_t guiTextLabel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event);
-
+void guiTextLabel_SetText(guiTextLabel_t *textLabel, char *text);
 
 
 #endif

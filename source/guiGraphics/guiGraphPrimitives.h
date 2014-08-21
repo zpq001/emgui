@@ -32,7 +32,7 @@ typedef struct {
 #define ALIGN_TOP_LEFT      (ALIGN_TOP | ALIGN_LEFT)
 #define ALIGN_BOTTOM_LEFT   (ALIGN_BOTTOM | ALIGN_LEFT)
 #define ALIGN_TOP_RIGHT     (ALIGN_TOP | ALIGN_RIGHT)
-#define ALIGN_BOTTOM_RIGHT   (ALIGN_BOTTOM | ALIGN_RIGHT)
+#define ALIGN_BOTTOM_RIGHT  (ALIGN_BOTTOM | ALIGN_RIGHT)
 
 
 // Dashed and dotted line style settings

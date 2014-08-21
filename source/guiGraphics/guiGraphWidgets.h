@@ -87,13 +87,16 @@ extern int16_t wy;
 void guiGraph_SetBaseXY(int16_t x, int16_t y);
 void guiGraph_OffsetBaseXY(int16_t dx, int16_t dy);
 
+void guiGraph_Draw3DFrame(rect_t *rect, uint8_t frameState);
+
 void guiGraph_DrawPanel(guiPanel_t *panel);
 void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel);
+void guiGraph_DrawButton(guiButton_t *button);
 void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox);
 void guiGraph_DrawRadioButton(guiRadioButton_t *button);
 
 
-void guiGraph_DrawButton(guiButton_t *button);
+
 
 
 

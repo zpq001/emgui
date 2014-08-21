@@ -130,6 +130,13 @@ typedef struct {
 #define emGUI_ERROR_OUT_OF_PREALLOCATED_MEMORY  0x02
 #define emGUI_ERROR_NULL_REF                    0x03
 
+
+//-----------------------------------//
+// Handler call specifiers
+#define CALL_HANDLER    1
+#define NO_HANDLER      0
+
+
 // Modifying these pointers should be done with care!
 extern guiGenericWidget_t *rootWidget;         // Root widget must be present
 extern guiGenericWidget_t *focusedWidget;      // Focused widget gets events from keys/encoder/touch
