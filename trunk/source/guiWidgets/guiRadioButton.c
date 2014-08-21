@@ -24,7 +24,7 @@
 //      except isChecked state.
 // Returns 1 if new state was applied. Otherwise returns 0.
 //-------------------------------------------------------//
-uint8_t guiRadioButton_SetChecked(guiRadioButton_t *button, uint8_t newCheckedState)
+uint8_t guiRadioButton_SetChecked(guiRadioButton_t *button, uint8_t newCheckedState, uint8_t callHandler)
 {
     guiEvent_t event;
     if (button == 0) return 0;
@@ -44,7 +44,7 @@ uint8_t guiRadioButton_SetChecked(guiRadioButton_t *button, uint8_t newCheckedSt
     // Checked state changed - call handler
     button->redrawCheckedState = 1;
     button->redrawRequired = 1;
-    if (button->handlers.count != 0)
+    if (callHandler)
     {
         event.type = RADIOBUTTON_CHECKED_CHANGED;
         guiCore_CallEventHandler((guiGenericWidget_t *)button, &event);
@@ -60,7 +60,7 @@ uint8_t guiRadioButton_SetChecked(guiRadioButton_t *button, uint8_t newCheckedSt
 // This function does not perform any widget state checks
 //      except isChecked state.
 //-------------------------------------------------------//
-void guiRadioButton_CheckExclusive(guiRadioButton_t *button)
+void guiRadioButton_CheckExclusive(guiRadioButton_t *button, uint8_t callHandler)
 {
     uint8_t i;
     guiGenericContainer_t *parent;
@@ -74,10 +74,10 @@ void guiRadioButton_CheckExclusive(guiRadioButton_t *button)
         {
             if ((((guiRadioButton_t *)w)->radioIndex == button->radioIndex) &&
                     (((guiRadioButton_t *)w)->isChecked))
-                guiRadioButton_SetChecked((guiRadioButton_t *)w, 0);
+                guiRadioButton_SetChecked((guiRadioButton_t *)w, 0, callHandler);
         }
     }
-    guiRadioButton_SetChecked(button, 1);
+    guiRadioButton_SetChecked(button, 1, callHandler);
 }
 
 
@@ -91,7 +91,7 @@ uint8_t guiRadioButton_ProcessKey(guiRadioButton_t *button, uint8_t key)
 {
     if (key == RADIOBUTTON_KEY_SELECT)
     {
-        guiRadioButton_CheckExclusive(button);
+        guiRadioButton_CheckExclusive(button, 1);
     }
     else
     {
@@ -101,7 +101,21 @@ uint8_t guiRadioButton_ProcessKey(guiRadioButton_t *button, uint8_t key)
 }
 
 
-
+//-------------------------------------------------------//
+// Default key event translator
+//
+//-------------------------------------------------------//
+uint8_t guiRadioButton_DefaultKeyTranslator(guiGenericWidget_t *widget, guiEvent_t *event, void *translatedKey)
+{
+    guiRadioButtonTranslatedKey_t *tkey = (guiRadioButtonTranslatedKey_t *)translatedKey;
+    tkey->key = 0;
+    if (event->spec == GUI_KEY_EVENT_DOWN)
+    {
+        if (event->lparam == GUI_KEY_OK)
+            tkey->key = RADIOBUTTON_KEY_SELECT;
+    }
+    return 0;
+}
 
 
 
@@ -109,8 +123,10 @@ uint8_t guiRadioButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event
 {
     guiRadioButton_t *button = (guiRadioButton_t *)widget;
     uint8_t processResult = GUI_EVENT_ACCEPTED;
-    uint8_t key;
+    guiRadioButtonTranslatedKey_t tkey;
+#ifdef emGUI_USE_TOUCH_SUPPORT
     widgetTouchState_t touch;
+#endif
 
     switch (event.type)
     {
@@ -143,19 +159,18 @@ uint8_t guiRadioButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event
             processResult = GUI_EVENT_DECLINE;
             if (RADIOBUTTON_ACCEPTS_KEY_EVENT(button))
             {
-                if (event.spec == GUI_KEY_EVENT_DOWN)
+                if (button->keyTranslator)
                 {
-                    if (event.lparam == GUI_KEY_OK)
-                        key = RADIOBUTTON_KEY_SELECT;
-                    else
-                        key = 0;
-                    if (key != 0)
-                        processResult = guiRadioButton_ProcessKey(button, key);
+                    processResult = button->keyTranslator(widget, &event, &tkey);
+                    if (tkey.key != 0)
+                        processResult |= guiRadioButton_ProcessKey(button, tkey.key);
                 }
                 // Call KEY event handler
-                processResult |= guiCore_CallEventHandler(widget, &event);
+                if (processResult == GUI_EVENT_DECLINE)
+                    processResult = guiCore_CallEventHandler(widget, &event);
             }
             break;
+#ifdef emGUI_USE_TOUCH_SUPPORT
         case GUI_EVENT_TOUCH:
             if (RADIOBUTTON_ACCEPTS_TOUCH_EVENT(button))
             {
@@ -198,6 +213,7 @@ uint8_t guiRadioButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event
                 processResult = GUI_EVENT_DECLINE;      // Cannot process touch event
             }
             break;
+#endif
         default:
             // Widget cannot process incoming event. Try to find a handler.
             processResult = guiCore_CallEventHandler(widget, &event);
@@ -215,7 +231,7 @@ uint8_t guiRadioButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event
 //-------------------------------------------------------//
 void guiRadioButton_Initialize(guiRadioButton_t *button, guiGenericWidget_t *parent)
 {
-    memset(button, 0, sizeof(*button));
+    memset(button, 0, sizeof(guiRadioButton_t));
     button->type = WT_RADIOBUTTON;
     button->parent = parent;
     button->acceptFocusByTab = 1;
@@ -223,6 +239,7 @@ void guiRadioButton_Initialize(guiRadioButton_t *button, guiGenericWidget_t *par
     button->isVisible = 1;
     button->showFocus = 1;
     button->processEvent = guiRadioButton_ProcessEvent;
+    button->keyTranslator = guiRadioButton_DefaultKeyTranslator;
     button->textAlignment = ALIGN_LEFT;
 }
 

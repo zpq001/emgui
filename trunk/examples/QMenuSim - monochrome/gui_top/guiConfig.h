@@ -38,6 +38,9 @@ enum emGUI_Timers { TMR_TIME_UPDATE };
 
 
 //---------- Graphic library configuration ----------//
+// Global color scheme definition
+//#define emGUI_COLORED
+#define emGUI_MONOCHROME
 
 // Screen size definitions in points for Nokia 1202 LCD
 #define LCD_XSIZE 128

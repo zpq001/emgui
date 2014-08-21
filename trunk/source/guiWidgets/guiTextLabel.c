@@ -65,8 +65,16 @@ void guiTextLabel_Initialize(guiTextLabel_t *textLabel, guiGenericWidget_t *pare
     textLabel->type = WT_TEXTLABEL;
     textLabel->parent = parent;
     textLabel->isVisible = 1;
-    textLabel->showFocus = 1;
+    textLabel->showFocus = 0;
     textLabel->processEvent = guiTextLabel_ProcessEvent;
     textLabel->textAlignment = ALIGN_CENTER;
+}
+
+
+void guiTextLabel_SetText(guiTextLabel_t *textLabel, char *text)
+{
+    textLabel->text = text;
+    textLabel->redrawRequired = 1;
+    textLabel->redrawForced = 1;
 }
 

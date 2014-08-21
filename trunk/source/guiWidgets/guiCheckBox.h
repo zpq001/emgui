@@ -2,6 +2,7 @@
 #define __GUI_CHECK_BOX_H_
 
 #include "guiWidgets.h"
+#include "guiFonts.h"
 
 
 // Widget type ID - must be unique!
