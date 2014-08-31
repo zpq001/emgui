@@ -33,9 +33,11 @@ void LCD_SetFont(const tFont *newFont);
 
 void LCD_DrawRect(uint8_t x_pos, uint8_t y_pos, uint8_t width, uint8_t height, uint8_t pixelValue);
 uint8_t LCD_GetFontItem(const tFont *font, uint8_t code, uint8_t *width, uint16_t *offset);
+uint8_t LCD_GetNextFontChar(const tFont *font, uint8_t code, int8_t scanDir);
 void LCD_PrintString(char *str, uint8_t x, uint8_t y, uint8_t mode);
 void LCD_PrintStringAligned(char *str, rect_t *rect, uint8_t alignment, uint8_t mode);
 void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t mode);
-
+void LCD_DrawCircle(int16_t x0, int16_t y0, int16_t radius, uint8_t mode);
+void LCD_DrawFilledCircle(int16_t x0, int16_t y0, int16_t radius, uint8_t mode);
 
 #endif
