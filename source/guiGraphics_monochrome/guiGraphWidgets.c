@@ -156,6 +156,80 @@ void guiGraph_DrawTextLabel(guiTextLabel_t *textLabel)
 }
 
 
+
+
+//-------------------------------------------------------//
+// Draw a selectTextBox
+//
+//
+//-------------------------------------------------------//
+void guiGraph_DrawSelectTextBox(guiSelectTextBox_t *selectTextBox)
+{
+    rect_t rect;
+
+    //-----------------------------------------//
+    // Draw background and text
+    if (selectTextBox->redrawForced)
+    {
+        // Erase rectangle
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        LCD_FillRect(wx,wy,selectTextBox->width,selectTextBox->height,FILL_WITH_WHITE);
+
+        // Draw string
+        LCD_SetPixelOutputMode(PIXEL_MODE_OR);
+        LCD_SetFont(selectTextBox->font);
+        rect.x1 = wx + 0;
+        rect.y1 = wy + 0;
+        rect.x2 = wx + selectTextBox->width - 1;
+        rect.y2 = wy + selectTextBox->height - 1;
+        if (selectTextBox->selectedIndex < selectTextBox->stringCount)
+        {
+            if (selectTextBox->stringList[selectTextBox->selectedIndex])
+            {
+                LCD_PrintStringAligned(selectTextBox->stringList[selectTextBox->selectedIndex], &rect, ALIGN_CENTER, IMAGE_MODE_NORMAL);
+            }
+
+            // Draw active state
+            if (selectTextBox->isActive)
+            {
+                if (selectTextBox->selectedIndex > 0)
+                    LCD_DrawImage(selector_tri, wx, wy, 6, 12, IMAGE_MODE_NORMAL);
+                if (selectTextBox->selectedIndex < selectTextBox->stringCount - 1)
+                    LCD_DrawImage(selector_tri_xrev, wx + selectTextBox->width - 6, wy, 6, 12, IMAGE_MODE_NORMAL);
+            }
+        }
+        else
+        {
+            LCD_PrintStringAligned("?", &rect, ALIGN_CENTER, IMAGE_MODE_NORMAL);
+        }
+
+    }
+
+
+    //-----------------------------------------//
+    // Draw focus
+    if (((selectTextBox->redrawForced) || (selectTextBox->redrawFocus)) &&
+            (selectTextBox->showFocus) && (selectTextBox->isActive == 0))
+    {
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        if (selectTextBox->isFocused)
+        {
+            LCD_SetLineStyle(LINE_STYLE_DOTTED);
+            LCD_DrawRect(wx,wy,selectTextBox->width,selectTextBox->height,1);
+        }
+        else
+        {
+            LCD_SetLineStyle(LINE_STYLE_SOLID);
+            if (selectTextBox->hasFrame)
+                LCD_DrawRect(wx,wy,selectTextBox->width,selectTextBox->height,1);
+            else
+                LCD_DrawRect(wx,wy,selectTextBox->width,selectTextBox->height,0);
+        }
+    }
+}
+
+
+
 //-------------------------------------------------------//
 // Draw checkbox
 //
@@ -226,6 +300,81 @@ void guiGraph_DrawCheckBox(guiCheckBox_t * checkBox)
         img = (checkBox->isChecked) ? CHECKBOX_IMG_CHECKED :
                                       CHECKBOX_IMG_EMPTY;
         LCD_DrawImage(img,wx+2,y_aligned,CHECKBOX_GRAPH_XSIZE, CHECKBOX_GRAPH_YSIZE,IMAGE_MODE_NORMAL);
+    }
+
+}
+
+//-------------------------------------------------------//
+// Draw radioButton
+//
+//
+//-------------------------------------------------------//
+void guiGraph_DrawRadioButton(guiRadioButton_t *button)
+{
+    int8_t y_aligned;
+    int8_t x_aligned;
+    rect_t rect1;
+
+    rect1.x1 = wx;
+    rect1.x2 = wx + button->width - 1;
+    rect1.y1 = wy;
+    rect1.y2 = wy + button->height - 1;
+
+
+    y_aligned = wy + button->height / 2;
+    x_aligned = wx + RADIOBUTTON_RADIUS + 2;
+
+
+    if (button->redrawForced)
+    {
+        // Erase rectangle
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        LCD_FillRect(wx+1,wy+1,button->width-2,button->height-2,FILL_WITH_WHITE);
+
+
+        // Draw string
+        if (button->text)
+        {
+            LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+            LCD_SetFont(button->font);
+            rect1.x1 = wx + 2 + RADIOBUTTON_RADIUS*2 + RADIOBUTTON_TEXT_MARGIN;
+            rect1.y1 = wy + 1;
+            rect1.x2 = wx + button->width - 2;
+            rect1.y2 = wy + button->height - 2;
+            LCD_PrintStringAligned(button->text, &rect1, button->textAlignment, IMAGE_MODE_NORMAL);
+        }
+    }
+
+    //-----------------------------------------//
+    // Draw radiobutton circles
+    if ((button->redrawForced) || (button->redrawCheckedState))
+    {
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        LCD_DrawFilledCircle(x_aligned,y_aligned,RADIOBUTTON_RADIUS, 0);
+        LCD_DrawCircle(x_aligned,y_aligned,RADIOBUTTON_RADIUS, 1);
+        if (button->isChecked)
+        {
+            LCD_DrawFilledCircle(x_aligned,y_aligned,RADIOBUTTON_CHECK_RADIUS, 1);
+        }
+    }
+
+
+
+    //-----------------------------------------//
+    // Draw focus / frame
+    if ((button->redrawForced) || (button->redrawFocus))
+    {
+        LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+        if (button->isFocused)
+        {
+          LCD_SetLineStyle(LINE_STYLE_DOTTED);
+          LCD_DrawRect(wx,wy,button->width,button->height,1);
+        }
+        else
+        {
+          LCD_SetLineStyle(LINE_STYLE_SOLID);
+          LCD_DrawRect(wx,wy,button->width,button->height,0);
+        }
     }
 
 }
@@ -319,8 +468,85 @@ uint8_t guiGraph_GetStringListVisibleItemCount(guiStringList_t * list)
 {
     uint8_t count;
     count = (list->height - STRINGLIST_V_FRAME_MARGIN * 1) / (list->font->height + STRINGLIST_INTERVAL);
+    if (count > list->stringCount)
+        count = list->stringCount;
     return count;
 }
+
+
+
+//-------------------------------------------------------//
+// Draw textSpinBox
+//
+//
+//-------------------------------------------------------//
+void guiGraph_DrawTextSpinBox(guiTextSpinBox_t * textSpinBox)
+{
+    uint8_t frameStyle;
+    uint8_t framePixelValue;
+    uint8_t charWidth;
+    uint16_t charOffset;
+    int8_t i;
+    int16_t x,y, y_underline;
+    char c;
+
+    LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+
+    //-----------------------------------------//
+    // Draw background
+    if ((textSpinBox->redrawForced) || (textSpinBox->redrawText) || (textSpinBox->redrawCharSelection))
+    {
+        // Erase rectangle
+        LCD_FillRect(wx+1,wy+1,textSpinBox->width-2,textSpinBox->height-2,FILL_WITH_WHITE);
+    }
+
+
+    //-----------------------------------------//
+    // Draw text value
+    if ((textSpinBox->redrawForced) || (textSpinBox->redrawText) || (textSpinBox->redrawCharSelection))
+    {
+        x = wx + textSpinBox->textLeftOffset;
+        y = wy + textSpinBox->textTopOffset;
+        i = 0;
+
+        while(i < textSpinBox->textLength)
+        {
+            c = textSpinBox->text[i];
+            if (LCD_GetFontItem(textSpinBox->font, c, &charWidth, &charOffset))
+            {
+                LCD_DrawImage(&textSpinBox->font->data[charOffset], x, y, charWidth, textSpinBox->font->height, IMAGE_MODE_NORMAL);
+                // Draw underline mark
+                if ((i == textSpinBox->activeChar) && (textSpinBox->isActive))
+                {
+                    LCD_SetLineStyle(LINE_STYLE_SOLID);
+                    for (y_underline = y + textSpinBox->font->height + TEXTSPINBOX_UNDERLINE_MARGIN;
+                         y_underline < y + textSpinBox->font->height + TEXTSPINBOX_UNDERLINE_MARGIN + TEXTSPINBOX_UNDERLINE_WIDTH;
+                         y_underline++)
+                        LCD_DrawHorLine(x,y_underline,charWidth,1);
+                }
+                x += charWidth + textSpinBox->font->spacing;
+            }
+            i++;
+        }
+    }
+
+    //-----------------------------------------//
+    // Draw focus / frame
+    if ((textSpinBox->redrawForced) || (textSpinBox->redrawFocus))
+    {
+        if ((textSpinBox->hasFrame) || (textSpinBox->showFocus))
+        {
+            LCD_SetPixelOutputMode(PIXEL_MODE_REWRITE);
+            frameStyle = ((textSpinBox->showFocus) && (textSpinBox->isFocused)) ? LINE_STYLE_DOTTED : LINE_STYLE_SOLID;
+            framePixelValue = ((textSpinBox->showFocus) && (textSpinBox->isFocused)) ? 1 : 0;
+            framePixelValue |= (textSpinBox->hasFrame) ? 1 : 0;
+            LCD_SetLineStyle(frameStyle);
+            if (!((textSpinBox->redrawForced) && (framePixelValue == 0)))
+                LCD_DrawRect(wx,wy,textSpinBox->width,textSpinBox->height,framePixelValue);
+        }
+    }
+}
+
 
 
 //-------------------------------------------------------//
@@ -365,7 +591,11 @@ void guiGraph_DrawStringList(guiStringList_t * list)
 
         while (itemsToDisplay--)
         {
-            LCD_PrintStringAligned(list->strings[index], &rect, list->textAlignment, IMAGE_MODE_NORMAL);
+            rect.x1 += STRINGLIST_H_TEXT_MARGIN;
+            if (list->strings[index])
+                LCD_PrintStringAligned(list->strings[index], &rect, list->textAlignment, IMAGE_MODE_NORMAL);
+            rect.x1 -= STRINGLIST_H_TEXT_MARGIN;
+
             if (index == list->selectedIndex)
             {
                 // Draw selection
