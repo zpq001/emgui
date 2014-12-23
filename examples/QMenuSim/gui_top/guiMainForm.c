@@ -17,6 +17,8 @@
 #include "guiGraphWidgets.h"
 
 #include "guiCore.h"
+#include "guiCoreTimers.h"
+#include "guiCoreMemory.h"
 #include "guiEvents.h"
 #include "guiWidgets.h"
 #include "guiTextLabel.h"
@@ -127,9 +129,9 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
     switch(event.type)
     {
           case GUI_EVENT_INIT:
-            guiCore_TimerInit(TMR_TIME_UPDATE, 1, 0, (guiGenericWidget_t *)&guiMainForm, 0);
-            guiCore_TimerStart(TMR_TIME_UPDATE, 1);
-            guiCore_SetFocused((guiGenericWidget_t *)&guiMainForm, 1);
+            guiCore_InitTimer(TMR_TIME_UPDATE, 1, 0, (guiGenericWidget_t *)&guiMainForm);
+            guiCore_StartTimer(TMR_TIME_UPDATE, 1);
+            guiCore_AcceptFocusedState((guiGenericWidget_t *)&guiMainForm, 1);
             break;
           case GUI_EVENT_TIMER:
             sprintf(textLabel_time.text, "%2d:%02d:%02d", timeHours, timeMinutes, timeSeconds);
@@ -151,11 +153,11 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
             guiMainForm.redrawRequired = 0;
             break;
         case GUI_EVENT_FOCUS:
-            guiCore_SetFocused((guiGenericWidget_t *)&guiMainForm, 1);
+            guiCore_AcceptFocusedState((guiGenericWidget_t *)&guiMainForm, 1);
             guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,1);
             break;
         case GUI_EVENT_UNFOCUS:
-            guiCore_SetFocused((guiGenericWidget_t *)&guiMainForm, 0);
+            guiCore_AcceptFocusedState((guiGenericWidget_t *)&guiMainForm, 0);
             guiMainForm.keepTouch = 0;
             break;
 /*        case GUI_EVENT_ENCODER:
@@ -167,18 +169,19 @@ static uint8_t guiMainForm_ProcessEvents(struct guiGenericWidget_t *widget, guiE
         case GUI_EVENT_KEY:
             if (event.spec == GUI_KEY_EVENT_DOWN)
             {
-                if (event.lparam == GUI_KEY_LEFT)
+                if (event.payload.params.lparam == GUI_KEY_LEFT)
                 {
                     guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,-1);
                 }
-                else if (event.lparam == GUI_KEY_RIGHT)
+                else if (event.payload.params.lparam == GUI_KEY_RIGHT)
                 {
                     guiCore_RequestFocusNextWidget((guiGenericContainer_t *)&guiMainForm,1);
                 }
-                else if (event.lparam == GUI_KEY_ESC)
+                else if (event.payload.params.lparam == GUI_KEY_ESC)
                 {
                     // Keep focus on first button
                     guiCore_RequestFocusChange((guiGenericWidget_t *)&guiMainForm);
+                    //guiCore_SetFocusOn((guiGenericWidget_t *)&guiMainForm);
                 }
             }
             break;
@@ -205,6 +208,7 @@ static uint8_t button_onPressed(void *sender, guiEvent_t *event)
             {
                 guiCore_SetVisibleByTag(&guiMainForm.widgets,20,30,ITEMS_IN_RANGE_ARE_INVISIBLE);
                 guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel1, &guiEvent_SHOW);
+                //guiCore_SetVisibleExclusively((guiGenericWidget_t *)&guiPanel1);
                 //guiCore_RequestFocusChange((guiGenericWidget_t *)&guiPanel1);
             }
         }
@@ -215,6 +219,7 @@ static uint8_t button_onPressed(void *sender, guiEvent_t *event)
             {
                 guiCore_SetVisibleByTag(&guiMainForm.widgets,20,30,ITEMS_IN_RANGE_ARE_INVISIBLE);
                 guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiPanel2, &guiEvent_SHOW);
+                //guiCore_SetVisibleExclusively((guiGenericWidget_t *)&guiPanel2);
                 //guiCore_RequestFocusChange((guiGenericWidget_t *)&guiPanel2);
             }
         }
@@ -276,7 +281,7 @@ static uint8_t textLabel_onButtonEvent(void *sender, guiEvent_t event)
         }
         else if (textLabel == (guiGenericWidget_t *)&textLabel2)
         {
-            //guiCore_SetVisibleByTag(&guiMainForm.widgets, 10,20,ITEMS_IN_RANGE_ARE_INVISIBLE);
+            //guiCore_AcceptVisibleStateByTag(&guiMainForm.widgets, 10,20,ITEMS_IN_RANGE_ARE_INVISIBLE);
             //guiCore_AddMessageToQueue((guiGenericWidget_t *)&guiSubForm1,guiEvent_SHOW);
             //guiCore_RequestFocusChange((guiGenericWidget_t *)&guiSubForm1);
         }

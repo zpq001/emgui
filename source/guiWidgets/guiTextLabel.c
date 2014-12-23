@@ -27,29 +27,29 @@ uint8_t guiTextLabel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
         case GUI_EVENT_DRAW:
             guiGraph_DrawTextLabel(textLabel);
             // Call handler
-            guiCore_CallEventHandler(widget, &event);
+            guiCore_CallHandler(widget, WIDGET_ON_DRAW_EVENT, &event);
             // Reset flags
             textLabel->redrawFocus = 0;
             textLabel->redrawRequired = 0;
             break;
         case GUI_EVENT_FOCUS:
             if (TEXTLABEL_ACCEPTS_FOCUS_EVENT(textLabel))
-                guiCore_SetFocused((guiGenericWidget_t *)textLabel, 1);
+                guiCore_AcceptFocusedState((guiGenericWidget_t *)textLabel, 1);
             else
                 processResult = GUI_EVENT_DECLINE;      // Cannot accept focus
             break;
         case GUI_EVENT_UNFOCUS:
-            guiCore_SetFocused((guiGenericWidget_t *)textLabel, 0);
+            guiCore_AcceptFocusedState((guiGenericWidget_t *)textLabel, 0);
             break;
         case GUI_EVENT_SHOW:
-            guiCore_SetVisible((guiGenericWidget_t *)textLabel, 1);
+            guiCore_AcceptVisibleState((guiGenericWidget_t *)textLabel, 1);
             break;
         case GUI_EVENT_HIDE:
-            guiCore_SetVisible((guiGenericWidget_t *)textLabel, 0);
+            guiCore_AcceptVisibleState((guiGenericWidget_t *)textLabel, 0);
             break;
         default:
             // Widget cannot process incoming event. Try to find a handler.
-            processResult = guiCore_CallEventHandler(widget, &event);
+            processResult = guiCore_CallHandler(widget, WIDGET_ON_UNKNOWN_EVENT, &event);
     }
     return processResult;
 }

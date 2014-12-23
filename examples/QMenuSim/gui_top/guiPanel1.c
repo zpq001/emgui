@@ -58,7 +58,7 @@ void guiPanel1_Initialize(void)
     guiPanel1.frame = FRAME3D_SUNKEN;
     guiPanel1.tag = 20;
     guiCore_AllocateHandlers(&guiPanel1, 1);
-    guiCore_AddHandler(&guiPanel1, GUI_EVENT_DRAW, panel1_onDraw);
+    guiCore_AddHandler(&guiPanel1, WIDGET_ON_DRAW_EVENT, panel1_onDraw);
 
     // Setup button1
     guiButton_Initialize(&button1,  (guiGenericWidget_t *)&guiPanel1);

@@ -8,6 +8,7 @@
 #ifndef __GUI_CONFIG_H_
 #define __GUI_CONFIG_H_
 
+#include <stdint.h>
 
 // Setup core queue size
 #define emGUI_CORE_QUEUE_SIZE 20
@@ -17,12 +18,19 @@
 #define emGUI_BYTE_ALIGNMENT        4           // bytes
 #define emGUI_POINTER_SIZE_TYPE     uint32_t
 
+//-----------------------------------//
+// Timers
+
 // Enable this macro if your design requires timer API
 #define emGUI_USE_TIMERS
-// Setup number of timers used
+// Setup number of avaliable timers in design
 #define emGUI_TIMERS_COUNT          1
+// Define timer's counter type
+#define tmrType_t   uint16_t
 // Enumerate your timers to allow access by name, not only index
 enum emGUI_Timers { TMR_TIME_UPDATE };
+
+
 
 // Enable or disable touch support
 #define emGUI_USE_TOUCH_SUPPORT

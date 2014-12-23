@@ -33,7 +33,7 @@ typedef struct {
 
 
 // Widget-specific events
-#define RADIOBUTTON_CHECKED_CHANGED    (0xC0 + 0x00)
+#define RADIOBUTTON_CHECKED_CHANGED    (GUI_SPECIFIC_WIDGET_HANDLERS + 0x00)
 
 
 

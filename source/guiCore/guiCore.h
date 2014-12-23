@@ -101,28 +101,6 @@ typedef struct {
 } containerTouchState_t;
 
 
-//-----------------------------------//
-// Timers
-
-typedef struct {
-    uint16_t top;
-    uint16_t counter;
-    uint8_t runOnce : 1;
-    uint8_t isEnabled : 1;
-    guiGenericWidget_t *targetWidget;
-    void (*handler)(uint8_t id);
-} guiTimer_t;
-
-// Timer init arguments
-#define TMR_RUN_CONSTANTLY  0
-#define TMR_RUN_ONCE        1
-#define TMR_TARGET_VOID     0
-#define TMR_HANDLER_VOID    0
-
-// Timer start arguments
-#define TMR_DO_RESET        1
-#define TMR_NO_RESET        0
-
 
 //-----------------------------------//
 // GUI errors
@@ -137,18 +115,12 @@ typedef struct {
 #define NO_HANDLER      0
 
 
-// Modifying these pointers should be done with care!
-extern guiGenericWidget_t *rootWidget;         // Root widget must be present
-extern guiGenericWidget_t *focusedWidget;      // Focused widget gets events from keys/encoder/touch
 
-void *guiCore_malloc(size_t wantedSize);
-void *guiCore_calloc(size_t wantedSize);
 void guiCore_AllocateWidgetCollection(guiGenericContainer_t *container, uint16_t count);
 void guiCore_AllocateHandlers(void *widget, uint16_t count);
-uint8_t guiCore_AddHandler(void *widget, uint8_t eventType, eventHandler_t handler);
+uint8_t guiCore_AddHandler(void *widget, uint8_t handlerType, eventHandler_t handler);
 
-// Common error handler
-void guiCore_Error(uint8_t errCode);
+
 
 //===================================================================//
 //                 GUI core message queue functions
@@ -157,14 +129,9 @@ uint8_t guiCore_AddMessageToQueue(const guiGenericWidget_t *target, const guiEve
 uint8_t guiCore_GetMessageFromQueue(guiGenericWidget_t **target, guiEvent_t *event);
 void guiCore_ProcessMessageQueue(void);
 void guiCore_PostEventToFocused(guiEvent_t event);
+// Common error handler
+void guiCore_Error(uint8_t errCode);
 
-//===================================================================//
-//                      GUI core timers functions
-//===================================================================//
-void guiCore_TimerInit(uint8_t timerID, uint16_t period, uint8_t runOnce, guiGenericWidget_t *target, void (*handler)(uint8_t));
-void guiCore_TimerStart(uint8_t timerID, uint8_t doReset);
-void guiCore_TimerStop(uint8_t timerID, uint8_t doReset);
-void guiCore_TimerProcess(uint8_t timerID);
 
 //===================================================================//
 //                      Top GUI core functions
@@ -174,7 +141,7 @@ void guiCore_RedrawAll(void);
 void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t touchState);
 void guiCore_ProcessKeyEvent(uint16_t code, uint8_t spec);
 void guiCore_ProcessEncoderEvent(int16_t increment);
-void guiCore_ProcessTimers(void);
+
 void guiCore_BroadcastEvent(guiEvent_t event, uint8_t(*validator)(guiGenericWidget_t *widget));
 void guiCore_UpdateAll(void);
 uint8_t guiCore_UpdateValidator(guiGenericWidget_t *widget);
@@ -190,26 +157,31 @@ void guiCore_ConvertToAbsoluteXY(guiGenericWidget_t *widget, int16_t *x, int16_t
 void guiCore_ConvertToRelativeXY(guiGenericWidget_t *widget, int16_t *x, int16_t *y);
 guiGenericWidget_t *guiCore_GetTouchedWidgetAtXY(guiGenericWidget_t *widget, int16_t x, int16_t y);
 uint8_t guiCore_IsWidgetVisible(guiGenericWidget_t *widget);
+void guiCore_DecodeWidgetTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, widgetTouchState_t *decodedTouchState);
+void guiCore_DecodeContainerTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, containerTouchState_t *decodedTouchState);
+
 
 //===================================================================//
 //                   Widget collections management                   //
 //===================================================================//
 uint8_t guiCore_AddWidgetToCollection(guiGenericWidget_t *widget, guiGenericContainer_t *container);
-void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget);
-void guiCore_AcceptFocus(guiGenericWidget_t *widget);
 void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tabDir);
 uint8_t guiCore_GetWidgetIndex(guiGenericWidget_t *widget);
 uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget);
 
+
 //===================================================================//
 //                   General widget API fucntions                    //
 //===================================================================//
-uint8_t guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState);
-uint8_t guiCore_SetFocused(guiGenericWidget_t *widget, uint8_t newFocusedState);
+uint8_t guiCore_AcceptVisibleState(guiGenericWidget_t *widget, uint8_t newVisibleState);
+uint8_t guiCore_AcceptFocusedState(guiGenericWidget_t *widget, uint8_t newFocusedState);
+void guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState);
 void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, uint8_t maxTag, uint8_t mode);
-uint8_t guiCore_CallEventHandler(guiGenericWidget_t *widget, guiEvent_t *event);
-void guiCore_DecodeWidgetTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, widgetTouchState_t *decodedTouchState);
-void guiCore_DecodeContainerTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, containerTouchState_t *decodedTouchState);
+void guiCore_SetVisibleExclusively(guiGenericWidget_t *widget);
+void guiCore_SetFocusOn(guiGenericWidget_t *newFocusedWidget);
+void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget);
+uint8_t guiCore_CallHandler(guiGenericWidget_t *widget, uint8_t handlerType, guiEvent_t *event);
+
 
 
 

@@ -27,8 +27,8 @@ typedef struct guiButton_t {
 
 
 // Widget-specific events
-#define BUTTON_PRESSED_CHANGED    (0xC0 + 0x00)
-#define BUTTON_CLICKED            (0xC0 + 0x01)
+#define BUTTON_PRESSED_CHANGED    (GUI_SPECIFIC_WIDGET_HANDLERS + 0x00)
+#define BUTTON_CLICKED            (GUI_SPECIFIC_WIDGET_HANDLERS + 0x01)
 
 
 // Widget-specific virtual keys

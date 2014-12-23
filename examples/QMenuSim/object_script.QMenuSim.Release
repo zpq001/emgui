@@ -21,6 +21,8 @@ INPUT(
 ./release\guiPanel1.o
 ./release\guiPanel2.o
 ./release\guiRadioButton.o
+./release\guiCoreTimers.o
+./release\guiCoreMemory.o
 ./release\moc_mainwindow.o
 ./release\moc_pixeldisplay.o
 );
