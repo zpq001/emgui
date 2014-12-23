@@ -7,6 +7,7 @@
 #include "guiGraphWidgets.h"
 
 #include "guiCore.h"
+#include "guiCoreTimers.h"
 #include "guiEvents.h"
 #include "guiWidgets.h"
 #include "guiTextLabel.h"
@@ -117,7 +118,7 @@ void guiDrawAll(void)
 {
      addLogCallback(LOG_FROM_TOP, "Requesting GUI redraw procedure");
    
-     guiCore_ProcessTimers();
+     guiCore_ProcessAllTimers();
      guiCore_UpdateAll();
      guiCore_RedrawAll();
      // Update display(s)

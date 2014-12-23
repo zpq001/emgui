@@ -3,37 +3,52 @@
 
 #include <stdint.h>
 
+// Event types
+#define GUI_COMMON_EVENTS   0           // Event types, common for whole GUI, should start with this value
+#define GUI_CUSTOM_EVENTS   0x20        // Custom user-defined event types
 
-// Event types for widgets
-#define GUI_EVENT_DRAW          0x01
-#define GUI_EVENT_INIT          0x02
-#define GUI_EVENT_UPDATE        0x04
-#define GUI_EVENT_HIDE          0x06
-#define GUI_EVENT_SHOW          0x07
-#define GUI_EVENT_UNFOCUS       0x08
-#define GUI_EVENT_FOCUS         0x09
-#define GUI_EVENT_TOUCH         0x0A
-#define GUI_EVENT_KEY           0x0B
-//#define GUI_EVENT_ENCODER       0x0C
-#define GUI_EVENT_TIMER         0x0D
+enum guiCommonEventTypes {
+    GUI_EVENT_INIT = GUI_COMMON_EVENTS,
+    GUI_EVENT_DRAW,
+    GUI_EVENT_UPDATE,
+    GUI_EVENT_SHOW,
+    GUI_EVENT_HIDE,
+    GUI_EVENT_FOCUS,
+    GUI_EVENT_UNFOCUS,
+    GUI_EVENT_TOUCH,
+    GUI_EVENT_KEY,
+    //GUI_EVENT_ENCODER,
+    GUI_EVENT_TIMER
+};
 
-// Event types for callbacks (common widget event handlers)
-#define GUI_ON_FOCUS_CHANGED    0x80
-#define GUI_ON_VISIBLE_CHANGED  0x82
-#define GUI_ON_TOUCH_EVENT      0x83
+// Widget event handler types
+#define GUI_COMMON_WIDGET_HANDLERS      0       // Event handler types, common for all widgets. Unique.
+#define GUI_SPECIFIC_WIDGET_HANDLERS    0x20    // Event handler types, widget-specific. May overlap between different widgets.
+#define GUI_CUSTOM_HANDLERS             0x80    // Custom user-defined handler types
 
-// Event types, specific for widgets start with 0xC0 and can overlap for different widgets.
-// Those types are declared in widget's header files.
+enum guiCommonWidgetHandlerTypes {
+    WIDGET_ON_VISIBLE_CHANGED = GUI_COMMON_WIDGET_HANDLERS,
+    WIDGET_ON_FOCUS_CHANGED,
+    WIDGET_ON_DRAW_EVENT,
+    WIDGET_ON_KEY_EVENT,
+    WIDGET_ON_TOUCH_EVENT,
+    WIDGET_ON_UNKNOWN_EVENT
+};
+
 
 
 // Event struct, common for all GUI elements
 typedef struct {
     uint8_t type;
     uint8_t spec;
-    uint16_t lparam;
-    uint16_t hparam;
+    union {
+        struct {
+            uint16_t lparam;
+            uint16_t hparam;
+        } params;
+        void *data;     // May be used for passing some data to widgets instead of params
+    } payload;
 } guiEvent_t;
-
 
 
 

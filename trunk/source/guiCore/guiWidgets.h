@@ -23,7 +23,7 @@ typedef uint8_t (*eventHandler_t)(void *sender, guiEvent_t *event);
 
 // Event handler record
 typedef struct {
-    uint8_t eventType;                  // Event type
+    uint8_t type;                       // Handler type
     eventHandler_t handler;             // Related callback function pointer
 } guiWidgetHandler_t;
 

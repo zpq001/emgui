@@ -21,6 +21,8 @@ INPUT(
 ./debug\guiPanel1.o
 ./debug\guiPanel2.o
 ./debug\guiRadioButton.o
+./debug\guiCoreTimers.o
+./debug\guiCoreMemory.o
 ./debug\moc_mainwindow.o
 ./debug\moc_pixeldisplay.o
 );

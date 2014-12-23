@@ -24,7 +24,7 @@ typedef struct guiCheckBox_t {
 
 
 // Widget-specific events
-#define CHECKBOX_CHECKED_CHANGED    (0xC0 + 0x00)
+#define CHECKBOX_CHECKED_CHANGED    (GUI_SPECIFIC_WIDGET_HANDLERS + 0x00)
 
 
 // Widget-specific virtual keys

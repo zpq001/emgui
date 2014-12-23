@@ -38,7 +38,9 @@ SOURCES += main.cpp\
     ../../source/guiWidgets/guiPanel.c \
     gui_top/guiPanel1.c \
     gui_top/guiPanel2.c \
-    ../../source/guiWidgets/guiRadioButton.c
+    ../../source/guiWidgets/guiRadioButton.c \
+    ../../source/guiCore/guiCoreTimers.c \
+    ../../source/guiCore/guiCoreMemory.c
 
 HEADERS  += mainwindow.h \
     ../common/pixeldisplay.h \
@@ -59,7 +61,9 @@ HEADERS  += mainwindow.h \
     gui_top/guiPanel2.h \
     ../../source/guiWidgets/guiRadioButton.h \
     gui_top/guiConfig.h \
-    ../../source/guiCore/guiWidgets.h
+    ../../source/guiCore/guiWidgets.h \
+    ../../source/guiCore/guiCoreTimers.h \
+    ../../source/guiCore/guiCoreMemory.h
 	
 
 

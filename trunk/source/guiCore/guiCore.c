@@ -5,10 +5,11 @@ Widget's event processing function calls:
 
 Direct:
     guiCore_ProcessMessageQueue
-    guiCore_SetVisibleByTag
+    guiCore_AcceptVisibleStateByTag
     guiCore_BroadcastEvent
     guiCore_RedrawAll
     guiCore_UpdateAll (using guiCore_BroadcastEvent)
+    guiCore_AcceptFocusedStatesedState
 
 Through message queue:
     guiCore_PostEventToFocused
@@ -19,168 +20,32 @@ Through message queue:
     guiCore_ProcessEncoderEvent
     guiCore_ProcessTimers (using guiCore_TimerProcess)
     guiCore_RequestFocusChange
-    guiCore_AcceptFocus
     guiCore_RequestFocusNextWidget (using guiCore_RequestFocusChange)
-    guiCore_SetFocused (using guiCore_AcceptFocus)
+
 
 **********************************************************/
 
 #include <stdint.h>
-#include <string.h>     // using memset
 #include "guiConfig.h"
 #include "guiGraphWidgets.h"
 #include "guiEvents.h"
 #include "guiWidgets.h"
 #include "guiCore.h"
+#include "guiCoreMemory.h"
+#include "guiCoreTimers.h"
 
 
-// Predefined constant events - saves stack a bit
-const guiEvent_t guiEvent_INIT = {GUI_EVENT_INIT, 0, 0, 0};
-const guiEvent_t guiEvent_DRAW = {GUI_EVENT_DRAW, 0, 0, 0};
-#ifdef emGUI_USE_UPDATE
-const guiEvent_t guiEvent_UPDATE = {GUI_EVENT_UPDATE, 0, 0, 0};
-#endif
-const guiEvent_t guiEvent_HIDE = {GUI_EVENT_HIDE, 0, 0, 0};
-const guiEvent_t guiEvent_SHOW = {GUI_EVENT_SHOW, 0, 0, 0};
-const guiEvent_t guiEvent_UNFOCUS = {GUI_EVENT_UNFOCUS, 0, 0, 0};
-const guiEvent_t guiEvent_FOCUS = {GUI_EVENT_FOCUS, 0, 0, 0};
-
-#ifdef emGUI_USE_TIMERS
-// Total count of timers should be defined in guiConfig.h
-guiTimer_t guiTimers[emGUI_TIMERS_COUNT];
-#endif
-
-guiMsgQueue_t guiMsgQueue;
-guiGenericWidget_t *rootWidget;         // Root widget must be present
-guiGenericWidget_t *focusedWidget;      // Focused widget gets events from keys/encoder/touch
+// Frequently used events - saves stack a bit
+const guiEvent_t guiEvent_HIDE = {GUI_EVENT_HIDE};
+const guiEvent_t guiEvent_SHOW = {GUI_EVENT_SHOW};
+const guiEvent_t guiEvent_UNFOCUS = {GUI_EVENT_UNFOCUS};
+const guiEvent_t guiEvent_FOCUS = {GUI_EVENT_FOCUS};
 
 
-//===================================================================//
-//===================================================================//
-//                                                                   //
-//               GUI core memory management functions                //
-//                                                                   //
-//===================================================================//
+static guiMsgQueue_t guiMsgQueue;
+static guiGenericWidget_t *rootWidget;         // Root widget must be present
+static guiGenericWidget_t *focusedWidget;      // Focused widget gets events from keys/encoder/touch
 
-// Inspired by freeRTOS heap1
-
-
-#define emGUI_BYTE_ALIGNMENT_MASK ( emGUI_BYTE_ALIGNMENT - 1 )
-// A few bytes might be lost to byte aligning the heap start address
-#define emGUI_ADJUSTED_HEAP_SIZE	( emGUI_HEAP_SIZE - emGUI_BYTE_ALIGNMENT )
-
-static unsigned char gui_heap[emGUI_HEAP_SIZE];
-static size_t allocated_bytes_count = (size_t) 0;
-
-
-void *guiCore_malloc(size_t wantedSize)
-{
-    static unsigned char *p_heap = 0;
-    void *result = 0;
-
-    // Make sure blocks are aligned
-    #if emGUI_BYTE_ALIGNMENT != 1
-        if (wantedSize & emGUI_BYTE_ALIGNMENT_MASK)
-        {
-            // Adjust allocated block size
-            wantedSize += (emGUI_BYTE_ALIGNMENT - (wantedSize & emGUI_BYTE_ALIGNMENT_MASK));
-        }
-    #endif
-
-    if (p_heap == 0)
-    {
-        p_heap = (unsigned char *)(((emGUI_POINTER_SIZE_TYPE)&gui_heap[emGUI_BYTE_ALIGNMENT_MASK]) & ((emGUI_POINTER_SIZE_TYPE) ~emGUI_BYTE_ALIGNMENT_MASK));
-    }
-
-    // Check if there is enough space
-    if( ( ( allocated_bytes_count + wantedSize ) < emGUI_ADJUSTED_HEAP_SIZE ) &&
-        ( ( allocated_bytes_count + wantedSize ) > allocated_bytes_count )	)   // Check for overflow
-    {
-        // Return the next free byte then increment the index past this block
-        result = p_heap + allocated_bytes_count;
-        allocated_bytes_count += wantedSize;
-    }
-
-    if (result == 0)
-    {
-        // Trace error
-        guiCore_Error(emGUI_ERROR_OUT_OF_HEAP);
-    }
-    return result;
-}
-
-
-void *guiCore_calloc(size_t wantedSize)
-{
-    void *result = guiCore_malloc(wantedSize);
-    if (result)
-    {
-        memset(result, 0, wantedSize);
-    }
-    return result;
-}
-
-
-size_t guiCore_GetFreeHeapSize( void )
-{
-    return ( emGUI_ADJUSTED_HEAP_SIZE - allocated_bytes_count );
-}
-
-
-void guiCore_AllocateWidgetCollection(guiGenericContainer_t *container, uint16_t count)
-{
-    if (container != 0)
-    {
-        container->widgets.count = count;
-        container->widgets.elements = guiCore_calloc(count * sizeof(void *));
-    }
-    else
-    {
-        guiCore_Error(emGUI_ERROR_NULL_REF);
-    }
-}
-
-void guiCore_AllocateHandlers(void *widget, uint16_t count)
-{
-    guiGenericWidget_t *w = (guiGenericWidget_t *)widget;
-    if (w != 0)
-    {
-        w->handlers.count = count;
-        w->handlers.elements = guiCore_calloc(count * sizeof(guiWidgetHandler_t));
-    }
-    else
-    {
-        guiCore_Error(emGUI_ERROR_NULL_REF);
-    }
-}
-
-
-//-------------------------------------------------------//
-// Adds a handler to widget's handlers
-//
-// Not used items in a collection must be zero
-// If success, function returns non-zero
-//-------------------------------------------------------//
-uint8_t guiCore_AddHandler(void *widget, uint8_t eventType, eventHandler_t handler)
-{
-    uint8_t i;
-    guiGenericWidget_t *w = (guiGenericWidget_t *)widget;
-    if ((w == 0) || (handler == 0))
-        return 0;
-    for (i = 0; i < w->handlers.count; i++)
-    {
-        if (w->handlers.elements[i].handler == 0)
-        {
-            // Found free item slot
-            w->handlers.elements[i].eventType = eventType;
-            w->handlers.elements[i].handler = handler;
-            return 1;
-        }
-    }
-    // No free space
-    guiCore_Error(emGUI_ERROR_OUT_OF_PREALLOCATED_MEMORY);
-    return 0;
-}
 
 
 
@@ -290,101 +155,6 @@ void guiCore_PostEventToFocused(guiEvent_t event)
 
 
 
-//===================================================================//
-//===================================================================//
-//                                                                   //
-//                      GUI core timers functions                    //
-//                                                                   //
-//===================================================================//
-
-
-#ifdef emGUI_USE_TIMERS
-//-------------------------------------------------------//
-//  Initializes GUI core timer
-//  Timer is identified by timerID which is simply index
-//  of element in guiTimers[]
-//
-//-------------------------------------------------------//
-void guiCore_TimerInit(uint8_t timerID, uint16_t period, uint8_t runOnce, guiGenericWidget_t *target, void (*handler)(uint8_t))
-{
-    if (timerID >= emGUI_TIMERS_COUNT)
-        return;
-    guiTimers[timerID].top = period;
-    guiTimers[timerID].counter = 0;
-    guiTimers[timerID].runOnce = (runOnce) ? 1 : 0;
-    guiTimers[timerID].isEnabled = 0;
-    guiTimers[timerID].targetWidget = target;
-    guiTimers[timerID].handler = handler;
-}
-
-//-------------------------------------------------------//
-//  Starts GUI core timer
-//  Timer is identified by timerID which is simply index
-//  of element in guiTimers[]
-//
-//  If doReset is non-zero, timer will be set to 0
-//-------------------------------------------------------//
-void guiCore_TimerStart(uint8_t timerID, uint8_t doReset)
-{
-    if (timerID >= emGUI_TIMERS_COUNT)
-        return;
-    if (doReset)
-        guiTimers[timerID].counter = 0;
-    guiTimers[timerID].isEnabled = 1;
-}
-
-//-------------------------------------------------------//
-//  Stops GUI core timer
-//  Timer is identified by timerID which is simply index
-//  of element in guiTimers[]
-//
-//  If doReset is non-zero, timer will be set to 0
-//-------------------------------------------------------//
-void guiCore_TimerStop(uint8_t timerID, uint8_t doReset)
-{
-    if (timerID >= emGUI_TIMERS_COUNT)
-        return;
-    if (doReset)
-        guiTimers[timerID].counter = 0;
-    guiTimers[timerID].isEnabled = 0;
-}
-
-//-------------------------------------------------------//
-//  Processes GUI core timer
-//  Timer is identified by timerID which is simply index
-//  of element in guiTimers[]
-//
-//  Timer's counter is incremented. If counter has reached
-//  top, in is reset and timer event is sent to the target widget
-//  Additionaly, handler is called (if specified)
-//-------------------------------------------------------//
-void guiCore_TimerProcess(uint8_t timerID)
-{
-    guiEvent_t event = {GUI_EVENT_TIMER, 0, 0, 0};
-    if (timerID >= emGUI_TIMERS_COUNT)
-        return;
-    if (guiTimers[timerID].isEnabled)
-    {
-        guiTimers[timerID].counter++;
-        if (guiTimers[timerID].counter >= guiTimers[timerID].top)
-        {
-            guiTimers[timerID].counter = 0;
-            if (guiTimers[timerID].runOnce)
-                guiTimers[timerID].isEnabled = 0;
-            if (guiTimers[timerID].targetWidget != 0)
-            {
-                event.spec = timerID;
-                guiCore_AddMessageToQueue(guiTimers[timerID].targetWidget, &event);
-            }
-            if (guiTimers[timerID].handler != 0)
-                guiTimers[timerID].handler(timerID);
-        }
-    }
-}
-#endif
-
-
-
 
 
 //===================================================================//
@@ -403,18 +173,15 @@ void guiCore_TimerProcess(uint8_t timerID)
 //-------------------------------------------------------//
 void guiCore_Init(guiGenericWidget_t *guiRootWidget)
 {
-    uint8_t i;
+    const guiEvent_t event = {GUI_EVENT_INIT};
+
     // Init queue
     guiMsgQueue.count = 0;
     guiMsgQueue.head = 0;
     guiMsgQueue.tail = 0;
 
 #ifdef emGUI_USE_TIMERS
-    // Disable all timers
-    for (i=0; i<emGUI_TIMERS_COUNT; i++)
-    {
-        guiTimers[i].isEnabled = 0;
-    }
+    guiCore_DisableAllTimers();
 #endif
 
     // Set root and focused widget and send initialize event
@@ -423,7 +190,7 @@ void guiCore_Init(guiGenericWidget_t *guiRootWidget)
     // and encoder events will get processed. ~~~
     rootWidget = guiRootWidget;
     focusedWidget = 0;
-    guiCore_AddMessageToQueue(rootWidget, &guiEvent_INIT);
+    guiCore_AddMessageToQueue(rootWidget, &event);
     guiCore_ProcessMessageQueue();
 }
 
@@ -438,7 +205,7 @@ void guiCore_RedrawAll(void)
     guiGenericWidget_t *widget;
     guiGenericWidget_t *nextWidget;
     uint8_t index;
-
+    const guiEvent_t drawEvent = {GUI_EVENT_DRAW};
     guiGenericWidget_t *w;
     uint8_t i;
     rect16_t inv_rect;
@@ -453,7 +220,7 @@ void guiCore_RedrawAll(void)
         if (widget->redrawRequired)
         {
             // The redrawRequired flag is reset by widget after processing DRAW event
-            widget->processEvent(widget, guiEvent_DRAW);
+            widget->processEvent(widget, drawEvent);
         }
         // Check if widget has children
         if (widget->isContainer)
@@ -536,6 +303,7 @@ void guiCore_RedrawAll(void)
     guiCore_ProcessMessageQueue();
 } */
 
+
 //-------------------------------------------------------//
 //  Top function for GUI redrawing
 //
@@ -545,6 +313,7 @@ void guiCore_RedrawAll(void)
     guiGenericWidget_t *widget;
     guiGenericWidget_t *nextWidget;
     guiGenericWidget_t *processedWidget;
+    const guiEvent_t drawEvent = {GUI_EVENT_DRAW};
     uint8_t index;
     uint8_t containerRequiredRedraw;
     uint8_t trectEmpty;
@@ -563,7 +332,7 @@ void guiCore_RedrawAll(void)
         if (widget->redrawRequired)
         {
             // The redrawRequired flag is reset by widget after processing DRAW event
-            widget->processEvent(widget, guiEvent_DRAW);
+            widget->processEvent(widget, drawEvent);
         }
         // Check if widget has children (is a container)
         if (widget->isContainer)
@@ -727,8 +496,8 @@ void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t touchState)
     guiEvent_t event;
     event.type = GUI_EVENT_TOUCH;
     event.spec = touchState;
-    event.lparam = (uint16_t)x;
-    event.hparam = (uint16_t)y;
+    event.payload.params.lparam = (uint16_t)x;
+    event.payload.params.hparam = (uint16_t)y;
 #ifdef emGUI_ALWAYS_PASS_TOUCH_TO_FOCUSED
     guiCore_AddMessageToQueue(focusedWidget, &event);
 #else
@@ -747,9 +516,9 @@ void guiCore_ProcessTouchEvent(int16_t x, int16_t y, uint8_t touchState)
 void guiCore_ProcessKeyEvent(uint16_t code, uint8_t spec)
 {
     guiEvent_t event;
-    event.type = GUI_EVENT_KEY;
+    event.type = GUI_EVENT_KEY;     // CHECKME - use one of union types
     event.spec = spec;
-    event.lparam = code;
+    event.payload.params.lparam = code;
     guiCore_AddMessageToQueue(focusedWidget, &event);
     guiCore_ProcessMessageQueue();
 }
@@ -763,24 +532,12 @@ void guiCore_ProcessEncoderEvent(int16_t increment)
     guiEvent_t event;
     event.type = GUI_EVENT_KEY;
     event.spec = GUI_ENCODER_EVENT;
-    event.lparam = (uint16_t)increment;
+    event.payload.params.lparam = (uint16_t)increment;
     guiCore_AddMessageToQueue(focusedWidget, &event);
     guiCore_ProcessMessageQueue();
 }
 
-//-------------------------------------------------------//
-//  Top function for processing timers
-//
-//-------------------------------------------------------//
-void guiCore_ProcessTimers(void)
-{
-    uint8_t i;
-    for (i=0; i<emGUI_TIMERS_COUNT; i++)
-    {
-        guiCore_TimerProcess(i);
-    }
-    guiCore_ProcessMessageQueue();
-}
+
 
 
 
@@ -858,7 +615,8 @@ void guiCore_BroadcastEvent(guiEvent_t event, uint8_t(*validator)(guiGenericWidg
 //-------------------------------------------------------//
 void guiCore_UpdateAll(void)
 {
-    guiCore_BroadcastEvent(guiEvent_UPDATE, guiCore_UpdateValidator);
+    const guiEvent_t event = {GUI_EVENT_UPDATE};
+    guiCore_BroadcastEvent(event, guiCore_UpdateValidator);
     guiCore_ProcessMessageQueue();
 }
 
@@ -875,6 +633,17 @@ uint8_t guiCore_UpdateValidator(guiGenericWidget_t *widget)
         return 1;
 }
 #endif
+
+
+//-------------------------------------------------------//
+// GUI error handler
+// One may trace call stack and thus find source of the error
+//-------------------------------------------------------//
+void guiCore_Error(uint8_t errCode)
+{
+    while(1);
+}
+
 
 
 
@@ -945,7 +714,6 @@ void guiCore_InvalidateRect(guiGenericWidget_t *widget, int16_t x1, int16_t y1, 
 }
 
 
-
 //-------------------------------------------------------//
 //  Verifies if widget and rectangle are overlapped
 //
@@ -965,7 +733,6 @@ uint8_t guiCore_CheckWidgetOvelap(guiGenericWidget_t *widget, rect16_t *rect)
 }
 
 
-
 //-------------------------------------------------------//
 //  Converts relative (x,y) for a specified widget to
 //    absolute values (absolute means relative to screen's (0,0))
@@ -983,6 +750,7 @@ void guiCore_ConvertToAbsoluteXY(guiGenericWidget_t *widget, int16_t *x, int16_t
         widget = widget->parent;
     }
 }
+
 
 //-------------------------------------------------------//
 //  Converts absolute (x,y) to relative for a specified widget
@@ -1070,6 +838,30 @@ uint8_t guiCore_IsWidgetVisible(guiGenericWidget_t *widget)
 }
 
 
+void guiCore_DecodeWidgetTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, widgetTouchState_t *decodedTouchState)
+{
+    // Convert coordinates to widget's relative
+    decodedTouchState->x = (int16_t)touchEvent->payload.params.lparam;
+    decodedTouchState->y = (int16_t)touchEvent->payload.params.hparam;
+    guiCore_ConvertToRelativeXY(widget,&decodedTouchState->x, &decodedTouchState->y);
+    decodedTouchState->state = touchEvent->spec;
+    // Determine if touch point lies inside the widget
+    decodedTouchState->isInsideWidget = (guiCore_GetTouchedWidgetAtXY(widget,decodedTouchState->x, decodedTouchState->y)) ? 1 : 0;
+}
+
+
+void guiCore_DecodeContainerTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, containerTouchState_t *decodedTouchState)
+{
+    // Convert coordinates to widget's relative
+    decodedTouchState->x = (int16_t)touchEvent->payload.params.lparam;
+    decodedTouchState->y = (int16_t)touchEvent->payload.params.hparam;
+    guiCore_ConvertToRelativeXY(widget,&decodedTouchState->x, &decodedTouchState->y);
+    decodedTouchState->state = touchEvent->spec;
+    // Determine if touch point lies inside the widget
+    decodedTouchState->widgetAtXY = guiCore_GetTouchedWidgetAtXY(widget,decodedTouchState->x, decodedTouchState->y);
+}
+
+
 
 
 //===================================================================//
@@ -1078,6 +870,24 @@ uint8_t guiCore_IsWidgetVisible(guiGenericWidget_t *widget)
 //                   Widget collections management                   //
 //                                                                   //
 //===================================================================//
+
+
+//-------------------------------------------------------//
+// Allocates memory for a widget collection
+//
+//-------------------------------------------------------//
+void guiCore_AllocateWidgetCollection(guiGenericContainer_t *container, uint16_t count)
+{
+    if (container != 0)
+    {
+        container->widgets.count = count;
+        container->widgets.elements = guiCore_calloc(count * sizeof(void *));
+    }
+    else
+    {
+        guiCore_Error(emGUI_ERROR_NULL_REF);
+    }
+}
 
 
 //-------------------------------------------------------//
@@ -1109,45 +919,6 @@ uint8_t guiCore_AddWidgetToCollection(guiGenericWidget_t *widget, guiGenericCont
     }
     guiCore_Error(emGUI_ERROR_OUT_OF_PREALLOCATED_MEMORY);
     return 0;
-}
-
-
-//-------------------------------------------------------//
-// Adds to queue focus message for newFocusedWidget
-//
-//-------------------------------------------------------//
-void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
-{
-    // Tell new widget to get focus
-    if ((newFocusedWidget != focusedWidget) && (newFocusedWidget != 0))
-    {
-        guiCore_AddMessageToQueue(newFocusedWidget, &guiEvent_FOCUS);
-    }
-}
-
-//-------------------------------------------------------//
-// Sets GUI core focusedWidget pointer to widget
-// This function should be called by a widget when it
-// receives FOCUS message and agrees with it.
-//-------------------------------------------------------//
-void guiCore_AcceptFocus(guiGenericWidget_t *widget)
-{
-    uint8_t index;
-    if ((widget != 0) && (widget != focusedWidget))     // CHECKME
-    {
-        // First tell currently focused widget to loose focus
-        if (focusedWidget != 0)
-        {
-            guiCore_AddMessageToQueue(focusedWidget, &guiEvent_UNFOCUS);
-        }
-        focusedWidget = widget;
-        if ((guiGenericContainer_t *)widget->parent != 0)
-        {
-            // Store index for container
-            index = guiCore_GetWidgetIndex(focusedWidget);
-            ((guiGenericContainer_t *)widget->parent)->widgets.focusedIndex = index;
-        }
-    }
 }
 
 
@@ -1267,6 +1038,12 @@ uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget)
 
 
 
+
+
+
+
+
+
 //===================================================================//
 //===================================================================//
 //                                                                   //
@@ -1275,17 +1052,84 @@ uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget)
 //===================================================================//
 
 
+//-------------------------------------------------------//
+// Allocates memory for widget's handlers
+//
+//-------------------------------------------------------//
+void guiCore_AllocateHandlers(void *widget, uint16_t count)
+{
+    guiGenericWidget_t *w = (guiGenericWidget_t *)widget;
+    if (w != 0)
+    {
+        w->handlers.count = count;
+        w->handlers.elements = guiCore_calloc(count * sizeof(guiWidgetHandler_t));
+    }
+    else
+    {
+        guiCore_Error(emGUI_ERROR_NULL_REF);
+    }
+}
+
 
 //-------------------------------------------------------//
-//  Shows or hides a widget.
+// Adds a handler to widget's handlers list
+//
+// Not used items in a collection must be zero
+// If success, function returns non-zero
+//-------------------------------------------------------//
+uint8_t guiCore_AddHandler(void *widget, uint8_t handlerType, eventHandler_t handler)
+{
+    uint8_t i;
+    guiGenericWidget_t *w = (guiGenericWidget_t *)widget;
+    if ((w == 0) || (handler == 0))
+        return 0;
+    for (i = 0; i < w->handlers.count; i++)
+    {
+        if (w->handlers.elements[i].handler == 0)
+        {
+            // Found free item slot
+            w->handlers.elements[i].type = handlerType;
+            w->handlers.elements[i].handler = handler;
+            return 1;
+        }
+    }
+    // No free space
+    guiCore_Error(emGUI_ERROR_OUT_OF_PREALLOCATED_MEMORY);
+    return 0;
+}
+
+
+//-------------------------------------------------------//
+//  Call widget's handler for an event
+//
+//  Function searches through the widget's handler table
+//  and call handlers for matching event type
+//-------------------------------------------------------//
+uint8_t guiCore_CallHandler(guiGenericWidget_t *widget, uint8_t handlerType, guiEvent_t *event)
+{
+    uint8_t i;
+    uint8_t handlerResult = GUI_EVENT_DECLINE;
+    for(i=0; i<widget->handlers.count; i++)
+    {
+        if (widget->handlers.elements[i].type == handlerType)
+        {
+            handlerResult = widget->handlers.elements[i].handler(widget, event);
+        }
+    }
+    return handlerResult;
+}
+
+
+//-------------------------------------------------------//
+//  Change visible state and call handlers
 //  This function should be called by widget as response for
-//      received SHOW or HIDE message
+//      received SHOW or HIDE event
 //
 // This function does not perform any widget state checks
 //      except visible state.
 // Returns 1 if new state was applied. Otherwise returns 0.
 //-------------------------------------------------------//
-uint8_t guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState)
+uint8_t guiCore_AcceptVisibleState(guiGenericWidget_t *widget, uint8_t newVisibleState)
 {
     guiEvent_t event;
     if (widget == 0) return 0;
@@ -1308,16 +1152,14 @@ uint8_t guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState)
     // Visible state changed - call handler
     if (widget->handlers.count != 0)
     {
-        event.type = GUI_ON_VISIBLE_CHANGED;
-        guiCore_CallEventHandler(widget, &event);
+        guiCore_CallHandler(widget, WIDGET_ON_VISIBLE_CHANGED, &event);
     }
     return 1;
 }
 
 
-
 //-------------------------------------------------------//
-//  Sets or clears focus on widget.
+//  Change focused state and call handlers
 //  This function should be called by widget as response for
 //      received FOCUS or UNFOCUS message
 //
@@ -1325,17 +1167,26 @@ uint8_t guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState)
 //      except focused state.
 // Returns 1 if new state was applied. Otherwise returns 0.
 //-------------------------------------------------------//
-uint8_t guiCore_SetFocused(guiGenericWidget_t *widget, uint8_t newFocusedState)
+uint8_t guiCore_AcceptFocusedState(guiGenericWidget_t *widget, uint8_t newFocusedState)
 {
     guiEvent_t event;
+    uint8_t index;
     if (widget == 0) return 0;
-
     if (newFocusedState)
     {
-        // Set focus on widget
+        // Check if widget is already focused
         if (widget->isFocused) return 0;
+        // First tell currently focused widget to loose focus
+        if (focusedWidget != 0)
+            focusedWidget->processEvent(focusedWidget, guiEvent_UNFOCUS);
         widget->isFocused = 1;
-        guiCore_AcceptFocus(widget);
+        focusedWidget = widget;
+        if ((guiGenericContainer_t *)widget->parent != 0)
+        {
+            // Update index of focused child for parent container
+            index = guiCore_GetWidgetIndex(focusedWidget);
+            ((guiGenericContainer_t *)widget->parent)->widgets.focusedIndex = index;
+        }
     }
     else
     {
@@ -1343,25 +1194,40 @@ uint8_t guiCore_SetFocused(guiGenericWidget_t *widget, uint8_t newFocusedState)
         if (widget->isFocused == 0) return 0;
         widget->isFocused = 0;
     }
-    // Focused state changed - call handler
-    //if (widget->showFocus)        // CHECKME
-    //{
-        widget->redrawFocus = 1;
-        widget->redrawRequired = 1;
-    //}
-    // Focus state changed - call handler
+    // Focused state changed - set drawing flags
+    widget->redrawFocus = 1;
+    widget->redrawRequired = 1;
+    // Call handler
     if (widget->handlers.count != 0)
     {
-        event.type = GUI_ON_FOCUS_CHANGED;
-        guiCore_CallEventHandler(widget, &event);
+        guiCore_CallHandler(widget, WIDGET_ON_FOCUS_CHANGED, &event);
     }
     return 1;
 }
 
+
+
+
+
+
+
+
+//-------------------------------------------------------//
+//  Shows or hides a widget
+//
+//  Affected widgets are sent message DIRECTLY, bypassing queue.
+//-------------------------------------------------------//
+void guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState)
+{
+    if (widget != 0)
+        widget->processEvent(widget, (newVisibleState) ? guiEvent_SHOW : guiEvent_HIDE);
+}
+
+
 //-------------------------------------------------------//
 //  Shows or hides widgets in a collection
 //
-//  Affected widgets are sent message directly, bypassing queue.
+//  Affected widgets are sent message DIRECTLY, bypassing queue.
 //  guiCore_ProcessMessageQueue() should be called after this function
 //  to process posted messages from callbacks or handlers
 //
@@ -1387,71 +1253,82 @@ void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, 
         {
             if (widget->isVisible == 0)
                 widget->processEvent(widget, guiEvent_SHOW);
-                //guiCore_AddMessageToQueue(widget, &guiEvent_SHOW);
         }
         else if ((tagInRange == ITEMS_IN_RANGE_ARE_INVISIBLE) || (tagInRange == ITEMS_OUT_OF_RANGE_ARE_INVISIBLE))
         {
             if (widget->isVisible)
                 widget->processEvent(widget, guiEvent_HIDE);
-                //guiCore_AddMessageToQueue(widget, &guiEvent_HIDE);
         }
     }
 }
 
 
 //-------------------------------------------------------//
-//  Call widget's handler for an event
+//  Shows a widget in a collection while hiding others
 //
-//  Function searches through the widget's handler table
-//  and call handlers for matching event type
+//  Affected widgets are sent message DIRECTLY, bypassing queue.
+//  guiCore_ProcessMessageQueue() should be called after this function
+//  to process posted messages from callbacks or handlers
 //-------------------------------------------------------//
-uint8_t guiCore_CallEventHandler(guiGenericWidget_t *widget, guiEvent_t *event)
+void guiCore_SetVisibleExclusively(guiGenericWidget_t *widget)
 {
     uint8_t i;
-    uint8_t handlerResult = GUI_EVENT_DECLINE;
-    for(i=0; i<widget->handlers.count; i++)
+    guiGenericWidget_t *some_other_widget;
+    if (widget != 0)
     {
-        if (widget->handlers.elements[i].eventType == event->type)
+        guiGenericContainer_t *parent = (guiGenericContainer_t *)widget->parent;
+        if (parent != 0)
         {
-            handlerResult = widget->handlers.elements[i].handler(widget, event);
+            for (i=0; i<parent->widgets.count; i++)
+            {
+                some_other_widget = parent->widgets.elements[i];
+                if (some_other_widget == 0)
+                    continue;
+                if (some_other_widget == widget)
+                {
+                    if (widget->isVisible == 0)
+                        widget->processEvent(some_other_widget, guiEvent_SHOW);
+                }
+                else
+                {
+                    some_other_widget->processEvent(some_other_widget, guiEvent_HIDE);
+                }
+            }
         }
     }
-    return handlerResult;
 }
 
 
-
-void guiCore_DecodeWidgetTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, widgetTouchState_t *decodedTouchState)
+//-------------------------------------------------------//
+// Sets focus on widget
+//
+// Affected widgets are sent message DIRECTLY, bypassing queue.
+// If widget cannot accept focus event, focus is not modified
+//-------------------------------------------------------//
+void guiCore_SetFocusOn(guiGenericWidget_t *newFocusedWidget)
 {
-    // Convert coordinates to widget's relative
-    decodedTouchState->x = (int16_t)touchEvent->lparam;
-    decodedTouchState->y = (int16_t)touchEvent->hparam;
-    guiCore_ConvertToRelativeXY(widget,&decodedTouchState->x, &decodedTouchState->y);
-    decodedTouchState->state = touchEvent->spec;
-    // Determine if touch point lies inside the widget
-    decodedTouchState->isInsideWidget = (guiCore_GetTouchedWidgetAtXY(widget,decodedTouchState->x, decodedTouchState->y)) ? 1 : 0;
+    // Tell new widget to get focus
+    if ((newFocusedWidget != focusedWidget) && (newFocusedWidget != 0))
+    {
+        newFocusedWidget->processEvent(newFocusedWidget, guiEvent_FOCUS);
+    }
 }
 
 
-void guiCore_DecodeContainerTouchEvent(guiGenericWidget_t *widget, guiEvent_t *touchEvent, containerTouchState_t *decodedTouchState)
+//-------------------------------------------------------//
+// Posts focus event for a widget into the QUEUE
+// If widget cannot accept focus event, it is sent to it's parent.
+//-------------------------------------------------------//
+void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
 {
-    // Convert coordinates to widget's relative
-    decodedTouchState->x = (int16_t)touchEvent->lparam;
-    decodedTouchState->y = (int16_t)touchEvent->hparam;
-    guiCore_ConvertToRelativeXY(widget,&decodedTouchState->x, &decodedTouchState->y);
-    decodedTouchState->state = touchEvent->spec;
-    // Determine if touch point lies inside the widget
-    decodedTouchState->widgetAtXY = guiCore_GetTouchedWidgetAtXY(widget,decodedTouchState->x, decodedTouchState->y);
+    // Tell new widget to get focus
+    if ((newFocusedWidget != focusedWidget) && (newFocusedWidget != 0))
+    {
+        guiCore_AddMessageToQueue(newFocusedWidget, &guiEvent_FOCUS);
+    }
 }
 
 
-
-
-void guiCore_Error(uint8_t errCode)
-{
-    // One may trace call stack and thus find source of the error
-    while(1);
-}
 
 
 

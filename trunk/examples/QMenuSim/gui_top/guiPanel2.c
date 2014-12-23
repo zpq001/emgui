@@ -82,7 +82,7 @@ void guiPanel2_Initialize()
     button2.tabIndex = 11;
 
 
-    guiPanel2.handlers.elements[0].eventType = GUI_EVENT_DRAW;
+    guiPanel2.handlers.elements[0].type = WIDGET_ON_DRAW_EVENT;
     guiPanel2.handlers.elements[0].handler = panel2_onDraw;
 }
 

@@ -43,8 +43,7 @@ uint8_t guiButton_SetPressed(guiButton_t *button, uint8_t newPressedState)
     button->redrawRequired = 1;
     if (button->handlers.count != 0)
     {
-        event.type = BUTTON_PRESSED_CHANGED;
-        guiCore_CallEventHandler((guiGenericWidget_t *)button, &event);
+        guiCore_CallHandler((guiGenericWidget_t *)button, BUTTON_PRESSED_CHANGED, &event);
     }
     return 1;
 }
@@ -59,8 +58,7 @@ void guiButton_Click(guiButton_t *button)
     guiEvent_t event;
     if (button->handlers.count != 0)
     {
-        event.type = BUTTON_CLICKED;
-        guiCore_CallEventHandler((guiGenericWidget_t *)button, &event);
+        guiCore_CallHandler((guiGenericWidget_t *)button, BUTTON_CLICKED, &event);
     }
 }
 
@@ -114,12 +112,12 @@ uint8_t guiButton_DefaultKeyTranslator(guiGenericWidget_t *widget, guiEvent_t *e
     tkey->key = 0;
     if (event->spec == GUI_KEY_EVENT_DOWN)
     {
-        if (event->lparam == GUI_KEY_OK)
+        if (event->payload.params.lparam == GUI_KEY_OK)
             tkey->key = BUTTON_KEY_PRESS;
     }
     else if (event->spec == GUI_KEY_EVENT_UP)
     {
-        if (event->lparam == GUI_KEY_OK)
+        if (event->payload.params.lparam == GUI_KEY_OK)
             tkey->key = BUTTON_KEY_RELEASE;
     }
     return 0;
@@ -144,7 +142,7 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
         case GUI_EVENT_DRAW:
             guiGraph_DrawButton(button);
             // Call handler
-            guiCore_CallEventHandler(widget, &event);
+            guiCore_CallHandler(widget, WIDGET_ON_DRAW_EVENT, &event);
             // Reset flags - redrawForced will be reset by core
             button->redrawFocus = 0;
             button->redrawPressedState = 0;
@@ -152,12 +150,12 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             break;
         case GUI_EVENT_FOCUS:
             if (BUTTON_ACCEPTS_FOCUS_EVENT(button))
-                guiCore_SetFocused((guiGenericWidget_t *)button,1);
+                guiCore_AcceptFocusedState((guiGenericWidget_t *)button,1);
             else
                 processResult = GUI_EVENT_DECLINE;      // Cannot accept focus
             break;
         case GUI_EVENT_UNFOCUS:
-            guiCore_SetFocused((guiGenericWidget_t *)button,0);
+            guiCore_AcceptFocusedState((guiGenericWidget_t *)button,0);
 #ifdef emGUI_USE_TOUCH_SUPPORT
             button->keepTouch = 0;
 #endif
@@ -165,10 +163,10 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                 guiButton_SetPressed(button,0);
             break;
         case GUI_EVENT_SHOW:
-            guiCore_SetVisible((guiGenericWidget_t *)button, 1);
+            guiCore_AcceptVisibleState((guiGenericWidget_t *)button, 1);
             break;
         case GUI_EVENT_HIDE:
-            guiCore_SetVisible((guiGenericWidget_t *)button, 0);
+            guiCore_AcceptVisibleState((guiGenericWidget_t *)button, 0);
             break;
         case GUI_EVENT_KEY:
             processResult = GUI_EVENT_DECLINE;
@@ -182,7 +180,7 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                 }
                 // Call KEY event handler
                 if (processResult == GUI_EVENT_DECLINE)
-                    processResult = guiCore_CallEventHandler(widget, &event);
+                    processResult = guiCore_CallHandler(widget, WIDGET_ON_KEY_EVENT, &event);
             }
             break;
 #ifdef emGUI_USE_TOUCH_SUPPORT
@@ -215,7 +213,7 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                     if (touch.isInsideWidget)
                     {
                         // Capture
-                        guiCore_SetFocused((guiGenericWidget_t *)button,1);
+                        guiCore_AcceptFocusedState((guiGenericWidget_t *)button,1);
                         guiButton_ProcessKey(button, BUTTON_KEY_PRESS, 0);
                         button->keepTouch = 1;
                     }
@@ -227,11 +225,11 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                     }
                 }
                 // Call touch handler - return value is ignored
-                event.type = GUI_ON_TOUCH_EVENT;
-                event.spec = touch.state;
-                event.lparam = (uint16_t)touch.x;
-                event.hparam = (uint16_t)touch.y;
-                guiCore_CallEventHandler(widget, &event);
+                //event.type = WIDGET_ON_TOUCH_EVENT;
+                //event.spec = touch.state;
+                //event.payload.params.lparam = (uint16_t)touch.x;
+                //event.payload.params.hparam = (uint16_t)touch.y;
+                guiCore_CallHandler(widget, WIDGET_ON_TOUCH_EVENT, &event);
             }
             else
             {
@@ -241,7 +239,7 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
 #endif
         default:
             // Widget cannot process incoming event. Try to find a handler.
-            processResult = guiCore_CallEventHandler(widget, &event);
+            processResult = guiCore_CallHandler(widget, WIDGET_ON_UNKNOWN_EVENT, &event);
     }
 
 
