@@ -19,6 +19,8 @@ int16_t wx;
 int16_t wy;
 
 const color_t colorPalette1[COLOR_PALETTE_SIZE] = {
+
+    //  WIN32 boring grey style
     colorFromRgb(210,210,210),      // COLOR_INDEX_WIDGET_BACKGROUND
     colorFromRgb(220,220,220),      // COLOR_INDEX_BUTTON_BACKGROUND
     colorFromRgb(240,240,240),      // COLOR_INDEX_3DFRAME_LIGHT1
@@ -27,6 +29,17 @@ const color_t colorPalette1[COLOR_PALETTE_SIZE] = {
     colorFromRgb(150,150,150),      // COLOR_INDEX_3DFRAME_DARK2
     colorFromRgb(0,0,0),            // COLOR_INDEX_FOCUS_FRAME
     colorFromRgb(0,0,0),            // COLOR_INDEX_TEXT_ACTIVE
+/*
+    // Dark-orange
+    colorFromRgb(0,0,0),            // COLOR_INDEX_WIDGET_BACKGROUND
+    colorFromRgb(0xDE,0x8D,0x31),   // COLOR_INDEX_BUTTON_BACKGROUND
+    colorFromRgb(0xFF,0xA1,0x36),   // COLOR_INDEX_3DFRAME_LIGHT1
+    colorFromRgb(0xC9,0x82,0x30),   // COLOR_INDEX_3DFRAME_LIGHT2
+    colorFromRgb(0x69,0x47,0x21),   // COLOR_INDEX_3DFRAME_DARK1
+    colorFromRgb(0x7A,0x51,0x22),   // COLOR_INDEX_3DFRAME_DARK2
+    colorFromRgb(200,200,0),        // COLOR_INDEX_FOCUS_FRAME
+    colorFromRgb(255,255,255),      // COLOR_INDEX_TEXT_ACTIVE
+*/
 };
 
 color_t *colorPalette = (color_t *)colorPalette1;

@@ -74,10 +74,10 @@ void guiPanel1_Initialize(void)
 
     // Setup button2
     guiButton_Initialize(&button2,  (guiGenericWidget_t *)&guiPanel1);
-    button2.x = 150;
-    button2.y = 90;
+    button2.x = 170;
+    button2.y = 50;
     button2.width = 80;
-    button2.height = 50;
+    button2.height = 80;
     button2.text = "Btn 2";
     button2.font = &font_h10;
     button2.tabIndex = 11;
@@ -151,12 +151,14 @@ void guiPanel1_Initialize(void)
 
 
     // Add widgets (addition order will be inherited by drawing Z-order)
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&radioButton1, (guiGenericContainer_t *)&guiPanel1);
+    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&radioButton2, (guiGenericContainer_t *)&guiPanel1);
+
     guiCore_AddWidgetToCollection((guiGenericWidget_t *)&button1, (guiGenericContainer_t *)&guiPanel1);
     guiCore_AddWidgetToCollection((guiGenericWidget_t *)&button2, (guiGenericContainer_t *)&guiPanel1);
     guiCore_AddWidgetToCollection((guiGenericWidget_t *)&checkBox1, (guiGenericContainer_t *)&guiPanel1);
     guiCore_AddWidgetToCollection((guiGenericWidget_t *)&checkBox2, (guiGenericContainer_t *)&guiPanel1);
-    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&radioButton1, (guiGenericContainer_t *)&guiPanel1);
-    guiCore_AddWidgetToCollection((guiGenericWidget_t *)&radioButton2, (guiGenericContainer_t *)&guiPanel1);
+
     guiCore_AddWidgetToCollection((guiGenericWidget_t *)&radioButton3, (guiGenericContainer_t *)&guiPanel1);
     guiCore_AddWidgetToCollection((guiGenericWidget_t *)&radioButton4, (guiGenericContainer_t *)&guiPanel1);
 }

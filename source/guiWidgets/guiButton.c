@@ -43,7 +43,7 @@ uint8_t guiButton_SetPressed(guiButton_t *button, uint8_t newPressedState)
     button->redrawRequired = 1;
     if (button->handlers.count != 0)
     {
-        guiCore_CallHandler((guiGenericWidget_t *)button, BUTTON_PRESSED_CHANGED, &event);
+        guiCore_CallHandler(button, BUTTON_PRESSED_CHANGED, &event);
     }
     return 1;
 }
@@ -58,7 +58,7 @@ void guiButton_Click(guiButton_t *button)
     guiEvent_t event;
     if (button->handlers.count != 0)
     {
-        guiCore_CallHandler((guiGenericWidget_t *)button, BUTTON_CLICKED, &event);
+        guiCore_CallHandler(button, BUTTON_CLICKED, &event);
     }
 }
 
@@ -150,12 +150,12 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             break;
         case GUI_EVENT_FOCUS:
             if (BUTTON_ACCEPTS_FOCUS_EVENT(button))
-                guiCore_AcceptFocusedState((guiGenericWidget_t *)button,1);
+                guiCore_AcceptFocusedState(button,1);
             else
                 processResult = GUI_EVENT_DECLINE;      // Cannot accept focus
             break;
         case GUI_EVENT_UNFOCUS:
-            guiCore_AcceptFocusedState((guiGenericWidget_t *)button,0);
+            guiCore_AcceptFocusedState(button,0);
 #ifdef emGUI_USE_TOUCH_SUPPORT
             button->keepTouch = 0;
 #endif
@@ -163,10 +163,10 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                 guiButton_SetPressed(button,0);
             break;
         case GUI_EVENT_SHOW:
-            guiCore_AcceptVisibleState((guiGenericWidget_t *)button, 1);
+            guiCore_AcceptVisibleState(button, 1);
             break;
         case GUI_EVENT_HIDE:
-            guiCore_AcceptVisibleState((guiGenericWidget_t *)button, 0);
+            guiCore_AcceptVisibleState(button, 0);
             break;
         case GUI_EVENT_KEY:
             processResult = GUI_EVENT_DECLINE;
@@ -213,7 +213,7 @@ uint8_t guiButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                     if (touch.isInsideWidget)
                     {
                         // Capture
-                        guiCore_AcceptFocusedState((guiGenericWidget_t *)button,1);
+                        guiCore_AcceptFocusedState(button,1);
                         guiButton_ProcessKey(button, BUTTON_KEY_PRESS, 0);
                         button->keepTouch = 1;
                     }

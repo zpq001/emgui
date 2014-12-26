@@ -32,11 +32,18 @@ typedef struct {
 #define GUI_EVENT_DECLINE       0x00
 #define GUI_EVENT_ACCEPTED      0x01
 
-// Set visible by tag mode
-#define ITEMS_IN_RANGE_ARE_VISIBLE          0x01
-#define ITEMS_IN_RANGE_ARE_INVISIBLE        0x02
-#define ITEMS_OUT_OF_RANGE_ARE_VISIBLE      0x04
-#define ITEMS_OUT_OF_RANGE_ARE_INVISIBLE    0x08
+// Invocation types
+enum guiInvokeTypes {INVOKE_DIRECT, INVOKE_QUEUED};
+
+// States
+enum guiFocusStates {WIDGET_UNFOCUSED = 0, WIDGET_FOCUSED = 1};
+enum guiVisibleStates {WIDGET_INVISIBLE = 0, WIDGET_VISIBLE = 1};
+
+// Set visible by tag mode argument
+enum guiVisibleByTagMode {
+    SHOW_IN_RANGE = 0x01,     HIDE_IN_RANGE = 0x02,
+    SHOW_OUT_OF_RANGE = 0x04, HIDE_OUT_OF_RANGE = 0x08
+};
 
 // Check tabIndex result
 #define TABINDEX_IS_MAX     2
@@ -165,7 +172,7 @@ void guiCore_DecodeContainerTouchEvent(guiGenericWidget_t *widget, guiEvent_t *t
 //                   Widget collections management                   //
 //===================================================================//
 uint8_t guiCore_AddWidgetToCollection(guiGenericWidget_t *widget, guiGenericContainer_t *container);
-void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tabDir);
+void guiCore_SetFocusOnNextWidget(guiGenericContainer_t *container, int8_t tabDir, uint8_t invokeType);
 uint8_t guiCore_GetWidgetIndex(guiGenericWidget_t *widget);
 uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget);
 
@@ -173,14 +180,13 @@ uint8_t guiCore_CheckWidgetTabIndex(guiGenericWidget_t *widget);
 //===================================================================//
 //                   General widget API fucntions                    //
 //===================================================================//
-uint8_t guiCore_AcceptVisibleState(guiGenericWidget_t *widget, uint8_t newVisibleState);
-uint8_t guiCore_AcceptFocusedState(guiGenericWidget_t *widget, uint8_t newFocusedState);
-void guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState);
-void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, uint8_t maxTag, uint8_t mode);
-void guiCore_SetVisibleExclusively(guiGenericWidget_t *widget);
-void guiCore_SetFocusOn(guiGenericWidget_t *newFocusedWidget);
-void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget);
-uint8_t guiCore_CallHandler(guiGenericWidget_t *widget, uint8_t handlerType, guiEvent_t *event);
+uint8_t guiCore_AcceptVisibleState(void *widget, uint8_t newVisibleState);
+uint8_t guiCore_AcceptFocusedState(void *widget, uint8_t newFocusedState);
+void guiCore_SetVisible(void *widget, uint8_t newVisibleState, uint8_t invokeType);
+void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, uint8_t maxTag, uint8_t mode, uint8_t invokeType);
+void guiCore_SetVisibleExclusively(void *widget, uint8_t invokeType);
+void guiCore_SetFocusOn(void *newFocusedWidget, uint8_t invokeType);
+uint8_t guiCore_CallHandler(void *widget, uint8_t handlerType, guiEvent_t *event);
 
 
 

@@ -46,7 +46,7 @@ uint8_t guiRadioButton_SetChecked(guiRadioButton_t *button, uint8_t newCheckedSt
     button->redrawRequired = 1;
     if (callHandler)
     {
-        guiCore_CallHandler((guiGenericWidget_t *)button, RADIOBUTTON_CHECKED_CHANGED, &event);
+        guiCore_CallHandler(button, RADIOBUTTON_CHECKED_CHANGED, &event);
     }
     return 1;
 }
@@ -140,19 +140,19 @@ uint8_t guiRadioButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event
             break;
         case GUI_EVENT_FOCUS:
             if (RADIOBUTTON_ACCEPTS_FOCUS_EVENT(button))
-                guiCore_AcceptFocusedState((guiGenericWidget_t *)button,1);
+                guiCore_AcceptFocusedState(button,1);
             else
                 processResult = GUI_EVENT_DECLINE;      // Cannot accept focus
             break;
         case GUI_EVENT_UNFOCUS:
-            guiCore_AcceptFocusedState((guiGenericWidget_t *)button,0);
+            guiCore_AcceptFocusedState(button,0);
             button->keepTouch = 0;
             break;
         case GUI_EVENT_SHOW:
-            guiCore_AcceptVisibleState((guiGenericWidget_t *)button, 1);
+            guiCore_AcceptVisibleState(button, 1);
             break;
         case GUI_EVENT_HIDE:
-            guiCore_AcceptVisibleState((guiGenericWidget_t *)button, 0);
+            guiCore_AcceptVisibleState(button, 0);
             break;
         case GUI_EVENT_KEY:
             processResult = GUI_EVENT_DECLINE;
@@ -189,7 +189,7 @@ uint8_t guiRadioButton_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event
                     if (touch.isInsideWidget)
                     {
                         // Capture
-                        guiCore_AcceptFocusedState((guiGenericWidget_t *)button,1);
+                        guiCore_AcceptFocusedState(button,1);
                         guiRadioButton_ProcessKey(button, RADIOBUTTON_KEY_SELECT);
                         button->keepTouch = 1;
                     }

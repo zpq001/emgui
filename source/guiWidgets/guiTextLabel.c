@@ -34,18 +34,18 @@ uint8_t guiTextLabel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             break;
         case GUI_EVENT_FOCUS:
             if (TEXTLABEL_ACCEPTS_FOCUS_EVENT(textLabel))
-                guiCore_AcceptFocusedState((guiGenericWidget_t *)textLabel, 1);
+                guiCore_AcceptFocusedState(textLabel, 1);
             else
                 processResult = GUI_EVENT_DECLINE;      // Cannot accept focus
             break;
         case GUI_EVENT_UNFOCUS:
-            guiCore_AcceptFocusedState((guiGenericWidget_t *)textLabel, 0);
+            guiCore_AcceptFocusedState(textLabel, 0);
             break;
         case GUI_EVENT_SHOW:
-            guiCore_AcceptVisibleState((guiGenericWidget_t *)textLabel, 1);
+            guiCore_AcceptVisibleState(textLabel, 1);
             break;
         case GUI_EVENT_HIDE:
-            guiCore_AcceptVisibleState((guiGenericWidget_t *)textLabel, 0);
+            guiCore_AcceptVisibleState(textLabel, 0);
             break;
         default:
             // Widget cannot process incoming event. Try to find a handler.
