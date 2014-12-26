@@ -28,7 +28,7 @@ uint8_t guiPanel_ProcessKey(guiPanel_t *panel, uint8_t key)
     if (panel->isFocused)
     {
         if (key == PANEL_KEY_SELECT)
-            guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,1);
+            guiCore_SetFocusOnNextWidget((guiGenericContainer_t *)panel, 1, INVOKE_QUEUED);
         else
             return GUI_EVENT_DECLINE;
     }
@@ -41,21 +41,21 @@ uint8_t guiPanel_ProcessKey(guiPanel_t *panel, uint8_t key)
             // Check if event should be passed to parent
             if ((panel->focusFallsThrough) && (guiCore_CheckWidgetTabIndex(w) == TABINDEX_IS_MIN))
                 return GUI_EVENT_DECLINE;
-            guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,-1);
+            guiCore_SetFocusOnNextWidget((guiGenericContainer_t *)panel, -1, INVOKE_QUEUED);
         }
         else if (key == PANEL_KEY_NEXT)
         {
             // Check if event should be passed to parent
             if ((panel->focusFallsThrough) && (guiCore_CheckWidgetTabIndex(w) == TABINDEX_IS_MAX))
                 return GUI_EVENT_DECLINE;
-            guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,1);
+            guiCore_SetFocusOnNextWidget((guiGenericContainer_t *)panel, 1, INVOKE_QUEUED);
         }
         else if (key == PANEL_KEY_ESC)
         {
             if (panel->focusFallsThrough)
                 return GUI_EVENT_DECLINE;
             //guiPanel_SetFocused(panel, 1);
-            guiCore_AcceptFocusedState((guiGenericWidget_t *)panel,1);
+            guiCore_AcceptFocusedState(panel, 1);
         }
         else
         {
@@ -114,9 +114,9 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
     switch(event.type)
     {
         case GUI_EVENT_DRAW:
-            guiGraph_DrawPanel(panel);
+            guiGraph_DrawPanel(z);
             // Call handler
-            guiCore_CallHandler((guiGenericWidget_t *)panel, WIDGET_ON_DRAW_EVENT, &event);
+            guiCore_CallHandler(panel, WIDGET_ON_DRAW_EVENT, &event);
             // Reset flags - redrawForced will be reset by core
             panel->redrawFocus = 0;
             panel->redrawRequired = 0;
@@ -124,10 +124,10 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
         case GUI_EVENT_FOCUS:
             if (PANEL_ACCEPTS_FOCUS_EVENT(panel))
             {
-                guiCore_AcceptFocusedState((guiGenericWidget_t *)panel,1);
+                guiCore_AcceptFocusedState(panel,1);
                 if (panel->focusFallsThrough)
                 {
-                    guiCore_RequestFocusNextWidget((guiGenericContainer_t *)panel,1);
+                    guiCore_SetFocusOnNextWidget((guiGenericContainer_t *)panel, 1, INVOKE_QUEUED);
                     //guiCore_RequestFocusChange(panel->widgets.elements[ panel->widgets.focusedIndex ]);
                 }
             }
@@ -137,14 +137,14 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
             }
             break;
         case GUI_EVENT_UNFOCUS:
-            guiCore_AcceptFocusedState((guiGenericWidget_t *)panel, 0);
+            guiCore_AcceptFocusedState(panel, 0);
             panel->keepTouch = 0;
             break;
         case GUI_EVENT_SHOW:
-            guiCore_AcceptVisibleState((guiGenericWidget_t *)panel, 1);
+            guiCore_AcceptVisibleState(panel, 1);
             break;
         case GUI_EVENT_HIDE:
-            guiCore_AcceptVisibleState((guiGenericWidget_t *)panel, 0);
+            guiCore_AcceptVisibleState(panel, 0);
             break;
         case GUI_EVENT_KEY:
             processResult = GUI_EVENT_DECLINE;
@@ -190,7 +190,7 @@ uint8_t guiPanel_ProcessEvent(guiGenericWidget_t *widget, guiEvent_t event)
                     else
                     {
                         // Point belogs to panel itself
-                        guiCore_AcceptFocusedState((guiGenericWidget_t *)panel,1);
+                        guiCore_AcceptFocusedState(panel,1);
                         panel->keepTouch = 1;
                     }
                 }

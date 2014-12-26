@@ -20,7 +20,7 @@ Through message queue:
     guiCore_ProcessEncoderEvent
     guiCore_ProcessTimers (using guiCore_TimerProcess)
     guiCore_RequestFocusChange
-    guiCore_RequestFocusNextWidget (using guiCore_RequestFocusChange)
+    guiCore_SetFocusOnNextWidget (using guiCore_RequestFocusChange)
 
 
 **********************************************************/
@@ -78,6 +78,7 @@ uint8_t guiCore_AddMessageToQueue(const guiGenericWidget_t *target, const guiEve
      }
     return 0;
 }
+
 
 //-------------------------------------------------------//
 //  Reads a message from GUI core message queue
@@ -139,12 +140,11 @@ void guiCore_ProcessMessageQueue(void)
 }
 
 
-
 //-------------------------------------------------------//
 //  Adds message for focused widget to message queue
 //
 //-------------------------------------------------------//
-void guiCore_PostEventToFocused(guiEvent_t event)
+void guiCore_PostEventToFocused(guiEvent_t event)                   // CHECKME - rename
 {
     if (focusedWidget == 0)
         return;                 // Should not normally happen ?
@@ -926,7 +926,7 @@ uint8_t guiCore_AddWidgetToCollection(guiGenericWidget_t *widget, guiGenericCont
 //  Pass focus to next widget in collection
 //
 //-------------------------------------------------------//
-void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tabDir)
+void guiCore_SetFocusOnNextWidget(guiGenericContainer_t *container, int8_t tabDir, uint8_t invokeType)
 {
     uint8_t currentTabIndex;
     uint8_t i;
@@ -969,8 +969,7 @@ void guiCore_RequestFocusNextWidget(guiGenericContainer_t *container, int8_t tab
     if (minWidgetIndex < container->widgets.count)
     {
         widget = container->widgets.elements[minWidgetIndex];
-        //container->widgets.focusedIndex = minWidgetIndex;
-        guiCore_RequestFocusChange(widget);
+        guiCore_SetFocusOn(widget, invokeType);
     }
 }
 
@@ -1082,7 +1081,10 @@ uint8_t guiCore_AddHandler(void *widget, uint8_t handlerType, eventHandler_t han
     uint8_t i;
     guiGenericWidget_t *w = (guiGenericWidget_t *)widget;
     if ((w == 0) || (handler == 0))
+    {
+        guiCore_Error(emGUI_ERROR_NULL_REF);
         return 0;
+    }
     for (i = 0; i < w->handlers.count; i++)
     {
         if (w->handlers.elements[i].handler == 0)
@@ -1101,19 +1103,22 @@ uint8_t guiCore_AddHandler(void *widget, uint8_t handlerType, eventHandler_t han
 
 //-------------------------------------------------------//
 //  Call widget's handler for an event
+//  This function should be called by widget as response for
+//      some received or internal event
 //
 //  Function searches through the widget's handler table
 //  and call handlers for matching event type
 //-------------------------------------------------------//
-uint8_t guiCore_CallHandler(guiGenericWidget_t *widget, uint8_t handlerType, guiEvent_t *event)
+uint8_t guiCore_CallHandler(void *widget, uint8_t handlerType, guiEvent_t *event)
 {
     uint8_t i;
     uint8_t handlerResult = GUI_EVENT_DECLINE;
-    for(i=0; i<widget->handlers.count; i++)
+    guiGenericWidget_t *w = (guiGenericWidget_t *)widget;
+    for(i=0; i<w->handlers.count; i++)
     {
-        if (widget->handlers.elements[i].type == handlerType)
+        if (w->handlers.elements[i].type == handlerType)
         {
-            handlerResult = widget->handlers.elements[i].handler(widget, event);
+            handlerResult = w->handlers.elements[i].handler(w, event);
         }
     }
     return handlerResult;
@@ -1129,30 +1134,30 @@ uint8_t guiCore_CallHandler(guiGenericWidget_t *widget, uint8_t handlerType, gui
 //      except visible state.
 // Returns 1 if new state was applied. Otherwise returns 0.
 //-------------------------------------------------------//
-uint8_t guiCore_AcceptVisibleState(guiGenericWidget_t *widget, uint8_t newVisibleState)
+uint8_t guiCore_AcceptVisibleState(void *widget, uint8_t newVisibleState)
 {
     guiEvent_t event;
-    if (widget == 0) return 0;
+    guiGenericWidget_t *w = (guiGenericWidget_t *)widget;
     if (newVisibleState)
     {
         // Show widget
-        if (widget->isVisible) return 0;
-        widget->isVisible = 1;
-        widget->redrawRequired = 1;
-        widget->redrawForced = 1;
+        if (w->isVisible) return 0;
+        w->isVisible = 1;
+        w->redrawRequired = 1;
+        w->redrawForced = 1;
     }
     else
     {
         // Hide widget
-        if (widget->isVisible == 0) return 0;
-        widget->isVisible = 0;
-        guiCore_InvalidateRect(widget, widget->x, widget->y,
-              widget->x + widget->width - 1, widget->y + widget->height - 1);
+        if (w->isVisible == 0) return 0;
+        w->isVisible = 0;
+        guiCore_InvalidateRect(w, w->x, w->y,
+              w->x + w->width - 1, w->y + w->height - 1);
     }
     // Visible state changed - call handler
-    if (widget->handlers.count != 0)
+    if (w->handlers.count != 0)
     {
-        guiCore_CallHandler(widget, WIDGET_ON_VISIBLE_CHANGED, &event);
+        guiCore_CallHandler(w, WIDGET_ON_VISIBLE_CHANGED, &event);
     }
     return 1;
 }
@@ -1167,40 +1172,40 @@ uint8_t guiCore_AcceptVisibleState(guiGenericWidget_t *widget, uint8_t newVisibl
 //      except focused state.
 // Returns 1 if new state was applied. Otherwise returns 0.
 //-------------------------------------------------------//
-uint8_t guiCore_AcceptFocusedState(guiGenericWidget_t *widget, uint8_t newFocusedState)
+uint8_t guiCore_AcceptFocusedState(void *widget, uint8_t newFocusedState)
 {
     guiEvent_t event;
     uint8_t index;
-    if (widget == 0) return 0;
+    guiGenericWidget_t *w = (guiGenericWidget_t *)widget;
     if (newFocusedState)
     {
         // Check if widget is already focused
-        if (widget->isFocused) return 0;
+        if (w->isFocused) return 0;
         // First tell currently focused widget to loose focus
         if (focusedWidget != 0)
             focusedWidget->processEvent(focusedWidget, guiEvent_UNFOCUS);
-        widget->isFocused = 1;
-        focusedWidget = widget;
-        if ((guiGenericContainer_t *)widget->parent != 0)
+        w->isFocused = 1;
+        focusedWidget = w;
+        if ((guiGenericContainer_t *)w->parent != 0)
         {
             // Update index of focused child for parent container
             index = guiCore_GetWidgetIndex(focusedWidget);
-            ((guiGenericContainer_t *)widget->parent)->widgets.focusedIndex = index;
+            ((guiGenericContainer_t *)w->parent)->widgets.focusedIndex = index;
         }
     }
     else
     {
         // Focus was removed
-        if (widget->isFocused == 0) return 0;
-        widget->isFocused = 0;
+        if (w->isFocused == 0) return 0;
+        w->isFocused = 0;
     }
     // Focused state changed - set drawing flags
-    widget->redrawFocus = 1;
-    widget->redrawRequired = 1;
+    w->redrawFocus = 1;
+    w->redrawRequired = 1;
     // Call handler
-    if (widget->handlers.count != 0)
+    if (w->handlers.count != 0)
     {
-        guiCore_CallHandler(widget, WIDGET_ON_FOCUS_CHANGED, &event);
+        guiCore_CallHandler(w, WIDGET_ON_FOCUS_CHANGED, &event);
     }
     return 1;
 }
@@ -1215,49 +1220,69 @@ uint8_t guiCore_AcceptFocusedState(guiGenericWidget_t *widget, uint8_t newFocuse
 //-------------------------------------------------------//
 //  Shows or hides a widget
 //
-//  Affected widgets are sent message DIRECTLY, bypassing queue.
+// Widget is sent show or hide events ether directly, bypassing message queue, or through queue.
+// If widget cannot accept the event, nothing is done. Widgets should always accept show or hide events.
 //-------------------------------------------------------//
-void guiCore_SetVisible(guiGenericWidget_t *widget, uint8_t newVisibleState)
+void guiCore_SetVisible(void *widget, uint8_t newVisibleState, uint8_t invokeType)
 {
-    if (widget != 0)
-        widget->processEvent(widget, (newVisibleState) ? guiEvent_SHOW : guiEvent_HIDE);
+    guiGenericWidget_t *w = (guiGenericWidget_t *)widget;
+    const guiEvent_t *event;
+    if (w != 0)
+    {
+        event = (newVisibleState) ? &guiEvent_SHOW : &guiEvent_HIDE;
+        if (invokeType == INVOKE_DIRECT)
+            w->processEvent(w, *event);
+        else
+            guiCore_AddMessageToQueue(w, event);
+    }
 }
 
 
 //-------------------------------------------------------//
 //  Shows or hides widgets in a collection
 //
-//  Affected widgets are sent message DIRECTLY, bypassing queue.
-//  guiCore_ProcessMessageQueue() should be called after this function
-//  to process posted messages from callbacks or handlers
+// Widget is sent show or hide events ether directly, bypassing message queue, or through queue.
+// If widget cannot accept the event, nothing is done. Widgets should always accept show or hide events.
 //
-//  Widgets are affected using mode paramenter:
-//      ITEMS_IN_RANGE_ARE_VISIBLE
-//      ITEMS_IN_RANGE_ARE_INVISIBLE
-//      ITEMS_OUT_OF_RANGE_ARE_VISIBLE
-//      ITEMS_OUT_OF_RANGE_ARE_INVISIBLE
+//  Widgets are affected using mode parameter:
+//      SHOW_IN_RANGE
+//      HIDE_IN_RANGE
+//      SHOW_OUT_OF_RANGE
+//      HIDE_OUT_OF_RANGE
 //  mode can be any combination of these constants
 //-------------------------------------------------------//
-void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, uint8_t maxTag, uint8_t mode)
+void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, uint8_t maxTag, uint8_t mode, uint8_t invokeType)
 {
     uint8_t i;
     uint8_t tagInRange;
     guiGenericWidget_t *widget;
-    for(i=0; i<collection->count; i++)
+    const guiEvent_t *event;
+    if (collection != 0)
     {
-        widget = (guiGenericWidget_t *)collection->elements[i];
-        if (widget == 0)
-            continue;
-        tagInRange = ((widget->tag >= minTag) && (widget->tag <= maxTag)) ? mode & 0x3 : mode & 0xC;
-        if ((tagInRange == ITEMS_IN_RANGE_ARE_VISIBLE) || (tagInRange == ITEMS_OUT_OF_RANGE_ARE_VISIBLE))
+        for(i=0; i<collection->count; i++)
         {
-            if (widget->isVisible == 0)
-                widget->processEvent(widget, guiEvent_SHOW);
-        }
-        else if ((tagInRange == ITEMS_IN_RANGE_ARE_INVISIBLE) || (tagInRange == ITEMS_OUT_OF_RANGE_ARE_INVISIBLE))
-        {
-            if (widget->isVisible)
-                widget->processEvent(widget, guiEvent_HIDE);
+            widget = (guiGenericWidget_t *)collection->elements[i];
+            if (widget == 0)
+                continue;
+            tagInRange = ((widget->tag >= minTag) && (widget->tag <= maxTag)) ? mode & 0x3 : mode & 0xC;
+            event = 0;
+            if ((tagInRange == SHOW_IN_RANGE) || (tagInRange == SHOW_OUT_OF_RANGE))
+            {
+                if (widget->isVisible == 0)
+                    event = &guiEvent_SHOW;
+            }
+            else if ((tagInRange == HIDE_IN_RANGE) || (tagInRange == HIDE_OUT_OF_RANGE))
+            {
+                if (widget->isVisible)
+                    event = &guiEvent_HIDE;
+            }
+            if (event)
+            {
+                if (invokeType == INVOKE_DIRECT)
+                    widget->processEvent(widget, *event);
+                else
+                    guiCore_AddMessageToQueue(widget, event);
+            }
         }
     }
 }
@@ -1266,34 +1291,36 @@ void guiCore_SetVisibleByTag(guiWidgetCollection_t *collection, uint8_t minTag, 
 //-------------------------------------------------------//
 //  Shows a widget in a collection while hiding others
 //
-//  Affected widgets are sent message DIRECTLY, bypassing queue.
-//  guiCore_ProcessMessageQueue() should be called after this function
-//  to process posted messages from callbacks or handlers
+// Widget is sent show or hide events ether directly, bypassing message queue, or through queue.
+// If widget cannot accept the event, nothing is done. Widgets should always accept show or hide events.
 //-------------------------------------------------------//
-void guiCore_SetVisibleExclusively(guiGenericWidget_t *widget)
+void guiCore_SetVisibleExclusively(void *widget, uint8_t invokeType)
 {
     uint8_t i;
+    guiGenericWidget_t *this_widget = (guiGenericWidget_t *)widget;
     guiGenericWidget_t *some_other_widget;
-    if (widget != 0)
+    if (this_widget != 0)
     {
-        guiGenericContainer_t *parent = (guiGenericContainer_t *)widget->parent;
+        guiGenericContainer_t *parent = (guiGenericContainer_t *)this_widget->parent;
         if (parent != 0)
         {
             for (i=0; i<parent->widgets.count; i++)
             {
                 some_other_widget = parent->widgets.elements[i];
-                if (some_other_widget == 0)
+                if ((some_other_widget == 0) || (some_other_widget == this_widget))
                     continue;
-                if (some_other_widget == widget)
-                {
-                    if (widget->isVisible == 0)
-                        widget->processEvent(some_other_widget, guiEvent_SHOW);
-                }
+                if (invokeType == INVOKE_DIRECT)
+                    some_other_widget->processEvent(some_other_widget, guiEvent_SHOW);
                 else
-                {
-                    some_other_widget->processEvent(some_other_widget, guiEvent_HIDE);
-                }
+                    guiCore_AddMessageToQueue(some_other_widget, &guiEvent_HIDE);
             }
+        }
+        if (this_widget->isVisible == 0)
+        {
+            if (invokeType == INVOKE_DIRECT)
+                this_widget->processEvent(some_other_widget, guiEvent_SHOW);
+            else
+                guiCore_AddMessageToQueue(this_widget, &guiEvent_SHOW);
         }
     }
 }
@@ -1302,29 +1329,29 @@ void guiCore_SetVisibleExclusively(guiGenericWidget_t *widget)
 //-------------------------------------------------------//
 // Sets focus on widget
 //
-// Affected widgets are sent message DIRECTLY, bypassing queue.
-// If widget cannot accept focus event, focus is not modified
+// Widget is sent focus event ether directly, bypassing message queue, or through queue.
+// If widget cannot accept the event, focus event is sent to widgets's parent by queue
 //-------------------------------------------------------//
-void guiCore_SetFocusOn(guiGenericWidget_t *newFocusedWidget)
+void guiCore_SetFocusOn(void *newFocusedWidget, uint8_t invokeType)
 {
-    // Tell new widget to get focus
-    if ((newFocusedWidget != focusedWidget) && (newFocusedWidget != 0))
+    guiGenericWidget_t *widget = (guiGenericWidget_t *)newFocusedWidget;
+    if (widget != 0)
     {
-        newFocusedWidget->processEvent(newFocusedWidget, guiEvent_FOCUS);
-    }
-}
-
-
-//-------------------------------------------------------//
-// Posts focus event for a widget into the QUEUE
-// If widget cannot accept focus event, it is sent to it's parent.
-//-------------------------------------------------------//
-void guiCore_RequestFocusChange(guiGenericWidget_t *newFocusedWidget)
-{
-    // Tell new widget to get focus
-    if ((newFocusedWidget != focusedWidget) && (newFocusedWidget != 0))
-    {
-        guiCore_AddMessageToQueue(newFocusedWidget, &guiEvent_FOCUS);
+        if (invokeType == INVOKE_DIRECT)
+        {
+            if (widget->processEvent(widget, guiEvent_FOCUS) == GUI_EVENT_DECLINE)
+            {
+                // Widget cannot take focus.
+                // Post focus event to the parent (as would message queue processor do)
+                if (widget->parent)
+                    guiCore_AddMessageToQueue(widget->parent, &guiEvent_FOCUS);
+            }
+        }
+        else
+        {
+            // Post focus event to the widget
+            guiCore_AddMessageToQueue(widget, &guiEvent_FOCUS);
+        }
     }
 }
 
